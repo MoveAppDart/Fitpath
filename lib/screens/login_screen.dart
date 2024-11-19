@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'signup_screen.dart';
-import 'home_screen.dart';
+import 'bottom_navbar.dart';
 import 'dart:ui';
 
 class LoginScreen extends StatefulWidget {
@@ -254,7 +254,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       context, 
                       MaterialPageRoute(
                         builder: (context) => 
-                        HomeScreen())
+                        BottomNavbar())
                     ); 
                   }
                 }, 

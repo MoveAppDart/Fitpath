@@ -223,7 +223,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),          
               ],
             ),
-            SizedBox(height: heights / 7),
+            SizedBox(height: heights / 12),
             // Boton de registro de sesion
             ElevatedButton(
               onPressed: (){
