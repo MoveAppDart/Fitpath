@@ -17,7 +17,6 @@ class MyApp extends StatelessWidget {
       title: 'GymBro App',
       home: LoginScreen(),
       theme: ThemeData(
-        scaffoldBackgroundColor: Color.fromRGBO(55, 81, 95, 1),
         fontFamily: GoogleFonts.itim().fontFamily
       ),
     );

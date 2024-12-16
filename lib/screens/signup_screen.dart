@@ -22,7 +22,20 @@ class _SignupScreenState extends State<SignupScreen> {
     heights = size.height;
     width = size.width;
     return Scaffold(
-      body: Padding(
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color.fromARGB(255, 0, 93, 200),
+              Color.fromARGB(255, 1, 69, 148),
+              Color.fromARGB(255, 1, 51, 109),
+              Color.fromARGB(255, 2, 45, 96),
+            ],
+          ),
+        ),
+      child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column( 
           mainAxisAlignment: MainAxisAlignment.center,
@@ -63,7 +76,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           borderSide: BorderSide(width: 0),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Color.fromARGB(255, 228, 133, 142), width: 1.5),
+                          borderSide: const BorderSide(color: Color.fromARGB(255, 0, 85, 77), width: 1.5),
                           borderRadius: BorderRadius.circular(15),    
                         ),                
                       ),
@@ -86,7 +99,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           borderSide: BorderSide(width: 0),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Color.fromARGB(255, 228, 133, 142)),
+                          borderSide: const BorderSide(color: Color.fromARGB(255, 0, 85, 77)),
                           borderRadius: BorderRadius.circular(15),    
                         )
                       ),
@@ -110,7 +123,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           borderSide: BorderSide(width: 0),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(color: Color.fromARGB(255, 228, 133, 142)),
+                          borderSide: const BorderSide(color: Color.fromARGB(255, 0, 85, 77)),
                           borderRadius: BorderRadius.circular(15),    
                         )
                       ),
@@ -225,28 +238,57 @@ class _SignupScreenState extends State<SignupScreen> {
             ),
             SizedBox(height: heights / 12),
             // Boton de registro de sesion
-            ElevatedButton(
-              onPressed: (){
-                String email = _emailController.text;
-                String password = _passwordController.text;
-                String confirmPassword = _passwordController2.text;
+            Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    stops: [0.78, 0.81, 0.84, 0.88, 1.0],
+                    colors: [
+                      Color(0xFF152CAF), // 78%
+                      Color(0xFF142BAC), // 81%
+                      Color(0xFF142AA9), // 84%
+                      Color(0xFF142AA6), // 88%
+                      Color(0xFF122699), // 100%
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black38,
+                      blurRadius: 4,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: InkWell(
+                  onTap: () {
+                      String email = _emailController.text;
+                      String password = _passwordController.text;
+                      String confirmPassword = _passwordController2.text;
 
-                if (email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Por favor, rellena todos los campos"))
-                  );
-                } else if (password != confirmPassword){
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Las contraseñas no coinciden"))
-                  );
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Te has registrado con exito"))
-                  );
-                }
-              }, 
-              style: TextButton.styleFrom(backgroundColor: Color.fromARGB(255, 228, 133, 142), fixedSize: Size(260, 40)),
-              child: Text("Registrarse", style: TextStyle(fontSize: 16,color: Color.fromARGB(200, 255, 255, 255)),)
+                      if (email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Por favor, rellena todos los campos"))
+                      );
+                      } else if (password != confirmPassword){
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Las contraseñas no coinciden"))
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Te has registrado con exito"))
+                      );
+                    }
+                  },
+                  borderRadius: BorderRadius.circular(20), // Agrega un efecto visual al pulsar
+                  child: Container(
+                    width: 260,
+                    height: 40,
+                    alignment: Alignment.center,
+                    child: Text("Registrarse", style: TextStyle(fontSize: 16,color: Color.fromARGB(200, 255, 255, 255)),)
+                  ),
+                ),
             ),
             // Apartado de iniciar sesion
             Text('¿Ya tienes cuenta?', 
@@ -259,7 +301,7 @@ class _SignupScreenState extends State<SignupScreen> {
               child: 
                 Text(
                   'Inicia sesión',
-                  style: TextStyle(color: Color.fromARGB(255, 228, 133, 142)),
+                  style: TextStyle(color: Colors.white),
                 ),
               onTap: () {
                 // Animacion de cambio de pantalla
@@ -284,6 +326,6 @@ class _SignupScreenState extends State<SignupScreen> {
           ],
         ),
       ),
-    );
+    ));
   }
 }

@@ -16,7 +16,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
     heights = size.height;
     width = size.width;
     return Scaffold(
-      body: Padding(
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color.fromARGB(255, 0, 93, 200),
+              Color.fromARGB(255, 1, 69, 148),
+              Color.fromARGB(255, 1, 51, 109),
+              Color.fromARGB(255, 2, 45, 96),
+            ],
+          ),
+        ),
+      child: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Center(
           child: Column(
@@ -142,6 +155,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       
       ),
-    );
+    ));
   }
 }
