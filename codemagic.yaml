@@ -1,0 +1,26 @@
+workflows:
+  ios_release:
+    name: Build iOS without signing
+    platform: ios
+    flutter: stable
+    environment:
+      vars:
+        FLUTTER_CHANNEL: stable
+    build:
+      ios:
+        build_mode: release
+        xcode_project_path: ios/Runner.xcworkspace
+        build_ios: true
+    post:
+      - script: |
+          # Deshabilitar la firma de código
+          export CODE_SIGNING_REQUIRED=NO
+          export CODE_SIGN_IDENTITY="-" # No usar firma
+          export DEVELOPMENT_TEAM="" # No usar equipo de desarrollo
+          xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -configuration Release archive -archivePath $HOME/build/Runner.xcarchive
+      - script: |
+          # Crear el archivo .ipa sin firmar
+          xcodebuild -exportArchive -archivePath $HOME/build/Runner.xcarchive -exportPath $HOME/build -exportOptionsPlist ios/ExportOptions.plist
+    publishing:
+      artifacts:
+        - build/*.ipa
