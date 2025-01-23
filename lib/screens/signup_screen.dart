@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gymbro/screens/register/first_step_signup.dart';
 import 'login_screen.dart';
 import 'dart:ui';
 
@@ -263,21 +264,34 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
                 child: InkWell(
                   onTap: () {
-                      String email = _emailController.text;
-                      String password = _passwordController.text;
-                      String confirmPassword = _passwordController2.text;
+                    String email = _emailController.text;
+                    String password = _passwordController.text;
+                    String confirmPassword = _passwordController2.text;
 
-                      if (email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Por favor, rellena todos los campos"))
+                    if (email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Por favor, rellena todos los campos"))
+                    );
+                    } else if (password != confirmPassword){
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Las contraseñas no coinciden"))
                       );
-                      } else if (password != confirmPassword){
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Las contraseñas no coinciden"))
-                        );
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Te has registrado con exito"))
+                    } else {
+                      Navigator.pushReplacement(
+                        context,
+                        PageRouteBuilder(
+                          transitionDuration: Duration(milliseconds: 600),
+                          pageBuilder: (context, animation, secondaryAnimation) => FirstStepSignup(),
+                          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                            return FadeTransition(
+                              opacity: animation,
+                              child: BackdropFilter(
+                                filter: ImageFilter.blur(sigmaX: animation.value * 5, sigmaY: animation.value * 5),
+                                child: child,
+                              ),
+                            );
+                          },
+                        ),
                       );
                     }
                   },

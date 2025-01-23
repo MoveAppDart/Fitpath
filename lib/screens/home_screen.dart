@@ -56,7 +56,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   Expanded(
                     child: RichText(
                       text: TextSpan(
-                        style: TextStyle(fontFamily: GoogleFonts.itim().fontFamily),
                         children: [
                           TextSpan(
                             text: "Bienvenido de vuelta\n",

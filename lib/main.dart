@@ -17,7 +17,7 @@ class MyApp extends StatelessWidget {
       title: 'GymBro App',
       home: LoginScreen(),
       theme: ThemeData(
-        fontFamily: GoogleFonts.itim().fontFamily
+        fontFamily: GoogleFonts.istokWeb().fontFamily
       ),
     );
   }

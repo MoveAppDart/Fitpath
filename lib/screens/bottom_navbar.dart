@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_2/screens/calendar_screen.dart';
-import 'package:flutter_application_2/screens/home_screen.dart';
-import 'package:flutter_application_2/screens/profile_screen.dart';
-import 'package:flutter_application_2/screens/routine_screen.dart';
-import 'package:flutter_application_2/screens/stats_screen.dart';
+import 'package:gymbro/screens/calendar_screen.dart';
+import 'package:gymbro/screens/home_screen.dart';
+import 'package:gymbro/screens/profile_screen.dart';
+import 'package:gymbro/screens/routine_screen.dart';
+import 'package:gymbro/screens/stats_screen.dart';
 
 class BottomNavbar extends StatefulWidget {
   const BottomNavbar({super.key});
