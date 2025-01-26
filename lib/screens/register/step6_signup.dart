@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:gymbro/screens/bottom_navbar.dart';
 import 'package:gymbro/screens/home_screen.dart';
 import 'package:gymbro/screens/register/step1_signup.dart';
 import 'package:gymbro/screens/register/step5_signup.dart';
@@ -187,7 +188,7 @@ class _SixthStepSignupState extends State<SixthStepSignup> {
                           PageRouteBuilder(
                             transitionDuration: Duration(milliseconds: 600),
                             pageBuilder: (context, animation, secondaryAnimation) =>
-                                HomeScreen(),
+                                BottomNavbar(),
                             transitionsBuilder: (context, animation,
                                 secondaryAnimation, child) {
                               return FadeTransition(
@@ -214,7 +215,7 @@ class _SixthStepSignupState extends State<SixthStepSignup> {
                       child: Row(
                         children: [
                           Text(
-                            "Continue",
+                            "Finish",
                             style: TextStyle(color: Colors.white),
                           ),
                           SizedBox(width: 5),

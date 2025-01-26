@@ -1,8 +1,12 @@
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:gymbro/screens/register/step2_signup.dart';
+import 'package:flutter/physics.dart';
+import 'package:gymbro/screens/register/step2_signup.dart'; // Asegúrate de que esta importación sea correcta
 import 'package:gymbro/screens/register/step4_signup.dart';
+import 'package:gymbro/screens/utils/weightSlider.dart';
+
+const greenColor = Color(0xff90D855);
 
 class ThirdStepSignup extends StatefulWidget {
   @override
@@ -10,51 +14,7 @@ class ThirdStepSignup extends StatefulWidget {
 }
 
 class _ThirdStepSignupState extends State<ThirdStepSignup> {
-  final ScrollController _scrollController = ScrollController();
-  final List<int> ages = List.generate(87, (index) => 14 + index); // Edades de 18 a 100
-  int selectedAge = 18; // Edad seleccionada inicialmente
-
-  @override
-  void initState() {
-    super.initState();
-    _scrollController.addListener(_onScroll);
-
-    // Inicializar el scroll para que la edad inicial esté en el centro
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollToAge(selectedAge);
-    });
-  }
-
-  void _onScroll() {
-    // Calcular la edad seleccionada basada en la posición del scroll
-    double centerOffset = _scrollController.offset + 75; // Ajusta según el tamaño del ítem
-    int index = (centerOffset / 50).round(); // Ajusta según el tamaño del ítem
-    index = index.clamp(0, ages.length - 1); // Asegurar que el índice esté dentro del rango
-
-    setState(() {
-      selectedAge = ages[index];
-    });
-
-    // Ajustar el scroll para que la edad seleccionada esté en el centro
-    _scrollToAge(selectedAge);
-  }
-
-  void _scrollToAge(int age) {
-    // Encontrar el índice de la edad seleccionada
-    int index = ages.indexOf(age);
-    if (index != -1) {
-      // Calcular la posición del scroll para que la edad esté en el centro
-      double offset = index * 51.0 - 75.0; // Ajusta según el tamaño del ítem
-      _scrollController.jumpTo(offset); // Usar jumpTo para un ajuste instantáneo
-    }
-  }
-
-  @override
-  void dispose() {
-    _scrollController.removeListener(_onScroll);
-    _scrollController.dispose();
-    super.dispose();
-  }
+  double selectedWeight = 75; // Peso seleccionado inicialmente
 
   @override
   Widget build(BuildContext context) {
@@ -123,7 +83,40 @@ class _ThirdStepSignupState extends State<ThirdStepSignup> {
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: heights / 20),
-              // Selector de Edad con Efecto de Escala
+              // Mostrar el peso seleccionado
+              Text(
+                "${selectedWeight.toStringAsFixed(1)} Kgs", // Mostrar el peso con un decimal
+                style: TextStyle(
+                  fontSize: 24,
+                  color: Colors.white,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 20),
+              // Contenedor del slider de peso
+              Container(
+                height: 118, // Altura total ajustada del selector
+                width: 300, // Ancho del selector
+                decoration: BoxDecoration(
+                  color: Color.fromARGB(229, 255, 255, 255), // Fondo blanco translúcido
+                  borderRadius: BorderRadius.circular(30), // Bordes redondeados
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black26,
+                      blurRadius: 10,
+                      offset: Offset(0, 5),
+                    ),
+                  ],
+                ),
+                child: WeightSlider(
+                  initialValue: selectedWeight,
+                  onChanged: (value) {
+                    setState(() {
+                      selectedWeight = value; // Actualizar el peso seleccionado
+                    });
+                  },
+                ),
+              ),
               Expanded(child: Container()),
               // Buttons
               Padding(
@@ -133,7 +126,7 @@ class _ThirdStepSignupState extends State<ThirdStepSignup> {
                   children: [
                     TextButton(
                       onPressed: () {
-                        Navigator.pushReplacement(
+                       Navigator.pushReplacement(
                           context,
                           PageRouteBuilder(
                             transitionDuration: Duration(milliseconds: 600),
