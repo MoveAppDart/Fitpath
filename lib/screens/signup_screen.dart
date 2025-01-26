@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:gymbro/screens/register/first_step_signup.dart';
+import 'package:gymbro/screens/register/step1_signup.dart';
 import 'login_screen.dart';
 import 'dart:ui';
 

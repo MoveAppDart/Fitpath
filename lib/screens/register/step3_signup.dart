@@ -1,18 +1,71 @@
 import 'dart:ui';
-
 import 'package:flutter/material.dart';
-import 'package:gymbro/screens/register/second_step_signup.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:gymbro/screens/register/step2_signup.dart';
+import 'package:gymbro/screens/register/step4_signup.dart';
 
-class FirstStepSignup extends StatelessWidget {
+class ThirdStepSignup extends StatefulWidget {
+  @override
+  _ThirdStepSignupState createState() => _ThirdStepSignupState();
+}
+
+class _ThirdStepSignupState extends State<ThirdStepSignup> {
+  final ScrollController _scrollController = ScrollController();
+  final List<int> ages = List.generate(87, (index) => 14 + index); // Edades de 18 a 100
+  int selectedAge = 18; // Edad seleccionada inicialmente
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+
+    // Inicializar el scroll para que la edad inicial esté en el centro
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollToAge(selectedAge);
+    });
+  }
+
+  void _onScroll() {
+    // Calcular la edad seleccionada basada en la posición del scroll
+    double centerOffset = _scrollController.offset + 75; // Ajusta según el tamaño del ítem
+    int index = (centerOffset / 50).round(); // Ajusta según el tamaño del ítem
+    index = index.clamp(0, ages.length - 1); // Asegurar que el índice esté dentro del rango
+
+    setState(() {
+      selectedAge = ages[index];
+    });
+
+    // Ajustar el scroll para que la edad seleccionada esté en el centro
+    _scrollToAge(selectedAge);
+  }
+
+  void _scrollToAge(int age) {
+    // Encontrar el índice de la edad seleccionada
+    int index = ages.indexOf(age);
+    if (index != -1) {
+      // Calcular la posición del scroll para que la edad esté en el centro
+      double offset = index * 51.0 - 75.0; // Ajusta según el tamaño del ítem
+      _scrollController.jumpTo(offset); // Usar jumpTo para un ajuste instantáneo
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     dynamic size, heights, width;
     size = MediaQuery.of(context).size;
     heights = size.height;
     width = size.width;
+
     return SafeArea(
       child: Scaffold(
-          body: Container(
+        body: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
@@ -37,10 +90,12 @@ class FirstStepSignup extends StatelessWidget {
                   children: List.generate(6, (index) {
                     return Container(
                       margin: EdgeInsets.symmetric(horizontal: 2.0),
-                      width: width/8,
+                      width: width / 8,
                       height: 5,
                       decoration: BoxDecoration(
-                        color: index == 0 ? const Color.fromARGB(255, 10, 187, 37) : const Color.fromARGB(255, 163, 172, 164),
+                        color: index == 2
+                            ? const Color.fromARGB(255, 10, 187, 37)
+                            : const Color.fromARGB(178, 163, 172, 164),
                         borderRadius: BorderRadius.circular(10),
                       ),
                     );
@@ -50,7 +105,7 @@ class FirstStepSignup extends StatelessWidget {
               SizedBox(height: heights / 20),
               // Title and Subtitle
               Text(
-                "How do you identify?",
+                "How much your weight?",
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -68,34 +123,8 @@ class FirstStepSignup extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: heights / 20),
-              // Options
-              Expanded(
-                child: ListView(
-                  padding: EdgeInsets.symmetric(horizontal: 10),
-                  children: [
-                    GenderOptionButton(
-                      label: "Male",
-                      icon: Icons.male,
-                      onPressed: () {},
-                    ),
-                    GenderOptionButton(
-                      label: "Female",
-                      icon: Icons.female,
-                      onPressed: () {},
-                    ),
-                    GenderOptionButton(
-                      label: "Non-Binary",
-                      icon: Icons.transgender,
-                      onPressed: () {},
-                    ),
-                    GenderOptionButton(
-                      label: "Prefer Not to disclose",
-                      icon: Icons.close,
-                      onPressed: () {},
-                    ),
-                  ],
-                ),
-              ),
+              // Selector de Edad con Efecto de Escala
+              Expanded(child: Container()),
               // Buttons
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
@@ -103,9 +132,31 @@ class FirstStepSignup extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     TextButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.pushReplacement(
+                          context,
+                          PageRouteBuilder(
+                            transitionDuration: Duration(milliseconds: 600),
+                            pageBuilder: (context, animation, secondaryAnimation) =>
+                                SecondStepSignup(),
+                            transitionsBuilder: (context, animation,
+                                secondaryAnimation, child) {
+                              return FadeTransition(
+                                opacity: animation,
+                                child: BackdropFilter(
+                                  filter: ImageFilter.blur(
+                                      sigmaX: animation.value * 5,
+                                      sigmaY: animation.value * 5),
+                                  child: child,
+                                ),
+                              );
+                            },
+                          ),
+                        );
+                      },
                       style: TextButton.styleFrom(
-                        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 20),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
                         ),
@@ -113,7 +164,7 @@ class FirstStepSignup extends StatelessWidget {
                       child: Row(
                         children: [
                           Transform.rotate(
-                            angle: 3.1416, // 90 grados en radianes (π/2)
+                            angle: 3.1416,
                             child: Icon(
                               Icons.play_arrow_rounded,
                               color: Colors.white,
@@ -122,7 +173,8 @@ class FirstStepSignup extends StatelessWidget {
                           SizedBox(width: 5),
                           Text(
                             "Previous",
-                            style: TextStyle(color: const Color.fromARGB(255, 255, 255, 255)),
+                            style: TextStyle(
+                                color: const Color.fromARGB(255, 255, 255, 255)),
                           ),
                         ],
                       ),
@@ -133,12 +185,16 @@ class FirstStepSignup extends StatelessWidget {
                           context,
                           PageRouteBuilder(
                             transitionDuration: Duration(milliseconds: 600),
-                            pageBuilder: (context, animation, secondaryAnimation) => SecondStepSignup(),
-                            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                            pageBuilder: (context, animation, secondaryAnimation) =>
+                                FourthStepSignup(),
+                            transitionsBuilder: (context, animation,
+                                secondaryAnimation, child) {
                               return FadeTransition(
                                 opacity: animation,
                                 child: BackdropFilter(
-                                  filter: ImageFilter.blur(sigmaX: animation.value * 5, sigmaY: animation.value * 5),
+                                  filter: ImageFilter.blur(
+                                      sigmaX: animation.value * 5,
+                                      sigmaY: animation.value * 5),
                                   child: child,
                                 ),
                               );
@@ -148,7 +204,8 @@ class FirstStepSignup extends StatelessWidget {
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color.fromRGBO(45, 124, 181, 1),
-                        padding: EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 15, vertical: 15),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(9),
                         ),
@@ -170,47 +227,6 @@ class FirstStepSignup extends StatelessWidget {
               SizedBox(height: heights / 30),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class GenderOptionButton extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final VoidCallback onPressed;
-
-  const GenderOptionButton({
-    required this.label,
-    required this.icon,
-    required this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(10),
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color.fromARGB(201, 255, 255, 255),
-          padding: EdgeInsets.all(25), // Aumentar el padding vertical
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          elevation: 5, // Añadir sombra
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.start, // Centrar contenido
-          children: [
-            Icon(icon, color: const Color.fromARGB(255, 126, 126, 126), size: 30), // Tamaño del ícono
-            SizedBox(width: 10),
-            Text(
-              label,
-              style: TextStyle(color: const Color.fromARGB(255, 126, 126, 126), fontSize: 17), // Tamaño del texto
-            ),
-          ],
         ),
       ),
     );
