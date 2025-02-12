@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:gymbro/screens/calendar_screen.dart';
 import 'package:gymbro/screens/home_screen.dart';
 import 'package:gymbro/screens/profile_screen.dart';
-import 'package:gymbro/screens/routine_screen.dart';
+import 'package:gymbro/screens/workouts_screen.dart';
 import 'package:gymbro/screens/stats_screen.dart';
 
 class BottomNavbar extends StatefulWidget {
@@ -28,7 +28,7 @@ class _BottomNavbarState extends State<BottomNavbar> {
     HomeScreen(),
     ProfileScreen(),
     StatsScreen(),
-    RoutineScreen(),
+    WorkoutsScreen(),
   ];
 
   void onButtonTapped(int index) {

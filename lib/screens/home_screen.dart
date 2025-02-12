@@ -11,154 +11,257 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
-    dynamic size, heights, width;
-    size = MediaQuery.of(context).size;
-    heights = size.height;
-    width = size.width;
+    final size = MediaQuery.of(context).size;
 
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color.fromARGB(255, 0, 93, 200),
-              Color.fromARGB(255, 1, 69, 148),
-              Color.fromARGB(255, 1, 51, 109),
-              Color.fromARGB(255, 2, 45, 96),
-            ],
-          ),
+          color: const Color(0xFF005DC8),
         ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.transparent,
-              ),
-              width: width,
-              height: heights / 10,
-              child: Row(
-                children: [
-                  SizedBox(width: width / 20),
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundColor: const Color.fromARGB(255, 255, 255, 255),
-                    child: Icon(
-                      Icons.person,
-                      size: 20,
-                      color: Colors.grey[500],
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header with user info and notification
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 25,
+                      backgroundImage: AssetImage('assets/profile.jpg'),
                     ),
-                  ),
-                  SizedBox(width: width / 20),
-                  Expanded(
-                    child: RichText(
-                      text: TextSpan(
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          TextSpan(
-                            text: "Bienvenido de vuelta\n",
-                            style: TextStyle(
-                              fontWeight: FontWeight.w100, 
-                              fontSize: 12,
-                              color: Colors.white
-                            ),
+                          Text(
+                            'Nice to see you again,',
+                            style: TextStyle(color: Colors.white70, fontSize: 14),
                           ),
-                          TextSpan(
-                            text: "Agustin Caraballo",
+                          Text(
+                            'John Marcus',
                             style: TextStyle(
-                              fontWeight: FontWeight.bold, 
-                              fontSize: 17,
-                              color: Colors.white
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ],
                       ),
                     ),
+                    IconButton(
+                      icon: Icon(Icons.notifications_outlined, color: Colors.white),
+                      onPressed: () {},
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+
+                // Today's routine card
+                Card(
+                  color: Colors.white.withOpacity(0.15),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Today's routine",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 20),
+                        Center(
+                          child: ElevatedButton(
+                            onPressed: () {},
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white.withOpacity(0.3),
+                              padding: EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                            ),
+                            child: Text('Start', style: TextStyle(color: Colors.white)),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  Icon(Icons.notifications,  color: Colors.white,),
-                  SizedBox(width: width / 20),
-                ],
-              ),
-            ),
-            SizedBox(height: heights/30,),
-            Container(
-              decoration: BoxDecoration(
-                color: const Color.fromARGB(228, 255, 255, 255),
-                border: Border.all(color: Colors.black),
-                borderRadius: BorderRadius.all(Radius.circular(10)),
-                boxShadow: [
-                    BoxShadow(
-                      color: const Color.fromARGB(255, 0, 0, 0).withOpacity(0.5),
-                      spreadRadius: 1,
-                      blurRadius: 5,
-                      offset: Offset(0, 3),
-                    )
-                  ],
-              ),                 
-              width: width,
-              height: heights / 10,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text("Porcentaje de rutina")
-                ],
-              ),
-            ),
-            SizedBox(height: heights/25,),
-            Text("Dia de ...", style: TextStyle(color: Colors.white),textAlign: TextAlign.start,),
-            Container(
-              decoration: BoxDecoration(
-                color: const Color.fromARGB(228, 255, 255, 255),
-                border: Border.all(color: Colors.black),
-                borderRadius: BorderRadius.all(Radius.circular(10)),
-                boxShadow: [
-                    BoxShadow(
-                      color: const Color.fromARGB(255, 0, 0, 0).withOpacity(0.5),
-                      spreadRadius: 1,
-                      blurRadius: 5,
-                      offset: Offset(0, 3),
-                    )
-                  ],
-              ),                 
-              width: width,
-              height: heights / 5,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
+                ),
+                const SizedBox(height: 16),
 
-                ],
-              ),
-            ),
-            SizedBox(height: heights/25,),
-            Text("Resumen semanal", style: TextStyle(color: Colors.white),textAlign: TextAlign.start,),
-            Container(
-              decoration: BoxDecoration(
-                color: const Color.fromARGB(228, 255, 255, 255),
-                border: Border.all(color: Colors.black),
-                borderRadius: BorderRadius.all(Radius.circular(10)),
-                boxShadow: [
-                    BoxShadow(
-                      color: const Color.fromARGB(255, 0, 0, 0).withOpacity(0.5),
-                      spreadRadius: 1,
-                      blurRadius: 5,
-                      offset: Offset(0, 3),
-                    )
-                  ],
-              ),                 
-              width: width,
-              height: heights / 5,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
+                // My workouts button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {},
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFF6B4E71),
+                      padding: EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    child: Text('My workouts', style: TextStyle(color: Colors.white)),
+                  ),
+                ),
+                const SizedBox(height: 24),
 
-                ],
-              ),
+                // Weekly schedule section
+                Card(
+                  color: Colors.white.withOpacity(0.15),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Weekly schedule',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            for (var i = 0; i < 7; i++)
+                              Column(
+                                children: [
+                                  Text(
+                                    '${10 + i}',
+                                    style: TextStyle(color: Colors.white, fontSize: 16),
+                                  ),
+                                  Text(
+                                    ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i],
+                                    style: TextStyle(color: Colors.white70, fontSize: 12),
+                                  ),
+                                  if (i < 3)
+                                    Container(
+                                      margin: EdgeInsets.only(top: 4),
+                                      width: 8,
+                                      height: 8,
+                                      decoration: BoxDecoration(
+                                        color: Colors.green,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                          ],
+                        ),
+                        SizedBox(height: 20),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Progress of the week',
+                                  style: TextStyle(color: Colors.white70),
+                                ),
+                                Text(
+                                  'Just 1 workout more!',
+                                  style: TextStyle(color: Colors.white60, fontSize: 12),
+                                ),
+                              ],
+                            ),
+                            Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                CircularProgressIndicator(
+                                  value: 0.75,
+                                  backgroundColor: Colors.white24,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                                Text(
+                                  '3/4',
+                                  style: TextStyle(color: Colors.white, fontSize: 12),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Health Care section
+                Text(
+                  'Health Care',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Card(
+                  color: Colors.white.withOpacity(0.15),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Row(
+                      children: [
+                        Column(
+                          children: [
+                            Icon(Icons.fitness_center, color: Colors.white),
+                            Text(
+                              '450',
+                              style: TextStyle(color: Colors.white, fontSize: 24),
+                            ),
+                            Text(
+                              'kcal',
+                              style: TextStyle(color: Colors.white70),
+                            ),
+                          ],
+                        ),
+                        SizedBox(width: 24),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Sleep Time',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                              Text(
+                                'Goal is 8 hours',
+                                style: TextStyle(color: Colors.white70),
+                              ),
+                              SizedBox(height: 8),
+                              Stack(
+                                alignment: Alignment.centerRight,
+                                children: [
+                                  LinearProgressIndicator(
+                                    value: 0.75,
+                                    backgroundColor: Colors.white24,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(right: 8.0),
+                                    child: Text(
+                                      '7:30 h',
+                                      style: TextStyle(color: Colors.white, fontSize: 12),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
-    ));
+    );
   }
 }
