@@ -47,7 +47,7 @@ class _SignupScreenState extends State<SignupScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                 Text('Registrarse', 
+                 Text('Sign Up', 
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 37.5,
@@ -68,7 +68,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       decoration: InputDecoration(
                         contentPadding: EdgeInsets.all(12.5),
                         labelStyle: TextStyle(fontSize: 15 , color: Color.fromARGB(255, 150, 150, 150,)),
-                        labelText: "Correo electrónico",
+                        labelText: "Email",
                         filled: true,
                         floatingLabelBehavior: FloatingLabelBehavior.never,
                         fillColor: Color.fromARGB(255, 222, 222, 222),
@@ -91,7 +91,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       decoration: InputDecoration(
                         contentPadding: EdgeInsets.all(12.5),
                         labelStyle: TextStyle(fontSize: 15 , color: Color.fromARGB(255, 150, 150, 150,)),
-                        labelText: "Contraseña",
+                        labelText: "Password",
                         floatingLabelBehavior: FloatingLabelBehavior.never,
                         filled: true,
                         fillColor: Color.fromARGB(255, 222, 222, 222),
@@ -115,7 +115,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       decoration: InputDecoration(
                         contentPadding: EdgeInsets.all(12.5),
                         labelStyle: TextStyle(fontSize: 15 , color: Color.fromARGB(255, 150, 150, 150,)),
-                        labelText: "Vuelve a escribir la contraseña",
+                        labelText: "Repeat your password",
                         floatingLabelBehavior: FloatingLabelBehavior.never,
                         filled: true,
                         fillColor: Color.fromARGB(255, 222, 222, 222),
@@ -141,7 +141,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 Expanded(child: Divider(thickness: 0.8,)),
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 10.0),
-                  child: Text('O', style: TextStyle(color: Colors.white, fontSize: 15)),
+                  child: Text('OR SIGN UP USING USING', style: TextStyle(color: Colors.white, fontSize: 15)),
                 ),
                 Expanded(child: Divider(thickness: 0.8,))
               ],
@@ -270,11 +270,11 @@ class _SignupScreenState extends State<SignupScreen> {
 
                     if (email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Por favor, rellena todos los campos"))
+                        const SnackBar(content: Text("Please fill in all the fields"))
                     );
                     } else if (password != confirmPassword){
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Las contraseñas no coinciden"))
+                        const SnackBar(content: Text("The passwords do not match."))
                       );
                     } else {
                       Navigator.pushReplacement(
@@ -300,12 +300,12 @@ class _SignupScreenState extends State<SignupScreen> {
                     width: 260,
                     height: 40,
                     alignment: Alignment.center,
-                    child: Text("Registrarse", style: TextStyle(fontSize: 16,color: Color.fromARGB(200, 255, 255, 255)),)
+                    child: Text("Sign Up", style: TextStyle(fontSize: 16,color: Color.fromARGB(200, 255, 255, 255)),)
                   ),
                 ),
             ),
             // Apartado de iniciar sesion
-            Text('¿Ya tienes cuenta?', 
+            Text('Already have an account?', 
               style: TextStyle(
                 color:  Color.fromARGB(255, 156, 156, 156),
                 fontSize: 14 
@@ -314,7 +314,7 @@ class _SignupScreenState extends State<SignupScreen> {
             InkWell(
               child: 
                 Text(
-                  'Inicia sesión',
+                  'Login',
                   style: TextStyle(color: Colors.white),
                 ),
               onTap: () {

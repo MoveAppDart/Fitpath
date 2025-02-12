@@ -47,10 +47,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
               // Texto de inicio de sesion
               Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   Text(
-                    'Inicia sesión',
+                    'Login',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 37.5,
@@ -78,7 +78,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             fontSize: 15,
                             color: Color.fromARGB(255, 150, 150, 150),
                           ),
-                          labelText: "Correo electrónico",
+                          labelText: "Email",
                           filled: true,
                           floatingLabelBehavior: FloatingLabelBehavior.never,
                           fillColor: Color.fromARGB(255, 222, 222, 222),
@@ -109,7 +109,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             fontSize: 15,
                             color: Color.fromARGB(255, 150, 150, 150),
                           ),
-                          labelText: "Contraseña",
+                          labelText: "Password",
                           floatingLabelBehavior: FloatingLabelBehavior.never,
                           filled: true,
                           fillColor: Color.fromARGB(255, 222, 222, 222),
@@ -136,7 +136,7 @@ class _LoginScreenState extends State<LoginScreen> {
               // "Boton" de cambio de contraseña
               InkWell(
                 child: Text(
-                  '¿Has olvidado tu contraseña?',
+                  'Forgot your password?',
                   style: TextStyle(color: Colors.white),
                 ),
                 onTap: () {
@@ -172,7 +172,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 10.0),
                     child: Text(
-                      'O',
+                      'OR',
                       style: TextStyle(color: Colors.white, fontSize: 15),
                     ),
                   ),
@@ -297,11 +297,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     if (email.isEmpty || password.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Por favor, rellena todos los campos")),
+                        const SnackBar(content: Text("Please fill in all the fields")),
                       );
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Has iniciado sesión con éxito")),
+                        const SnackBar(content: Text("Login succesfull")),
                       );
                       Navigator.push(
                         context,
@@ -315,7 +315,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     height: 40,
                     alignment: Alignment.center,
                     child: const Text(
-                      "Iniciar sesión",
+                      "Login",
                       style: TextStyle(
                         fontSize: 16,
                         color: Colors.white,
@@ -328,12 +328,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
               // Apartado de crear cuenta
               Text(
-                '¿No tienes cuenta?',
+                'Don''t have an account?',
                 style: TextStyle(color: Color.fromARGB(255, 156, 156, 156), fontSize: 14),
               ),
               InkWell(
                 child: Text(
-                  'Crea una',
+                  'Create it',
                   style: TextStyle(color: Colors.white),
                 ),
                 onTap: () {
