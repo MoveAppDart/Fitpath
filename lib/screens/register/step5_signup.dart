@@ -1,7 +1,5 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:gymbro/screens/register/step1_signup.dart';
 import 'package:gymbro/screens/register/step4_signup.dart';
 import 'package:gymbro/screens/register/step6_signup.dart';
 
