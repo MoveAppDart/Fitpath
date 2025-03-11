@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'signup_screen.dart';
 import 'bottom_navbar.dart';
-import 'dart:ui';
+import 'package:google_fonts/google_fonts.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -11,353 +11,324 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  bool rememberMe = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    dynamic size, heights, width;
-    size = MediaQuery.of(context).size;
-    heights = size.height;
-    width = size.width;
-
+    // Get screen size for responsive calculations
+    final Size screenSize = MediaQuery.of(context).size;
+    final bool isTablet = screenSize.width > 600;
+    final bool isDesktop = screenSize.width > 1200;
+    
+    // Calcul dels valors responsive
+    final double titleFontSize = isDesktop ? 90 : (isTablet ? 72 : 60); // Larger base values
+    final double horizontalPadding = isDesktop ? 80 : (isTablet ? 40 : 16);
+    final double verticalSpacing = isDesktop ? 50 : (isTablet ? 40 : 30);
+    
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color.fromARGB(255, 0, 93, 200),
-              Color.fromARGB(255, 1, 69, 148),
-              Color.fromARGB(255, 1, 51, 109),
-              Color.fromARGB(255, 2, 45, 96),
-            ],
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color.fromARGB(255, 0, 93, 200),
+                  Color.fromARGB(255, 1, 69, 148),
+                  Color.fromARGB(255, 1, 51, 109),
+                  Color.fromARGB(255, 2, 45, 96),
+                ],
+              ),
+            ),
+            child: SafeArea(
+              child: Center(
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: horizontalPadding,
+                      vertical: 16.0,
+                    ),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: isDesktop ? 600 : double.infinity,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(height: 40),
+                          
+                          // Title
+                          Center(
+                            child: Text(
+                              'FitPath',
+                              style: GoogleFonts.genos(
+                                fontSize: titleFontSize,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 40),
+                          
+                          // Login Text
+                          Row(
+                            children: [
+                              Text(
+                                'Login',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: isDesktop ? 42 : (isTablet ? 38 : 34),
+                                  letterSpacing: 1,
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 20),
+
+                          // Email field
+                          _buildTextField(
+                            controller: _emailController,
+                            hintText: 'example@example.com',
+                          ),
+                          const SizedBox(height: 40),
+
+                          // Password field
+                          _buildTextField(
+                            controller: _passwordController,
+                            hintText: 'Password',
+                            isPassword: true,
+                          ),
+                          SizedBox(height: 40),
+
+                          // Login button
+                          _buildLoginButton(context),
+                          const SizedBox(height: 40),
+
+                          // OR divider
+                          _buildOrDivider(),
+                          SizedBox(height: 40),
+
+                          // Social login buttons
+                          _buildSocialLoginButtons(isTablet),
+                          SizedBox(height: 40),
+
+                          // Sign up link
+                          _buildSignUpLink(context),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // Reusable text field widget
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String hintText,
+    bool isPassword = false,
+  }) {
+    return TextField(
+      controller: controller,
+      obscureText: isPassword,
+      decoration: InputDecoration(
+        contentPadding: const EdgeInsets.all(12.5),
+        hintText: hintText,
+        filled: true,
+        fillColor: const Color.fromARGB(148, 224, 224, 224),
+        enabledBorder: OutlineInputBorder(
+          borderSide: const BorderSide(
+            color: Color.fromARGB(170, 255, 255, 255),
+          ),
+          borderRadius: BorderRadius.circular(15),
+        ),
+      ),
+    );
+  }
+
+  // Login button widget
+  Widget _buildLoginButton(BuildContext context) {
+    return Center(
+      child: ElevatedButton(
+        onPressed: () {
+          if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Please enter both email and password'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          } else {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const BottomNavbar()),
+            );
+          }
+        },
+        style: ElevatedButton.styleFrom(
+          foregroundColor: Colors.white,
+          backgroundColor: const Color.fromARGB(148, 0, 0, 0),
+          minimumSize: const Size(260, 50),
+        ),
+        child: const Text(
+          'Login',
+          style: TextStyle(fontSize: 16),
+        ),
+      ),
+    );
+  }
+
+  // OR divider widget
+  Widget _buildOrDivider() {
+    return const Row(
+      children: [
+        Expanded(
+          child: Divider(
+            color: Colors.white,
+            thickness: 1,
           ),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Imagen del logo superior
-              Image(image: AssetImage('assets/Gymbro.png'), height: heights / 4),
-
-              // Texto de inicio de sesion
-              Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  Text(
-                    'Login',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 37.5,
-                      letterSpacing: 1,
-                    ),
-                  ),
-                ],
-              ),
-
-              // Formulario
-              Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    SizedBox(height: heights / 80),
-
-                    // Textfield de correo electronico
-                    Container(
-                      child: TextField(
-                        keyboardType: TextInputType.emailAddress,
-                        controller: _emailController,
-                        decoration: InputDecoration(
-                          contentPadding: EdgeInsets.all(13.5),
-                          labelStyle: TextStyle(
-                            fontSize: 15,
-                            color: Color.fromARGB(255, 150, 150, 150),
-                          ),
-                          labelText: "Email",
-                          filled: true,
-                          floatingLabelBehavior: FloatingLabelBehavior.never,
-                          fillColor: Color.fromARGB(255, 222, 222, 222),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15),
-                            borderSide: BorderSide(width: 0),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(
-                              color: Color.fromARGB(255, 0, 85, 77),
-                              width: 1.5,
-                            ),
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    SizedBox(height: heights / 45),
-
-                    // Textfield de contraseña
-                    Container(
-                      child: TextField(
-                        controller: _passwordController,
-                        decoration: InputDecoration(
-                          contentPadding: EdgeInsets.all(12.5),
-                          labelStyle: TextStyle(
-                            fontSize: 15,
-                            color: Color.fromARGB(255, 150, 150, 150),
-                          ),
-                          labelText: "Password",
-                          floatingLabelBehavior: FloatingLabelBehavior.never,
-                          filled: true,
-                          fillColor: Color.fromARGB(255, 222, 222, 222),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15),
-                            borderSide: BorderSide(width: 0),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(
-                              color: Color.fromARGB(255, 0, 85, 77),
-                            ),
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                        ),
-                        obscureText: true,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              SizedBox(height: heights / 150),
-
-              // "Boton" de cambio de contraseña
-              InkWell(
-                child: Text(
-                  'Forgot your password?',
-                  style: TextStyle(color: Colors.white),
-                ),
-                onTap: () {
-                  Navigator.pushReplacement(
-                    context,
-                    PageRouteBuilder(
-                      transitionDuration: Duration(milliseconds: 600),
-                      pageBuilder: (context, animation, secondaryAnimation) => LoginScreen(),
-                      transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                        const begin = Offset(-1.0, 0.0); // Desde la izquierda
-                        const end = Offset.zero;
-                        const curve = Curves.ease;
-
-                        var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-                        var offsetAnimation = animation.drive(tween);
-
-                        return SlideTransition(
-                          position: offsetAnimation,
-                          child: child,
-                        );
-                      },
-                    ),
-                  );
-                },
-              ),
-
-              SizedBox(height: heights / 80),
-
-              // Espaciado y linea separadora
-              Row(
-                children: [
-                  Expanded(child: Divider(thickness: 0.8)),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 10.0),
-                    child: Text(
-                      'OR',
-                      style: TextStyle(color: Colors.white, fontSize: 15),
-                    ),
-                  ),
-                  Expanded(child: Divider(thickness: 0.8)),
-                ],
-              ),
-
-              SizedBox(height: heights / 80),
-
-              // Botones de login con redes sociales
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  InkWell(
-                    child: Container(
-                      margin: const EdgeInsets.all(6),
-                      padding: const EdgeInsets.all(5.5),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                        color: Colors.white,
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color.fromARGB(255, 0, 0, 0).withOpacity(0.5),
-                            spreadRadius: 1,
-                            blurRadius: 5,
-                            offset: Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: Image(image: AssetImage('assets/google_logo.png'), height: 25),
-                    ),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => LoginScreen()),
-                      );
-                    },
-                  ),
-                  InkWell(
-                    child: Container(
-                      margin: const EdgeInsets.all(6),
-                      padding: const EdgeInsets.all(5.5),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                        color: Colors.white,
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color.fromARGB(255, 0, 0, 0).withOpacity(0.5),
-                            spreadRadius: 1,
-                            blurRadius: 5,
-                            offset: Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: Image(image: AssetImage('assets/facebook_logo.png'), height: 25),
-                    ),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => LoginScreen()),
-                      );
-                    },
-                  ),
-                  InkWell(
-                    child: Container(
-                      margin: const EdgeInsets.all(6),
-                      padding: const EdgeInsets.all(5.5),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                        color: Colors.white,
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color.fromARGB(255, 0, 0, 0).withOpacity(0.5),
-                            spreadRadius: 1,
-                            blurRadius: 5,
-                            offset: Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: Image(image: AssetImage('assets/microsoft_logo.png'), height: 25),
-                    ),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => LoginScreen()),
-                      );
-                    },
-                  ),
-                ],
-              ),
-
-              SizedBox(height: heights / 7),
-
-              // Boton de inicio de sesion
-              Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    stops: [0.78, 0.81, 0.84, 0.88, 1.0],
-                    colors: [
-                      Color(0xFF152CAF), // 78%
-                      Color(0xFF142BAC), // 81%
-                      Color(0xFF142AA9), // 84%
-                      Color(0xFF142AA6), // 88%
-                      Color(0xFF122699), // 100%
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black38,
-                      blurRadius: 4,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: InkWell(
-                  onTap: () {
-                    String email = _emailController.text;
-                    String password = _passwordController.text;
-
-                    if (email.isEmpty || password.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Please fill in all the fields")),
-                      );
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Login succesfull")),
-                      );
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => BottomNavbar()),
-                      );
-                    }
-                  },
-                  borderRadius: BorderRadius.circular(20), // Agrega un efecto visual al pulsar
-                  child: Container(
-                    width: 260,
-                    height: 40,
-                    alignment: Alignment.center,
-                    child: const Text(
-                      "Login",
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
-
-              // Apartado de crear cuenta
-              Text(
-                'Don''t have an account?',
-                style: TextStyle(color: Color.fromARGB(255, 156, 156, 156), fontSize: 14),
-              ),
-              InkWell(
-                child: Text(
-                  'Create it',
-                  style: TextStyle(color: Colors.white),
-                ),
-                onTap: () {
-                  // Animacion de cambio de pantalla
-                  Navigator.pushReplacement(
-                    context,
-                    PageRouteBuilder(
-                      transitionDuration: Duration(milliseconds: 600),
-                      pageBuilder: (context, animation, secondaryAnimation) => SignupScreen(),
-                      transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                        return FadeTransition(
-                          opacity: animation,
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: animation.value * 5, sigmaY: animation.value * 5),
-                            child: child,
-                          ),
-                        );
-                      },
-                    ),
-                  );
-                },
-              ),
-            ],
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 10.0),
+          child: Text('OR', style: TextStyle(color: Colors.white)),
+        ),
+        Expanded(
+          child: Divider(
+            color: Colors.white,
+            thickness: 1,
           ),
+        ),
+      ],
+    );
+  }
+
+  // Social login buttons widget
+  Widget _buildSocialLoginButtons(bool isTablet) {
+    // For tablet and above, show buttons side by side
+    if (isTablet) {
+      return Row(
+        children: [
+          Expanded(child: _buildGoogleButton()),
+          const SizedBox(width: 70),
+          Expanded(child: _buildAppleButton()),
+        ],
+      );
+    }
+    
+    // For mobile, stack buttons vertically
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _buildGoogleButton(),
+        const SizedBox(height: 40),
+        _buildAppleButton(),
+      ],
+    );
+  }
+
+  // Google login button
+  Widget _buildGoogleButton() {
+    return Center(
+      child: OutlinedButton.icon(
+        onPressed: () {},
+        icon: Image.asset(
+          'assets/google_logo.png',
+          width: 18,
+          height: 18,
+          errorBuilder: (context, error, stackTrace) =>
+              const Icon(Icons.error, color: Colors.red),
+        ),
+        label: const Text(
+          'Continue with Google',
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+        ),
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.all(22),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30),
+          ),
+          side: const BorderSide(color: Colors.black12), // Fixed opacity
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+        ),
+      ),
+    );
+  }
+
+  // Apple login button
+  Widget _buildAppleButton() {
+    return Center(
+      child: OutlinedButton.icon(
+        onPressed: () {},
+        icon: Image.asset(
+          'assets/apple_logo.png',
+          width: 19,
+          height: 19,
+          errorBuilder: (context, error, stackTrace) =>
+              const Icon(Icons.error, color: Colors.red),
+        ),
+        label: const Text(
+          'Continue with Apple',
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+        ),
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.all(22),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30),
+          ),
+          side: const BorderSide(color: Colors.black12), // Fixed opacity
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+        ),
+      ),
+    );
+  }
+
+  // Sign up link widget
+  Widget _buildSignUpLink(BuildContext context) {
+    return Center(
+      child: TextButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            PageRouteBuilder(
+              pageBuilder: (context, animation, secondaryAnimation) =>
+                  const SignupScreen(),
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) {
+                const begin = Offset(1.0, 0.0);
+                const end = Offset.zero;
+                const curve = Curves.ease;
+
+                var tween = Tween(begin: begin, end: end)
+                    .chain(CurveTween(curve: curve));
+
+                return SlideTransition(
+                  position: animation.drive(tween),
+                  child: child,
+                );
+              },
+            ),
+          );
+        },
+        child: const Text(
+          'Don\'t Have An Account? Sign Up Here!',
+          style: TextStyle(color: Colors.white),
         ),
       ),
     );
