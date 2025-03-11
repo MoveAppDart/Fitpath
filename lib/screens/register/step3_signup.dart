@@ -1,7 +1,6 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/physics.dart';
 import 'package:gymbro/screens/register/step2_signup.dart'; // Asegúrate de que esta importación sea correcta
 import 'package:gymbro/screens/register/step4_signup.dart';
 import 'package:gymbro/screens/utils/weightSlider.dart';
@@ -14,7 +13,17 @@ class ThirdStepSignup extends StatefulWidget {
 }
 
 class _ThirdStepSignupState extends State<ThirdStepSignup> {
-  double selectedWeight = 75; // Peso seleccionado inicialmente
+  double selectedWeight = 75; // Initial weight
+  bool isKG = true; // New variable to track the unit
+
+  // New method to convert weight for display
+  String getDisplayWeight() {
+    if (isKG) {
+      return "${selectedWeight.toStringAsFixed(1)} Kgs";
+    } else {
+      return "${(selectedWeight * 2.20462).toStringAsFixed(1)} Lbs";
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -83,9 +92,63 @@ class _ThirdStepSignupState extends State<ThirdStepSignup> {
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: heights / 20),
-              // Mostrar el peso seleccionado
+              // Add the KG/LB selector
+              Container(
+                width: 120,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => setState(() => isKG = true),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: isKG ? Colors.white : Colors.transparent,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Center(
+                            child: Text(
+                              'KG',
+                              style: TextStyle(
+                                color: isKG ? Colors.blue : Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => setState(() => isKG = false),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: !isKG ? Colors.white : Colors.transparent,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Center(
+                            child: Text(
+                              'LB',
+                              style: TextStyle(
+                                color: !isKG ? Colors.blue : Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: heights / 40),
+              // Update the weight display text to use the new method
               Text(
-                "${selectedWeight.toStringAsFixed(1)} Kgs", // Mostrar el peso con un decimal
+                getDisplayWeight(),
                 style: TextStyle(
                   fontSize: 24,
                   color: Colors.white,
@@ -95,11 +158,11 @@ class _ThirdStepSignupState extends State<ThirdStepSignup> {
               SizedBox(height: 20),
               // Contenedor del slider de peso
               Container(
-                height: 118, // Altura total ajustada del selector
-                width: 300, // Ancho del selector
+                height: 118,
+                width: 300,
                 decoration: BoxDecoration(
-                  color: Color.fromARGB(229, 255, 255, 255), // Fondo blanco translúcido
-                  borderRadius: BorderRadius.circular(30), // Bordes redondeados
+                  color: Color.fromARGB(229, 255, 255, 255),
+                  borderRadius: BorderRadius.circular(30),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black26,
@@ -109,10 +172,15 @@ class _ThirdStepSignupState extends State<ThirdStepSignup> {
                   ],
                 ),
                 child: WeightSlider(
-                  initialValue: selectedWeight,
+                  initialValue: isKG ? selectedWeight : (selectedWeight * 2.20462),
+                  isKG: isKG,
                   onChanged: (value) {
                     setState(() {
-                      selectedWeight = value; // Actualizar el peso seleccionado
+                      if (isKG) {
+                        selectedWeight = value;
+                      } else {
+                        selectedWeight = value / 2.20462; // Convert LBS to KG for storage
+                      }
                     });
                   },
                 ),

@@ -6,10 +6,12 @@ const greenColor = Color(0xff90D855);
 class WeightSlider extends StatefulWidget {
   final double initialValue;
   final ValueChanged<double> onChanged;
+  final bool isKG;
 
   const WeightSlider({
     required this.initialValue,
     required this.onChanged,
+    this.isKG = true,
     super.key,
   });
 
@@ -21,24 +23,53 @@ class _WeightSliderState extends State<WeightSlider> {
   PageController? numbersController;
   final itemsExtension = 1000;
   late double value;
+  bool isUpdating = false;
+
+  void _initializeController(double viewportFraction) {
+    numbersController?.removeListener(_updateValue);
+    numbersController?.dispose();
+    numbersController = PageController(
+      initialPage: itemsExtension + value.toInt(),
+      viewportFraction: viewportFraction,
+    );
+    numbersController?.addListener(_updateValue);
+  }
 
   @override
   void initState() {
-    value = widget.initialValue;
     super.initState();
+    value = widget.initialValue;
+    numbersController = PageController(
+      initialPage: itemsExtension + value.toInt(),
+      viewportFraction: 0.2,
+    );
+    numbersController?.addListener(_updateValue);
+  }
+
+  @override
+  void didUpdateWidget(WeightSlider oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.isKG != widget.isKG || oldWidget.initialValue != widget.initialValue) {
+      value = widget.initialValue;
+      isUpdating = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        numbersController?.jumpToPage(itemsExtension + value.toInt());
+        isUpdating = false;
+      });
+    }
   }
 
   void _updateValue() {
-    final double newValue = ((((numbersController?.page ?? 0) - itemsExtension) * 10)
-                .roundToDouble() /
-            10)
-        .clamp(0, 250);
+    if (isUpdating) return;
+    
+    final page = numbersController?.page ?? 0;
+    final newValue = (page - itemsExtension).clamp(0, widget.isKG ? 250 : 551);
 
-    if (newValue != value) {
+    if ((newValue - value).abs() > 0.01) {
       setState(() {
-        value = newValue; // Ahora newValue es double
+        value = newValue.toDouble();
       });
-      widget.onChanged(value); // Notificar al padre el nuevo valor
+      widget.onChanged(value);
     }
   }
 
@@ -59,11 +90,12 @@ class _WeightSliderState extends State<WeightSlider> {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final viewPortFraction = 1 / (constraints.maxWidth / 10);
-          numbersController = PageController(
-            initialPage: itemsExtension + widget.initialValue.toInt(),
-            viewportFraction: viewPortFraction * 10,
-          );
-          numbersController?.addListener(_updateValue);
+          
+          // Initialize controller with correct viewportFraction
+          if (numbersController == null) {
+            _initializeController(viewPortFraction * 10);
+          }
+          
           return Column(
             children: [
               const SizedBox(height: 10),
@@ -88,8 +120,8 @@ class _WeightSliderState extends State<WeightSlider> {
                 itemsExtension: itemsExtension,
                 controller: numbersController,
                 start: 0,
-                end: 250,
-                selectedValue: value, // Pasar el valor seleccionado
+                end: widget.isKG ? 250 : 551,
+                selectedValue: value,
               ),
             ],
           );
@@ -136,7 +168,7 @@ class _Numbers extends StatelessWidget {
   final int itemsExtension;
   final int start;
   final int end;
-  final double selectedValue; // Valor seleccionado en el slider
+  final double selectedValue;
 
   const _Numbers({
     required this.controller,
@@ -162,7 +194,7 @@ class _Numbers extends StatelessWidget {
           final index = rawIndex - itemsExtension;
           return _Item(
             index: index >= start && index <= end ? index : null,
-            selectedValue: selectedValue, // Pasar el valor seleccionado
+            selectedValue: selectedValue,
           );
         },
       ),
@@ -196,8 +228,8 @@ class _Item extends StatelessWidget {
 }
 
 class _Dividers extends StatelessWidget {
-  final int index; // Índice actual
-  final double selectedValue; // Valor seleccionado en el slider
+  final int index;
+  final double selectedValue;
 
   const _Dividers({
     required this.index,
@@ -207,20 +239,16 @@ class _Dividers extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 20, // Altura base del contenedor
+      height: 20,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: List.generate(10, (subIndex) {
-          // Determinar si esta línea es la seleccionada
           final isSelectedLine = (index + (subIndex - 5) / 10) == selectedValue;
-          // Determinar si es una línea de número entero
           final isIntegerLine = subIndex == 5;
 
-          // Grosor y altura de la línea
           final thickness = isSelectedLine ? 2.0 : 0.5;
           final lineHeight = (isSelectedLine || isIntegerLine) ? 30.0 : 10.0;
 
-          // Color de la línea
           final lineColor = isSelectedLine ? Colors.black : Colors.grey;
 
           return Expanded(
@@ -229,12 +257,12 @@ class _Dividers extends StatelessWidget {
                 Transform.translate(
                   offset: Offset(-thickness / 2, 0),
                   child: AnimatedContainer(
-                    duration: Duration(milliseconds: 200), // Duración de la animación
-                    height: lineHeight, // Altura de la línea
+                    duration: Duration(milliseconds: 200),
+                    height: lineHeight,
                     child: VerticalDivider(
                       thickness: thickness,
                       width: 1,
-                      color: lineColor, // Color de la línea
+                      color: lineColor,
                     ),
                   ),
                 ),

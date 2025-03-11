@@ -3,6 +3,23 @@ import 'package:flutter/material.dart';
 import 'package:gymbro/screens/bottom_navbar.dart';
 import 'package:gymbro/screens/register/step5_signup.dart';
 
+class RoundedBox extends StatelessWidget {
+  final double size;
+  RoundedBox({required this.size});
+  
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+      ),
+    );
+  }
+}
+
 class SixthStepSignup extends StatefulWidget {
   @override
   _SixthStepSignupState createState() => _SixthStepSignupState();
@@ -71,15 +88,16 @@ class _SixthStepSignupState extends State<SixthStepSignup> {
               
               SizedBox(height: size.height * 0.08),
               
-              // Contenedor de opciones
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20),
-                child: GridView.count(
-                  shrinkWrap: true,
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 20,
-                  mainAxisSpacing: 20,
-                  children: List.generate(4, (index) => RoundedBox()),
+              // Contenedor de opciones con posiciones diferentes
+              SizedBox(
+                height: size.height * 0.3, // Ajusta según lo necesario
+                child: Stack(
+                  children: [
+                    Positioned(top: 0, left: 40, child: RoundedBox(size: 80)),
+                    Positioned(top: 30, right: 60, child: RoundedBox(size: 80)),
+                    Positioned(bottom: 40, left: 70, child: RoundedBox(size: 80)),
+                    Positioned(bottom: 20, right: 40, child: RoundedBox(size: 80)),
+                  ],
                 ),
               ),
               
@@ -170,20 +188,6 @@ class _SixthStepSignupState extends State<SixthStepSignup> {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class RoundedBox extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 80,
-      height: 80,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
       ),
     );
   }
