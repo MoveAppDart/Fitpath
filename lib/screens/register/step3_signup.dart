@@ -1,9 +1,9 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:gymbro/screens/register/step2_signup.dart'; // Asegúrate de que esta importación sea correcta
-import 'package:gymbro/screens/register/step4_signup.dart';
-import 'package:gymbro/screens/utils/weightSlider.dart';
+import 'package:FitPath/screens/register/step2_signup.dart';
+import 'package:FitPath/screens/register/step4_signup.dart';
+import 'package:FitPath/screens/utils/weightSlider.dart';
 
 const greenColor = Color(0xff90D855);
 

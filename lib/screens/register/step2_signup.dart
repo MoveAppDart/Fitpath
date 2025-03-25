@@ -1,8 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:gymbro/screens/register/step1_signup.dart';
-import 'package:gymbro/screens/register/step3_signup.dart';
+import 'package:FitPath/screens/register/step1_signup.dart';
+import 'package:FitPath/screens/register/step3_signup.dart';
 
 class SecondStepSignup extends StatefulWidget {
   @override
@@ -213,25 +213,16 @@ class _SecondStepSignupState extends State<SecondStepSignup> {
                   children: [
                     TextButton(
                       onPressed: () {
+                        // For Previous button
                         Navigator.pushReplacement(
                           context,
-                          PageRouteBuilder(
-                            transitionDuration: Duration(milliseconds: 600),
-                            pageBuilder: (context, animation, secondaryAnimation) =>
-                                FirstStepSignup(),
-                            transitionsBuilder: (context, animation,
-                                secondaryAnimation, child) {
-                              return FadeTransition(
-                                opacity: animation,
-                                child: BackdropFilter(
-                                  filter: ImageFilter.blur(
-                                      sigmaX: animation.value * 5,
-                                      sigmaY: animation.value * 5),
-                                  child: child,
-                                ),
-                              );
-                            },
-                          ),
+                          MaterialPageRoute(builder: (context) => FirstStepSignup()),
+                        );
+                        
+                        // For Next button
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (context) => ThirdStepSignup()),
                         );
                       },
                       style: TextButton.styleFrom(

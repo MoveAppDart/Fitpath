@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:gymbro/screens/bottom_navbar.dart';
-import 'package:gymbro/screens/register/step5_signup.dart';
+import 'package:FitPath/screens/bottom_navbar.dart';
+import 'package:FitPath/screens/register/step5_signup.dart';
 
 class RoundedBox extends StatelessWidget {
   final double size;

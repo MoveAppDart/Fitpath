@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:gymbro/screens/calendar_screen.dart';
-import 'package:gymbro/screens/home_screen.dart';
-import 'package:gymbro/screens/profile_screen.dart';
-import 'package:gymbro/screens/workouts_screen.dart';
-import 'package:gymbro/screens/stats_screen.dart';
+import 'package:FitPath/screens/calendar_screen.dart';
+import 'package:FitPath/screens/home_screen.dart';
+import 'package:FitPath/screens/profile_screen.dart';
+import 'package:FitPath/screens/workouts_screen.dart';
+import 'package:FitPath/screens/stats_screen.dart';
 
 class BottomNavbar extends StatefulWidget {
   const BottomNavbar({super.key});

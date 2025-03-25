@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:gymbro/screens/register/step4_signup.dart';
-import 'package:gymbro/screens/register/step6_signup.dart';
+import 'package:FitPath/screens/register/step4_signup.dart';
+import 'package:FitPath/screens/register/step6_signup.dart';
 
 class FifthStepSignup extends StatefulWidget {
   @override

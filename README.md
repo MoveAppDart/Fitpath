@@ -1,4 +1,4 @@
-# gymbro
+# FitPath
 
 A new Flutter project.
 
