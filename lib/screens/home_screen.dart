@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'workout_detail_screen.dart';
+import 'package:intl/intl.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -10,6 +11,26 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  // Get current date and calculate the week range
+  final DateTime _now = DateTime.now();
+  late final DateTime _weekStart;
+  late final DateTime _weekEnd;
+  late final List<DateTime> _weekDays;
+
+  @override
+  void initState() {
+    super.initState();
+    // Calculate the start of the week (Monday)
+    _weekStart = _now.subtract(Duration(days: _now.weekday - 1));
+    // Calculate the end of the week (Sunday)
+    _weekEnd = _weekStart.add(const Duration(days: 6));
+    // Generate all days of the current week
+    _weekDays = List.generate(
+      7, 
+      (index) => _weekStart.add(Duration(days: index))
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // Get screen dimensions and determine device type
@@ -25,6 +46,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final double headerFontSize = isDesktop ? 22 : (isTablet ? 20 : 18);
     final double subHeaderFontSize = isDesktop ? 18 : (isTablet ? 16 : 14);
     final double routineTitleFontSize = isDesktop ? 24 : (isTablet ? 22 : 20);
+
+    // Format date range for weekly schedule
+    final String weekRangeText = '${DateFormat('MMMM d').format(_weekStart)}-${DateFormat('d').format(_weekEnd)}';
 
     return Scaffold(
       body: Container(
@@ -218,7 +242,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
-                                          'October 10-16',
+                                          weekRangeText, // Display actual date range
                                           style: TextStyle(
                                             color: Colors.white70,
                                             fontSize: subHeaderFontSize,
@@ -277,7 +301,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                 SizedBox(height: verticalSpacing),
 
                                 // Day cards
-                                // Use spaceEvenly so cards don't get too small.
                                 Row(
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceEvenly,
@@ -289,6 +312,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                     final double cardHeight = isDesktop
                                         ? 80
                                         : (isTablet ? 70 : 60);
+                                    
+                                    // Get the day for this card
+                                    final DateTime day = _weekDays[i];
+                                    final bool isToday = day.day == _now.day && 
+                                                        day.month == _now.month && 
+                                                        day.year == _now.year;
 
                                     return Container(
                                       width: cardWidth,
@@ -297,7 +326,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         horizontalPadding * 0.1,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: i == 3
+                                        color: isToday
                                             ? const Color(0xFF003366)
                                             : Colors.white.withOpacity(0.15),
                                         borderRadius:
@@ -307,7 +336,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         mainAxisAlignment: MainAxisAlignment.center,
                                         children: [
                                           Text(
-                                            '${10 + i}',
+                                            day.day.toString(), // Display actual day number
                                             style: TextStyle(
                                               color: Colors.white,
                                               fontSize: subHeaderFontSize,
@@ -315,15 +344,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                             ),
                                           ),
                                           Text(
-                                            [
-                                              'Mon',
-                                              'Tue',
-                                              'Wed',
-                                              'Thu',
-                                              'Fri',
-                                              'Sat',
-                                              'Sun'
-                                            ][i],
+                                            DateFormat('E').format(day), // Mon, Tue, etc.
                                             style: TextStyle(
                                               color: Colors.white70,
                                               fontSize:
