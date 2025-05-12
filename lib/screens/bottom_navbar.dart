@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:FitPath/screens/calendar_screen.dart';
-import 'package:FitPath/screens/home_screen.dart';
-import 'package:FitPath/screens/profile_screen.dart';
-import 'package:FitPath/screens/workouts_screen.dart';
-import 'package:FitPath/screens/stats_screen.dart';
+import 'calendar_screen.dart';
+import 'home_screen.dart';
+import 'profile_screen.dart';
+import 'workouts_screen.dart';
+import 'stats_screen.dart';
 
 class BottomNavbar extends StatefulWidget {
   const BottomNavbar({super.key});
@@ -16,11 +16,11 @@ class _BottomNavbarState extends State<BottomNavbar> {
   int selectedIndex = 1;
 
   final List<Map<String, dynamic>> buttons = [
-    {'icon': Icons.calendar_today, 'label': 'Calendario'},
-    {'icon': Icons.home_outlined, 'label': 'Inicio'},
-    {'icon': Icons.person, 'label': 'Perfil'},
-    {'icon': Icons.bar_chart, 'label': 'Estadisticas'},
-    {'icon': Icons.fitness_center, 'label': 'Rutina'},
+    {'icon': Icons.calendar_today, 'label': 'Calendar'},
+    {'icon': Icons.home_outlined, 'label': 'Home'},
+    {'icon': Icons.person, 'label': 'Profile'},
+    {'icon': Icons.bar_chart, 'label': 'Stats'},
+    {'icon': Icons.fitness_center, 'label': 'Routine'},
   ];
 
   final List<Widget> pages = [

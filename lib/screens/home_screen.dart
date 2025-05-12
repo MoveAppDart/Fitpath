@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'workout_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -26,11 +27,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final double routineTitleFontSize = isDesktop ? 24 : (isTablet ? 22 : 20);
 
     return Scaffold(
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          return Container(
+      body: Container(
             width: screenSize.width,
-            height: screenSize.height,
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
@@ -44,6 +42,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: SafeArea(
               child: Center(
                 child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
                   child: Padding(
                     padding: EdgeInsets.symmetric(
                       horizontal: horizontalPadding,
@@ -90,15 +89,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ],
                                 ),
                               ),
-                              IconButton(
-                                icon: Icon(
-                                  Icons.notifications_outlined,
-                                  color: Colors.white,
-                                  size:
-                                      isDesktop ? 35 : (isTablet ? 30 : 25),
-                                ),
-                                onPressed: () {},
-                              ),
+                              
                             ],
                           ),
                           SizedBox(height: verticalSpacing),
@@ -135,7 +126,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                                 SizedBox(height: verticalSpacing * 0.8),
                                 ElevatedButton(
-                                  onPressed: () {},
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => WorkoutDetailScreen(
+                                          workoutName: 'Strength Training',
+                                        ),
+                                      ),
+                                    );
+                                  },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor:
                                         Colors.white.withOpacity(0.2),
@@ -286,9 +286,13 @@ class _HomeScreenState extends State<HomeScreen> {
                                     final double cardWidth = isDesktop
                                         ? 60
                                         : (isTablet ? 55 : 50);
+                                    final double cardHeight = isDesktop
+                                        ? 80
+                                        : (isTablet ? 70 : 60);
 
                                     return Container(
                                       width: cardWidth,
+                                      height: cardHeight,
                                       padding: EdgeInsets.all(
                                         horizontalPadding * 0.1,
                                       ),
@@ -300,6 +304,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                             BorderRadius.circular(8),
                                       ),
                                       child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
                                         children: [
                                           Text(
                                             '${10 + i}',
@@ -325,17 +330,18 @@ class _HomeScreenState extends State<HomeScreen> {
                                                   subHeaderFontSize * 0.8,
                                             ),
                                           ),
-                                          if (i < 3)
-                                            Container(
-                                              margin:
-                                                  const EdgeInsets.only(top: 4),
-                                              width: 6,
-                                              height: 6,
-                                              decoration: const BoxDecoration(
-                                                color: Color(0xFF7BA69A),
-                                                shape: BoxShape.circle,
-                                              ),
+                                          SizedBox(height: 4),
+                                          // Always show a container, but make it transparent for days without activity
+                                          Container(
+                                            width: 6,
+                                            height: 6,
+                                            decoration: BoxDecoration(
+                                              color: i < 3 
+                                                  ? const Color(0xFF7BA69A)
+                                                  : Colors.transparent,
+                                              shape: BoxShape.circle,
                                             ),
+                                          ),
                                         ],
                                       ),
                                     );
@@ -518,16 +524,14 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                           SizedBox(height: verticalSpacing),
-                        ],
-                      ),
-                    ),
-                  ),
+                  ],
                 ),
               ),
             ),
-          );
-        },
+          ),
       ),
-    );
+    ),
+  )
+  );
   }
 }

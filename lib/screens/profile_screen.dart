@@ -24,137 +24,77 @@ class _ProfileScreenState extends State<ProfileScreen> {
             colors: [
               Color.fromARGB(255, 0, 93, 200),
               Color.fromARGB(255, 1, 69, 148),
-              Color.fromARGB(255, 1, 51, 109),
-              Color.fromARGB(255, 2, 45, 96),
             ],
           ),
         ),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Center(
-          child: Column(
-            children: [
-              SizedBox(height: heights / 20),
-              CircleAvatar(
-                radius: 100, 
-                backgroundColor: Colors.grey[300],
-                child: Icon(
-                  Icons.person, 
-                  size: 150,
-                  color: Colors.grey[500],
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              children: [
+                // Profile Section
+                CircleAvatar(
+                  radius: 50,
+                  backgroundImage: AssetImage('assets/profile.jpg'),
                 ),
-              ),
-              SizedBox(height: heights / 70),
-              Text("Agustin Caraballo", style: TextStyle(fontSize: 20, color: Colors.white),),
-              SizedBox(height: heights / 50),
-              Row(
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      color: const Color.fromARGB(228, 255, 255, 255),
-                      border: Border.all(color: Colors.black),
-                      borderRadius: BorderRadius.all(Radius.circular(10)),
-                      boxShadow: [
-                          BoxShadow(
-                            color: const Color.fromARGB(255, 0, 0, 0).withOpacity(0.5),
-                            spreadRadius: 1,
-                            blurRadius: 5,
-                            offset: Offset(0, 3),
-                          )
-                       ],
-                    ),                 
-                    width: width/2.3,
-                    height: heights / 10,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-
-                      ],
-                    ),
+                SizedBox(height: 16),
+                Text(
+                  'John Marcus',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
                   ),
-                  SizedBox(width: width/30,),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: const Color.fromARGB(228, 255, 255, 255),
-                      border: Border.all(color: Colors.black),
-                      borderRadius: BorderRadius.all(Radius.circular(10)),
-                      boxShadow: [
-                          BoxShadow(
-                            color: const Color.fromARGB(255, 0, 0, 0).withOpacity(0.5),
-                            spreadRadius: 1,
-                            blurRadius: 5,
-                            offset: Offset(0, 3),
-                          )
-                       ],
-                    ),                 
-                    width: width/2.3,
-                    height: heights / 10,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-
-                      ],
-                    ),
+                ),
+                Text(
+                  'john.marcus@example.com',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 16,
                   ),
-                ],
-              ),
-              SizedBox(height: heights/30,),
-              Row(
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      color: const Color.fromARGB(228, 255, 255, 255),
-                      border: Border.all(color: Colors.black),
-                      borderRadius: BorderRadius.all(Radius.circular(10)),
-                      boxShadow: [
-                          BoxShadow(
-                            color: const Color.fromARGB(255, 0, 0, 0).withOpacity(0.5),
-                            spreadRadius: 1,
-                            blurRadius: 5,
-                            offset: Offset(0, 3),
-                          )
-                       ],
-                    ),                 
-                    width: width/2.3,
-                    height: heights / 10,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
+                ),
+                SizedBox(height: 40),
 
-                      ],
-                    ),
-                  ),
-                  SizedBox(width: width/30,),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: const Color.fromARGB(228, 255, 255, 255),
-                      border: Border.all(color: Colors.black),
-                      borderRadius: BorderRadius.all(Radius.circular(10)),
-                      boxShadow: [
-                          BoxShadow(
-                            color: const Color.fromARGB(255, 0, 0, 0).withOpacity(0.5),
-                            spreadRadius: 1,
-                            blurRadius: 5,
-                            offset: Offset(0, 3),
-                          )
-                       ],
-                    ),                 
-                    width: width/2.3,
-                    height: heights / 10,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-
-                      ],
-                    ),
-                  ),
-                ],
-              )
-            ],
+                // Menu Items
+                ListTile(
+                  leading: Icon(Icons.person, color: Colors.white),
+                  title: Text('Profile', style: TextStyle(color: Colors.white)),
+                  trailing: Icon(Icons.arrow_forward_ios, color: Colors.white),
+                  onTap: () {},
+                ),
+                Divider(color: Colors.white24),
+                ListTile(
+                  leading: Icon(Icons.language, color: Colors.white),
+                  title: Text('Language', style: TextStyle(color: Colors.white)),
+                  trailing: Icon(Icons.arrow_forward_ios, color: Colors.white),
+                  onTap: () {},
+                ),
+                Divider(color: Colors.white24),
+                ListTile(
+                  leading: Icon(Icons.integration_instructions, color: Colors.white),
+                  title: Text('Integrations', style: TextStyle(color: Colors.white)),
+                  trailing: Icon(Icons.arrow_forward_ios, color: Colors.white),
+                  onTap: () {},
+                ),
+                Divider(color: Colors.white24),
+                ListTile(
+                  leading: Icon(Icons.settings, color: Colors.white),
+                  title: Text('Settings', style: TextStyle(color: Colors.white)),
+                  trailing: Icon(Icons.arrow_forward_ios, color: Colors.white),
+                  onTap: () {},
+                ),
+                Divider(color: Colors.white24),
+                ListTile(
+                  leading: Icon(Icons.logout, color: Colors.white),
+                  title: Text('Log Out', style: TextStyle(color: Colors.white)),
+                  trailing: Icon(Icons.arrow_forward_ios, color: Colors.white),
+                  onTap: () {},
+                ),
+              ],
+            ),
           ),
         ),
-      
       ),
-    ));
+    );
   }
 }
