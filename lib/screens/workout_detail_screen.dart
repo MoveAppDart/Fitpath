@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'exercise_execution_screen.dart';
+import '../services/data_service.dart';
 
 class WorkoutDetailScreen extends StatefulWidget {
   final String workoutName;

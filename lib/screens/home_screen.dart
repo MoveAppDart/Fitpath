@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'workout_detail_screen.dart';
 import 'package:intl/intl.dart';
+import '../services/data_service.dart'; // Add this import
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -16,6 +17,13 @@ class _HomeScreenState extends State<HomeScreen> {
   late final DateTime _weekStart;
   late final DateTime _weekEnd;
   late final List<DateTime> _weekDays;
+  
+  // Add these variables for data
+  late final Map<String, dynamic> _userData;
+  late final List<Map<String, dynamic>> _upcomingWorkouts;
+  late final List<Map<String, dynamic>> _recentWorkouts;
+  late final Map<DateTime, List<String>> _workoutHistory;
+  late final Map<String, dynamic> _nutritionData;
 
   @override
   void initState() {
@@ -29,6 +37,13 @@ class _HomeScreenState extends State<HomeScreen> {
       7, 
       (index) => _weekStart.add(Duration(days: index))
     );
+    
+    // Load data from DataService
+    _userData = DataService.getUserProfile();
+    _upcomingWorkouts = DataService.getUpcomingWorkouts();
+    _recentWorkouts = DataService.getRecentWorkouts();
+    _workoutHistory = DataService.getWorkoutHistory();
+    _nutritionData = DataService.getNutritionData();
   }
 
   @override
@@ -49,6 +64,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
     // Format date range for weekly schedule
     final String weekRangeText = '${DateFormat('MMMM d').format(_weekStart)}-${DateFormat('d').format(_weekEnd)}';
+
+    // Get today's workout if available
+    final todaysWorkout = _upcomingWorkouts.firstWhere(
+      (workout) => workout['date'] == 'Today',
+      orElse: () => {'name': 'Rest Day', 'time': 'No workout scheduled', 'duration': '0 min'},
+    );
+
+    // Calculate completed workouts for the week
+    final int completedWorkouts = _weekDays
+        .where((day) => _workoutHistory.containsKey(DateTime(day.year, day.month, day.day)))
+        .length;
+    final int totalPlannedWorkouts = 4; // Example target
+    final double progressValue = completedWorkouts / totalPlannedWorkouts;
 
     return Scaffold(
       body: Container(
@@ -87,8 +115,12 @@ class _HomeScreenState extends State<HomeScreen> {
                             children: [
                               CircleAvatar(
                                 radius: isDesktop ? 35 : (isTablet ? 30 : 25),
-                                backgroundImage:
-                                    const AssetImage('assets/profile.jpg'),
+                                backgroundColor: Colors.white24,
+                                child: Icon(
+                                  Icons.person,
+                                  size: isDesktop ? 40 : (isTablet ? 35 : 30),
+                                  color: Colors.white,
+                                ),
                               ),
                               SizedBox(width: horizontalPadding * 0.2),
                               Expanded(
@@ -103,7 +135,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       ),
                                     ),
                                     Text(
-                                      'John Marcus',
+                                      _userData['name'],
                                       style: TextStyle(
                                         color: Colors.white,
                                         fontSize: headerFontSize,
@@ -147,6 +179,28 @@ class _HomeScreenState extends State<HomeScreen> {
                                     color: Colors.white.withOpacity(0.15),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
+                                  padding: EdgeInsets.all(horizontalPadding * 0.3),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        todaysWorkout['name'],
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: headerFontSize,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      SizedBox(height: 8),
+                                      Text(
+                                        '${todaysWorkout['time']} • ${todaysWorkout['duration']}',
+                                        style: TextStyle(
+                                          color: Colors.white70,
+                                          fontSize: subHeaderFontSize,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                                 SizedBox(height: verticalSpacing * 0.8),
                                 ElevatedButton(
@@ -155,7 +209,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) => WorkoutDetailScreen(
-                                          workoutName: 'Strength Training',
+                                          workoutName: todaysWorkout['name'],
                                         ),
                                       ),
                                     );
@@ -253,7 +307,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     Row(
                                       children: [
                                         Text(
-                                          'Just 1 workout more !',
+                                          'Just ${totalPlannedWorkouts - completedWorkouts} workout more!',
                                           style: TextStyle(
                                             color: Colors.white70,
                                             fontSize: subHeaderFontSize * 0.8,
@@ -272,7 +326,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                             alignment: Alignment.center,
                                             children: [
                                               CircularProgressIndicator(
-                                                value: 0.75,
+                                                value: progressValue,
                                                 backgroundColor:
                                                     Colors.white24,
                                                 valueColor:
@@ -283,7 +337,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                 strokeWidth: 4,
                                               ),
                                               Text(
-                                                '3/4',
+                                                '$completedWorkouts/$totalPlannedWorkouts',
                                                 style: TextStyle(
                                                   color: Colors.white,
                                                   fontSize:
@@ -318,6 +372,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                     final bool isToday = day.day == _now.day && 
                                                         day.month == _now.month && 
                                                         day.year == _now.year;
+                                    
+                                    // Check if there's a workout for this day
+                                    final bool hasWorkout = _workoutHistory.containsKey(
+                                      DateTime(day.year, day.month, day.day)
+                                    );
 
                                     return Container(
                                       width: cardWidth,
@@ -352,12 +411,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                             ),
                                           ),
                                           SizedBox(height: 4),
-                                          // Always show a container, but make it transparent for days without activity
+                                          // Show indicator for days with workouts
                                           Container(
                                             width: 6,
                                             height: 6,
                                             decoration: BoxDecoration(
-                                              color: i < 3 
+                                              color: hasWorkout 
                                                   ? const Color(0xFF7BA69A)
                                                   : Colors.transparent,
                                               shape: BoxShape.circle,
@@ -428,7 +487,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                           ),
                                           SizedBox(height: verticalSpacing * 0.2),
                                           Text(
-                                            '450',
+                                            _nutritionData['calories']['burned'].toString(),
                                             style: TextStyle(
                                               color: Colors.white,
                                               fontSize: headerFontSize,

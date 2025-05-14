@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'screens/login_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'screens/login_screen.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() {
   runApp(const MyApp());
@@ -9,16 +10,31 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'FitPath App',
-      home: LoginScreen(),
+      title: 'FitPath',
+      debugShowCheckedModeBanner: false, 
       theme: ThemeData(
-        fontFamily: GoogleFonts.istokWeb().fontFamily
+        textTheme: GoogleFonts.istokWebTextTheme(),
+        primaryColor: const Color(0xFF005DC8),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF005DC8),
+          primary: const Color(0xFF005DC8),
+          secondary: const Color(0xFF004AAE),
+        ),
       ),
+      supportedLocales: const [
+        Locale('en', ''),
+        Locale('es', ''),
+        Locale('fr', ''),
+      ],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      home: const LoginScreen(),
     );
   }
 }

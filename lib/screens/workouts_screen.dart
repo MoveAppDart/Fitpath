@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'workout_detail_screen.dart';
 import 'create_plan_screen.dart';
+import '../services/data_service.dart'; // Add this import
 
 class WorkoutsScreen extends StatefulWidget {
   const WorkoutsScreen({super.key});
@@ -11,112 +12,151 @@ class WorkoutsScreen extends StatefulWidget {
 }
 
 class _WorkoutsScreenState extends State<WorkoutsScreen> {
+  late List<Map<String, dynamic>> _workoutCollections;
+  
+  @override
+  void initState() {
+    super.initState();
+    _workoutCollections = DataService.getWorkoutCollections();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF005DC8),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header with profile picture
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundImage: AssetImage('assets/profile.jpg'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              
-              // Your Collections Title
-              Text(
-                "Your's Collections",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Routines Section
-              Column(
-                children: [
-                  _buildRoutineButton(
-                    'Warm-Up & Stretching Routines',
-                    onTap: () {},
-                  ),
-                  const SizedBox(height: 12),
-                  _buildRoutineButton(
-                    'Strength Training',
-                    onTap: () {},
-                  ),
-                  const SizedBox(height: 20),
-                  _buildNewRoutineButton(),
-                ],
-              ),
-              const SizedBox(height: 40),
-
-              // Programs Section
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Programms',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.add_circle_outline, color: Colors.white),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const CreatePlanScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              
-              // Programs Carousel
-              Expanded(
-                child: Column(
+          padding: const EdgeInsets.all(32.0),
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(), // Ensure scrolling is always enabled
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header with profile picture
+                Row(
                   children: [
-                    SizedBox(
-                      height: 180,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: 3,
-                        itemBuilder: (context, index) {
-                          return _buildProgramCard();
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    SizedBox(
-                      height: 180,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: 3,
-                        itemBuilder: (context, index) {
-                          return _buildProgramCard();
-                        },
+                    CircleAvatar(
+                      radius: 20,
+                      backgroundColor: Colors.white24,
+                      child: Icon(
+                        Icons.person,
+                        size: 24,
+                        color: Colors.white,
                       ),
                     ),
                   ],
                 ),
-              ),
-            ],
+                const SizedBox(height: 30), // Increased spacing
+                
+                // Your Collections Title
+                Text(
+                  "Your's Collections",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 30), // Increased spacing
+                
+                // Routines Section - Using data from DataService
+                Column(
+                  children: [
+                    ..._workoutCollections.map((workout) => 
+                      Column(
+                        children: [
+                          _buildRoutineButton(
+                            workout['name'],
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => WorkoutDetailScreen(
+                                    workoutName: workout['name'],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+                      ),
+                    ).toList(),
+                    _buildNewRoutineButton(),
+                  ],
+                ),
+                const SizedBox(height: 40),
+
+                // Programs Section
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Programms',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.add_circle_outline, color: Colors.white),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const CreatePlanScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                
+                // Programs Carousel - Using workout collections for variety
+                SizedBox(  // Removed Expanded and replaced with SizedBox
+                  height: 380,  // Fixed height for both carousels
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        height: 180,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: _workoutCollections.length,
+                          itemBuilder: (context, index) {
+                            return _buildProgramCard(
+                              title: _workoutCollections[index]['name'],
+                              duration: '${index + 4} weeks',
+                              level: index % 2 == 0 ? 'Intermediate' : 'Advanced',
+                              color: _workoutCollections[index]['color'],
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      SizedBox(
+                        height: 180,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: _workoutCollections.length,
+                          itemBuilder: (context, index) {
+                            final reversedIndex = _workoutCollections.length - 1 - index;
+                            return _buildProgramCard(
+                              title: '${_workoutCollections[reversedIndex]['name']} Pro',
+                              duration: '${reversedIndex + 6} weeks',
+                              level: reversedIndex % 2 == 0 ? 'Beginner' : 'Expert',
+                              color: _workoutCollections[reversedIndex]['color'],
+                            );
+                          },
+                        ),
+                      ),
+                      
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -134,24 +174,26 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => WorkoutDetailScreen(
-                  workoutName: title,
-                ),
-              ),
-            );
-          },
+          onTap: onTap,
           borderRadius: BorderRadius.circular(12),
-          child: Center(
-            child: Text(
-              title,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-              ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.white,
+                  size: 16,
+                ),
+              ],
             ),
           ),
         ),
@@ -194,12 +236,17 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
     );
   }
 
-  Widget _buildProgramCard() {
+  Widget _buildProgramCard({
+    required String title,
+    required String duration,
+    required String level,
+    Color? color,
+  }) {
     return Container(
       width: 160,
       margin: const EdgeInsets.only(right: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A4B94),
+        color: color ?? const Color(0xFF1A4B94),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Padding(
@@ -208,7 +255,7 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Burning\nAbs',
+              title,
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 20,
@@ -217,7 +264,7 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
             ),
             const Spacer(),
             Text(
-              '6 weeks',
+              duration,
               style: TextStyle(
                 color: Colors.white70,
                 fontSize: 14,
@@ -225,7 +272,7 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
             ),
             const SizedBox(height: 4),
             Text(
-              'Intermediate',
+              level,
               style: TextStyle(
                 color: Colors.white70,
                 fontSize: 14,
