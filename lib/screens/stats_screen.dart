@@ -12,23 +12,41 @@ class StatsScreen extends StatefulWidget {
 
 class _StatsScreenState extends State<StatsScreen> {
   int selectedDays = 15; // Default value
-  
+
   // Maps to store different stats for different time periods
   final Map<int, Map<String, String>> exerciseStats = {
     7: {
-      'Biceps1': '8%', 'Biceps2': '7%', 'Triceps1': '9%', 'Biceps3': '6%',
-      'Triceps2': '5%', 'Biceps4': '8%', 'Triceps3': '7%', 'Biceps5': '5%',
+      'Biceps1': '8%',
+      'Biceps2': '7%',
+      'Triceps1': '9%',
+      'Biceps3': '6%',
+      'Triceps2': '5%',
+      'Biceps4': '8%',
+      'Triceps3': '7%',
+      'Biceps5': '5%',
     },
     15: {
-      'Biceps1': '10%', 'Biceps2': '10%', 'Triceps1': '10%', 'Biceps3': '10%',
-      'Triceps2': '10%', 'Biceps4': '10%', 'Triceps3': '10%', 'Biceps5': '10%',
+      'Biceps1': '10%',
+      'Biceps2': '10%',
+      'Triceps1': '10%',
+      'Biceps3': '10%',
+      'Triceps2': '10%',
+      'Biceps4': '10%',
+      'Triceps3': '10%',
+      'Biceps5': '10%',
     },
     21: {
-      'Biceps1': '15%', 'Biceps2': '12%', 'Triceps1': '14%', 'Biceps3': '13%',
-      'Triceps2': '16%', 'Biceps4': '15%', 'Triceps3': '14%', 'Biceps5': '17%',
+      'Biceps1': '15%',
+      'Biceps2': '12%',
+      'Triceps1': '14%',
+      'Biceps3': '13%',
+      'Triceps2': '16%',
+      'Biceps4': '15%',
+      'Triceps3': '14%',
+      'Biceps5': '17%',
     },
   };
-  
+
   final Map<int, Map<String, String>> regionStats = {
     7: {'Arms': '30%', 'Back': '25%', 'Chest': '35%', 'Legs': '10%'},
     15: {'Arms': '40%', 'Back': '35%', 'Chest': '25%', 'Legs': '10%'},
@@ -68,9 +86,9 @@ class _StatsScreenState extends State<StatsScreen> {
                     ),
                   ],
                 ),
-                
+
                 SizedBox(height: height * 0.02),
-                
+
                 // Day selector
                 Container(
                   decoration: BoxDecoration(
@@ -96,9 +114,11 @@ class _StatsScreenState extends State<StatsScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Image.asset('body_front.png', height: height * 0.2, color: Colors.black38),
+                      Image.asset('body_front.png',
+                          height: height * 0.2, color: Colors.black38),
                       SizedBox(width: 20),
-                      Image.asset('body_back.png', height: height * 0.2, color: Colors.black38),
+                      Image.asset('body_back.png',
+                          height: height * 0.2, color: Colors.black38),
                     ],
                   ),
                 ),
@@ -113,14 +133,11 @@ class _StatsScreenState extends State<StatsScreen> {
                     children: [
                       Padding(
                         padding: const EdgeInsets.all(12.0),
-                        child: Text(
-                          'Done exercises',
-                          style: TextStyle(
-                            fontSize: 16, 
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black
-                          )
-                        ),
+                        child: Text('Done exercises',
+                            style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black)),
                       ),
                       Expanded(
                         child: Padding(
@@ -129,21 +146,37 @@ class _StatsScreenState extends State<StatsScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  _buildExerciseStats('Biceps1', exerciseStats[selectedDays]!['Biceps1']!),
-                                  _buildExerciseStats('Biceps2', exerciseStats[selectedDays]!['Biceps2']!),
-                                  _buildExerciseStats('Triceps1', exerciseStats[selectedDays]!['Triceps1']!),
-                                  _buildExerciseStats('Biceps3', exerciseStats[selectedDays]!['Biceps3']!),
+                                  _buildExerciseStats('Biceps1',
+                                      exerciseStats[selectedDays]!['Biceps1']!),
+                                  _buildExerciseStats('Biceps2',
+                                      exerciseStats[selectedDays]!['Biceps2']!),
+                                  _buildExerciseStats(
+                                      'Triceps1',
+                                      exerciseStats[selectedDays]![
+                                          'Triceps1']!),
+                                  _buildExerciseStats('Biceps3',
+                                      exerciseStats[selectedDays]!['Biceps3']!),
                                 ],
                               ),
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  _buildExerciseStats('Triceps2', exerciseStats[selectedDays]!['Triceps2']!),
-                                  _buildExerciseStats('Biceps4', exerciseStats[selectedDays]!['Biceps4']!),
-                                  _buildExerciseStats('Triceps3', exerciseStats[selectedDays]!['Triceps3']!),
-                                  _buildExerciseStats('Biceps5', exerciseStats[selectedDays]!['Biceps5']!),
+                                  _buildExerciseStats(
+                                      'Triceps2',
+                                      exerciseStats[selectedDays]![
+                                          'Triceps2']!),
+                                  _buildExerciseStats('Biceps4',
+                                      exerciseStats[selectedDays]!['Biceps4']!),
+                                  _buildExerciseStats(
+                                      'Triceps3',
+                                      exerciseStats[selectedDays]![
+                                          'Triceps3']!),
+                                  _buildExerciseStats('Biceps5',
+                                      exerciseStats[selectedDays]!['Biceps5']!),
                                 ],
                               ),
                             ],
@@ -168,41 +201,43 @@ class _StatsScreenState extends State<StatsScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                'Trained regions',
-                                style: TextStyle(
-                                  fontSize: 16, 
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black
-                                )
-                              ),
+                              Text('Trained regions',
+                                  style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black)),
                               SizedBox(height: 10),
-                              _buildLegendItem('Arms', Colors.blue, regionStats[selectedDays]!['Arms']!),
-                                              _buildLegendItem('Back', Colors.green, regionStats[selectedDays]!['Back']!),
-                                              _buildLegendItem('Chest', Colors.purple, regionStats[selectedDays]!['Chest']!),
-                                              _buildLegendItem('Legs', Colors.teal, regionStats[selectedDays]!['Legs']!),
+                              _buildLegendItem('Arms', Colors.blue,
+                                  regionStats[selectedDays]!['Arms']!),
+                              _buildLegendItem('Back', Colors.green,
+                                  regionStats[selectedDays]!['Back']!),
+                              _buildLegendItem('Chest', Colors.purple,
+                                  regionStats[selectedDays]!['Chest']!),
+                              _buildLegendItem('Legs', Colors.teal,
+                                  regionStats[selectedDays]!['Legs']!),
                             ],
                           ),
                         ),
                       ),
                       Expanded(
                         flex: 2,
-                        child: Container(
+                        child: SizedBox(
                           width: 100,
                           height: 100,
                           child: CustomPaint(
-                            painter: PieChartPainter(selectedDays: selectedDays),
+                            painter:
+                                PieChartPainter(selectedDays: selectedDays),
                           ),
                         ),
                       ),
                     ],
                   ),
                 ),
-                
+
                 Spacer(),
-                
+
                 // Bottom navigation
-                Container(
+                SizedBox(
                   height: 60,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -284,20 +319,9 @@ class _StatsScreenState extends State<StatsScreen> {
   Widget _buildExerciseStats(String name, String percentage) {
     return Column(
       children: [
-        Text(
-          name, 
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.white
-          )
-        ),
-        Text(
-          percentage, 
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.white
-          )
-        ),
+        Text(name, style: TextStyle(fontSize: 12, color: Colors.white)),
+        Text(percentage,
+            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
       ],
     );
   }
@@ -318,7 +342,9 @@ class _StatsScreenState extends State<StatsScreen> {
           SizedBox(width: 8),
           Text(text, style: TextStyle(color: Colors.white)),
           SizedBox(width: 8),
-          Text(percentage, style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          Text(percentage,
+              style:
+                  TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -327,55 +353,54 @@ class _StatsScreenState extends State<StatsScreen> {
 
 class PieChartPainter extends CustomPainter {
   final int selectedDays;
-  
+
   PieChartPainter({required this.selectedDays});
-  
+
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2;
-    
-    final paint = Paint()
-      ..style = PaintingStyle.fill;
+
+    final paint = Paint()..style = PaintingStyle.fill;
 
     // Draw pie chart sections
     double startAngle = 0;
-    
+
     // Get percentages based on selected days
-    double armsPercentage = double.parse(selectedDays == 7 ? '0.30' : 
-                                        (selectedDays == 15 ? '0.40' : '0.45'));
-    double backPercentage = double.parse(selectedDays == 7 ? '0.25' : 
-                                        (selectedDays == 15 ? '0.35' : '0.30'));
-    double chestPercentage = double.parse(selectedDays == 7 ? '0.35' : 
-                                         (selectedDays == 15 ? '0.25' : '0.15'));
+    double armsPercentage = double.parse(
+        selectedDays == 7 ? '0.30' : (selectedDays == 15 ? '0.40' : '0.45'));
+    double backPercentage = double.parse(
+        selectedDays == 7 ? '0.25' : (selectedDays == 15 ? '0.35' : '0.30'));
+    double chestPercentage = double.parse(
+        selectedDays == 7 ? '0.35' : (selectedDays == 15 ? '0.25' : '0.15'));
     double legsPercentage = 0.10; // Constant for all periods
-    
+
     // Arms
     paint.color = Colors.blue;
-    canvas.drawArc(Rect.fromCircle(center: center, radius: radius),
-        startAngle, 2 * math.pi * armsPercentage, true, paint);
-    
+    canvas.drawArc(Rect.fromCircle(center: center, radius: radius), startAngle,
+        2 * math.pi * armsPercentage, true, paint);
+
     startAngle += 2 * math.pi * armsPercentage;
-    
+
     // Back
     paint.color = Colors.green;
-    canvas.drawArc(Rect.fromCircle(center: center, radius: radius),
-        startAngle, 2 * math.pi * backPercentage, true, paint);
-    
+    canvas.drawArc(Rect.fromCircle(center: center, radius: radius), startAngle,
+        2 * math.pi * backPercentage, true, paint);
+
     startAngle += 2 * math.pi * backPercentage;
-    
+
     // Chest
     paint.color = Colors.purple;
-    canvas.drawArc(Rect.fromCircle(center: center, radius: radius),
-        startAngle, 2 * math.pi * chestPercentage, true, paint);
-        
+    canvas.drawArc(Rect.fromCircle(center: center, radius: radius), startAngle,
+        2 * math.pi * chestPercentage, true, paint);
+
     startAngle += 2 * math.pi * chestPercentage;
-    
+
     // Legs
     paint.color = Colors.teal;
-    canvas.drawArc(Rect.fromCircle(center: center, radius: radius),
-        startAngle, 2 * math.pi * legsPercentage, true, paint);
-        
+    canvas.drawArc(Rect.fromCircle(center: center, radius: radius), startAngle,
+        2 * math.pi * legsPercentage, true, paint);
+
     // Draw white circle in center for donut effect
     paint.color = Colors.white.withOpacity(0.2);
     canvas.drawCircle(center, radius * 0.5, paint);

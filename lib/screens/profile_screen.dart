@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
 import 'login_screen.dart';
 import 'profile_settings_screen.dart';
 import 'app_settings_screen.dart';
-import '../services/localization_service.dart';
-import '../services/data_service.dart';  // Add this import
+import '../services/data_service.dart'; // Add this import
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -14,7 +12,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  String _selectedLanguage = 'English';  // Add this variable declaration
+  String _selectedLanguage = 'English'; // Add this variable declaration
 
   // Move dialog methods here, outside build()
   void _showLanguageDialog(BuildContext context) {
@@ -32,7 +30,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Text(
-                  'Select Language',  // Use a simple string instead of LocalizationService
+                  'Select Language', // Use a simple string instead of LocalizationService
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 20,
@@ -40,11 +38,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                _buildLanguageOption(context, 'English', _selectedLanguage == 'English'),  // Updated
+                _buildLanguageOption(context, 'English',
+                    _selectedLanguage == 'English'), // Updated
                 const Divider(color: Colors.white24),
-                _buildLanguageOption(context, 'Spanish', _selectedLanguage == 'Spanish'),  // Updated
+                _buildLanguageOption(context, 'Spanish',
+                    _selectedLanguage == 'Spanish'), // Updated
                 const Divider(color: Colors.white24),
-                _buildLanguageOption(context, 'French', _selectedLanguage == 'French'),  // Updated
+                _buildLanguageOption(context, 'French',
+                    _selectedLanguage == 'French'), // Updated
               ],
             ),
           ),
@@ -53,18 +54,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildLanguageOption(BuildContext context, String language, bool isSelected) {
+  Widget _buildLanguageOption(
+      BuildContext context, String language, bool isSelected) {
     return ListTile(
       title: Text(
         language,
         style: const TextStyle(color: Colors.white),
       ),
-      trailing: _selectedLanguage == language  // Modified this line
+      trailing: _selectedLanguage == language // Modified this line
           ? const Icon(Icons.check, color: Colors.white)
           : null,
       onTap: () {
         setState(() {
-          _selectedLanguage = language;  // Add this line
+          _selectedLanguage = language; // Add this line
         });
         Navigator.pop(context);
         // You can add your localization logic here
@@ -76,7 +78,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     // Get user data from DataService
     final userData = DataService.getUserProfile();
-    
+
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -121,43 +123,55 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 SizedBox(height: 40),
-                
+
                 // Menu Items
                 ListTile(
                   leading: Icon(Icons.person, color: Colors.white),
-                  title: const Text('Profile', style: TextStyle(color: Colors.white)),
+                  title: const Text('Profile',
+                      style: TextStyle(color: Colors.white)),
                   trailing: Icon(Icons.arrow_forward_ios, color: Colors.white),
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ProfileSettingsScreen())),
+                  onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => ProfileSettingsScreen())),
                 ),
                 Divider(color: Colors.white24),
                 // Add this method to _ProfileScreenState class
                 ListTile(
                   leading: const Icon(Icons.language, color: Colors.white),
-                  title: const Text('Language', style: TextStyle(color: Colors.white)),
-                  trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white),
-                  onTap: () => _showLanguageDialog(context),  // Add this
+                  title: const Text('Language',
+                      style: TextStyle(color: Colors.white)),
+                  trailing:
+                      const Icon(Icons.arrow_forward_ios, color: Colors.white),
+                  onTap: () => _showLanguageDialog(context), // Add this
                 ),
                 Divider(color: Colors.white24),
                 ListTile(
-                  leading: Icon(Icons.integration_instructions, color: Colors.white),
-                  title: Text('Integrations', style: TextStyle(color: Colors.white)),
+                  leading:
+                      Icon(Icons.integration_instructions, color: Colors.white),
+                  title: Text('Integrations',
+                      style: TextStyle(color: Colors.white)),
                   trailing: Icon(Icons.arrow_forward_ios, color: Colors.white),
-                  onTap: () {
-                  },
+                  onTap: () {},
                 ),
                 Divider(color: Colors.white24),
                 ListTile(
                   leading: Icon(Icons.settings, color: Colors.white),
-                  title: Text('Settings', style: TextStyle(color: Colors.white)),
+                  title:
+                      Text('Settings', style: TextStyle(color: Colors.white)),
                   trailing: Icon(Icons.arrow_forward_ios, color: Colors.white),
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => AppSettingsScreen())),
+                  onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => AppSettingsScreen())),
                 ),
                 Divider(color: Colors.white24),
                 ListTile(
                   leading: Icon(Icons.logout, color: Colors.white),
                   title: Text('Log Out', style: TextStyle(color: Colors.white)),
                   trailing: Icon(Icons.arrow_forward_ios, color: Colors.white),
-                  onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LoginScreen())),
+                  onTap: () => Navigator.pushReplacement(context,
+                      MaterialPageRoute(builder: (context) => LoginScreen())),
                 ),
               ],
             ),

@@ -5,13 +5,16 @@ import 'package:FitPath/screens/register/step1_signup.dart';
 import 'package:FitPath/screens/register/step3_signup.dart';
 
 class SecondStepSignup extends StatefulWidget {
+  const SecondStepSignup({super.key});
+
   @override
   _SecondStepSignupState createState() => _SecondStepSignupState();
 }
 
 class _SecondStepSignupState extends State<SecondStepSignup> {
   final ScrollController _scrollController = ScrollController();
-  final List<int> ages = List.generate(87, (index) => 14 + index); // Edades de 18 a 100
+  final List<int> ages =
+      List.generate(87, (index) => 14 + index); // Edades de 18 a 100
   int selectedAge = 18; // Edad seleccionada inicialmente
 
   @override
@@ -27,9 +30,11 @@ class _SecondStepSignupState extends State<SecondStepSignup> {
 
   void _onScroll() {
     // Calcular la edad seleccionada basada en la posición del scroll
-    double centerOffset = _scrollController.offset + 75; // Ajusta según el tamaño del ítem
+    double centerOffset =
+        _scrollController.offset + 75; // Ajusta según el tamaño del ítem
     int index = (centerOffset / 50).round(); // Ajusta según el tamaño del ítem
-    index = index.clamp(0, ages.length - 1); // Asegurar que el índice esté dentro del rango
+    index = index.clamp(
+        0, ages.length - 1); // Asegurar que el índice esté dentro del rango
 
     setState(() {
       selectedAge = ages[index];
@@ -45,7 +50,8 @@ class _SecondStepSignupState extends State<SecondStepSignup> {
     if (index != -1) {
       // Calcular la posición del scroll para que la edad esté en el centro
       double offset = index * 51.0 - 75.0; // Ajusta según el tamaño del ítem
-      _scrollController.jumpTo(offset); // Usar jumpTo para un ajuste instantáneo
+      _scrollController
+          .jumpTo(offset); // Usar jumpTo para un ajuste instantáneo
     }
   }
 
@@ -128,7 +134,8 @@ class _SecondStepSignupState extends State<SecondStepSignup> {
                 height: 277, // Altura total ajustada del selector
                 width: 116, // Ancho del selector
                 decoration: BoxDecoration(
-                  color: Color.fromARGB(229, 255, 255, 255), // Fondo blanco translúcido
+                  color: Color.fromARGB(
+                      229, 255, 255, 255), // Fondo blanco translúcido
                   borderRadius: BorderRadius.circular(30), // Bordes redondeados
                   boxShadow: [
                     BoxShadow(
@@ -171,7 +178,8 @@ class _SecondStepSignupState extends State<SecondStepSignup> {
                       children: List.generate(ages.length, (index) {
                         final currentIndex = index;
                         final selectedIndex = ages.indexOf(selectedAge);
-                        final distanceFromCenter = (currentIndex - selectedIndex).abs();
+                        final distanceFromCenter =
+                            (currentIndex - selectedIndex).abs();
 
                         // Calcular el tamaño de fuente en función de la distancia
                         double fontSize;
@@ -182,7 +190,8 @@ class _SecondStepSignupState extends State<SecondStepSignup> {
                         } else if (distanceFromCenter == 2) {
                           fontSize = 15; // Dos posiciones arriba/abajo
                         } else {
-                          fontSize = 12; // Valores más lejanos visibles pero pequeños
+                          fontSize =
+                              12; // Valores más lejanos visibles pero pequeños
                         }
 
                         return Center(
@@ -192,9 +201,11 @@ class _SecondStepSignupState extends State<SecondStepSignup> {
                               fontSize: fontSize,
                               color: distanceFromCenter == 0
                                   ? Colors.black // Elemento central en negro
-                                  : Color.fromARGB(255, 158, 158, 158), // Elementos secundarios en gris
+                                  : Color.fromARGB(255, 158, 158,
+                                      158), // Elementos secundarios en gris
                               fontWeight: distanceFromCenter == 0
-                                  ? FontWeight.bold // Elemento central en negrita
+                                  ? FontWeight
+                                      .bold // Elemento central en negrita
                                   : FontWeight.normal,
                             ),
                           ),
@@ -207,7 +218,8 @@ class _SecondStepSignupState extends State<SecondStepSignup> {
               Expanded(child: Container()),
               // Buttons
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -216,18 +228,20 @@ class _SecondStepSignupState extends State<SecondStepSignup> {
                         // For Previous button
                         Navigator.pushReplacement(
                           context,
-                          MaterialPageRoute(builder: (context) => FirstStepSignup()),
+                          MaterialPageRoute(
+                              builder: (context) => FirstStepSignup()),
                         );
-                        
+
                         // For Next button
                         Navigator.pushReplacement(
                           context,
-                          MaterialPageRoute(builder: (context) => ThirdStepSignup()),
+                          MaterialPageRoute(
+                              builder: (context) => ThirdStepSignup()),
                         );
                       },
                       style: TextButton.styleFrom(
-                        padding: EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 20),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
                         ),
@@ -245,7 +259,8 @@ class _SecondStepSignupState extends State<SecondStepSignup> {
                           Text(
                             "Previous",
                             style: TextStyle(
-                                color: const Color.fromARGB(255, 255, 255, 255)),
+                                color:
+                                    const Color.fromARGB(255, 255, 255, 255)),
                           ),
                         ],
                       ),
@@ -256,8 +271,9 @@ class _SecondStepSignupState extends State<SecondStepSignup> {
                           context,
                           PageRouteBuilder(
                             transitionDuration: Duration(milliseconds: 600),
-                            pageBuilder: (context, animation, secondaryAnimation) =>
-                                ThirdStepSignup(),
+                            pageBuilder:
+                                (context, animation, secondaryAnimation) =>
+                                    ThirdStepSignup(),
                             transitionsBuilder: (context, animation,
                                 secondaryAnimation, child) {
                               return FadeTransition(

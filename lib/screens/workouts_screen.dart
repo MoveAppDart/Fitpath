@@ -13,7 +13,7 @@ class WorkoutsScreen extends StatefulWidget {
 
 class _WorkoutsScreenState extends State<WorkoutsScreen> {
   late List<Map<String, dynamic>> _workoutCollections;
-  
+
   @override
   void initState() {
     super.initState();
@@ -28,7 +28,8 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
         child: Padding(
           padding: const EdgeInsets.all(32.0),
           child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(), // Ensure scrolling is always enabled
+            physics:
+                const AlwaysScrollableScrollPhysics(), // Ensure scrolling is always enabled
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -47,7 +48,7 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                   ],
                 ),
                 const SizedBox(height: 30), // Increased spacing
-                
+
                 // Your Collections Title
                 Text(
                   "Your's Collections",
@@ -58,12 +59,12 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                   ),
                 ),
                 const SizedBox(height: 30), // Increased spacing
-                
+
                 // Routines Section - Using data from DataService
                 Column(
                   children: [
-                    ..._workoutCollections.map((workout) => 
-                      Column(
+                    ..._workoutCollections.map(
+                      (workout) => Column(
                         children: [
                           _buildRoutineButton(
                             workout['name'],
@@ -81,7 +82,7 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                           const SizedBox(height: 12),
                         ],
                       ),
-                    ).toList(),
+                    ),
                     _buildNewRoutineButton(),
                   ],
                 ),
@@ -100,7 +101,8 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.add_circle_outline, color: Colors.white),
+                      icon: const Icon(Icons.add_circle_outline,
+                          color: Colors.white),
                       onPressed: () {
                         Navigator.push(
                           context,
@@ -113,10 +115,11 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                   ],
                 ),
                 const SizedBox(height: 20),
-                
+
                 // Programs Carousel - Using workout collections for variety
-                SizedBox(  // Removed Expanded and replaced with SizedBox
-                  height: 380,  // Fixed height for both carousels
+                SizedBox(
+                  // Removed Expanded and replaced with SizedBox
+                  height: 380, // Fixed height for both carousels
                   child: Column(
                     children: [
                       SizedBox(
@@ -128,7 +131,8 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                             return _buildProgramCard(
                               title: _workoutCollections[index]['name'],
                               duration: '${index + 4} weeks',
-                              level: index % 2 == 0 ? 'Intermediate' : 'Advanced',
+                              level:
+                                  index % 2 == 0 ? 'Intermediate' : 'Advanced',
                               color: _workoutCollections[index]['color'],
                             );
                           },
@@ -141,17 +145,21 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                           scrollDirection: Axis.horizontal,
                           itemCount: _workoutCollections.length,
                           itemBuilder: (context, index) {
-                            final reversedIndex = _workoutCollections.length - 1 - index;
+                            final reversedIndex =
+                                _workoutCollections.length - 1 - index;
                             return _buildProgramCard(
-                              title: '${_workoutCollections[reversedIndex]['name']} Pro',
+                              title:
+                                  '${_workoutCollections[reversedIndex]['name']} Pro',
                               duration: '${reversedIndex + 6} weeks',
-                              level: reversedIndex % 2 == 0 ? 'Beginner' : 'Expert',
-                              color: _workoutCollections[reversedIndex]['color'],
+                              level: reversedIndex % 2 == 0
+                                  ? 'Beginner'
+                                  : 'Expert',
+                              color: _workoutCollections[reversedIndex]
+                                  ['color'],
                             );
                           },
                         ),
                       ),
-                      
                     ],
                   ),
                 ),

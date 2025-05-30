@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'login_screen.dart';
 import 'dart:ui';
+
+// Providers
+import '../providers/auth_provider.dart';
 
 // Assuming FirstStepSignup is in this path, if not, adjust the import
 import 'register/step1_signup.dart';
@@ -237,36 +241,53 @@ class _SignupScreenState extends State<SignupScreen> {
 
   // Sign Up button
   Widget _buildSignUpButton(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    
     return Center(
       child: ElevatedButton(
-        onPressed: () {
-          String email = _emailController.text;
-          String password = _passwordController.text;
-          String confirmPassword = _passwordController2.text;
-
-          if (email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
+        onPressed: () async {
+          // Basic validation
+          if (_emailController.text.isEmpty ||
+              _passwordController.text.isEmpty ||
+              _passwordController2.text.isEmpty) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Please fill in all the fields"))
+              const SnackBar(
+                content: Text('Please fill in all fields'),
+                backgroundColor: Colors.red,
+              ),
             );
-          } else if (password != confirmPassword) {
+            return;
+          }
+          
+          // Check if passwords match
+          if (_passwordController.text != _passwordController2.text) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("The passwords do not match."))
+              const SnackBar(
+                content: Text('Passwords do not match'),
+                backgroundColor: Colors.red,
+              ),
             );
-          } else {
-            Navigator.pushReplacement(
+            return;
+          }
+          
+          // Attempt to register the user
+          final success = await authProvider.register(
+            _emailController.text.trim(),
+            _passwordController.text,
+            'New User', // Nombre temporal, se actualizará en los siguientes pasos
+          );
+          
+          if (success && mounted) {
+            // Navigate to the first step of the registration process
+            Navigator.push(
               context,
-              PageRouteBuilder(
-                transitionDuration: Duration(milliseconds: 600),
-                pageBuilder: (context, animation, secondaryAnimation) => FirstStepSignup(),
-                transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                  return FadeTransition(
-                    opacity: animation,
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: animation.value * 5, sigmaY: animation.value * 5),
-                      child: child,
-                    ),
-                  );
-                },
+              MaterialPageRoute(builder: (context) => FirstStepSignup()),
+            );
+          } else if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(authProvider.error ?? 'Failed to register'),
+                backgroundColor: Colors.red,
               ),
             );
           }

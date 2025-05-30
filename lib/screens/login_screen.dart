@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'signup_screen.dart';
-import 'bottom_navbar.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../providers/auth_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -165,9 +166,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // Login button widget
   Widget _buildLoginButton(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    
     return Center(
       child: ElevatedButton(
-        onPressed: () {
+        onPressed: () async {
           if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
@@ -176,10 +179,28 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             );
           } else {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const BottomNavbar()),
+            final success = await authProvider.login(
+              _emailController.text.trim(),
+              _passwordController.text,
             );
+            
+            if (!success && mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(authProvider.errorMessage),
+                  backgroundColor: Colors.red,
+                  duration: const Duration(seconds: 4),
+                  action: SnackBarAction(
+                    label: 'OK',
+                    textColor: Colors.white,
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                    },
+                  ),
+                ),
+              );
+            }
+            // No need to navigate - the Consumer in main.dart will handle navigation
           }
         },
         style: ElevatedButton.styleFrom(
@@ -187,9 +208,22 @@ class _LoginScreenState extends State<LoginScreen> {
           backgroundColor: const Color.fromARGB(148, 0, 0, 0),
           minimumSize: const Size(260, 50),
         ),
-        child: const Text(
-          'Login',
-          style: TextStyle(fontSize: 16),
+        child: Consumer<AuthProvider>(
+          builder: (context, authProvider, child) {
+            return authProvider.isLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  )
+                : const Text(
+                    'Login',
+                    style: TextStyle(fontSize: 16),
+                  );
+          },
         ),
       ),
     );

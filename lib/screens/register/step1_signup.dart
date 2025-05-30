@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:FitPath/screens/register/step2_signup.dart';
 
 class FirstStepSignup extends StatefulWidget {
+  const FirstStepSignup({super.key});
+
   @override
   _FirstStepSignupState createState() => _FirstStepSignupState();
 }
@@ -136,8 +138,8 @@ class _FirstStepSignupState extends State<FirstStepSignup> {
                     TextButton(
                       onPressed: () {},
                       style: TextButton.styleFrom(
-                        padding: EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 20),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
                         ),
@@ -155,7 +157,8 @@ class _FirstStepSignupState extends State<FirstStepSignup> {
                           Text(
                             "Previous",
                             style: TextStyle(
-                                color: const Color.fromARGB(255, 255, 255, 255)),
+                                color:
+                                    const Color.fromARGB(255, 255, 255, 255)),
                           ),
                         ],
                       ),
@@ -166,8 +169,9 @@ class _FirstStepSignupState extends State<FirstStepSignup> {
                           context,
                           PageRouteBuilder(
                             transitionDuration: Duration(milliseconds: 600),
-                            pageBuilder: (context, animation, secondaryAnimation) =>
-                                SecondStepSignup(),
+                            pageBuilder:
+                                (context, animation, secondaryAnimation) =>
+                                    SecondStepSignup(),
                             transitionsBuilder: (context, animation,
                                 secondaryAnimation, child) {
                               return FadeTransition(
@@ -221,6 +225,7 @@ class GenderOptionButton extends StatelessWidget {
   final VoidCallback onPressed;
 
   const GenderOptionButton({
+    super.key,
     required this.label,
     required this.icon,
     required this.isSelected,

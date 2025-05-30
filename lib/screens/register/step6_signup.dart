@@ -5,8 +5,8 @@ import 'package:FitPath/screens/register/step5_signup.dart';
 
 class RoundedBox extends StatelessWidget {
   final double size;
-  RoundedBox({required this.size});
-  
+  const RoundedBox({super.key, required this.size});
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -21,6 +21,8 @@ class RoundedBox extends StatelessWidget {
 }
 
 class SixthStepSignup extends StatefulWidget {
+  const SixthStepSignup({super.key});
+
   @override
   _SixthStepSignupState createState() => _SixthStepSignupState();
 }
@@ -51,7 +53,7 @@ class _SixthStepSignupState extends State<SixthStepSignup> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               SizedBox(height: size.height * 0.05),
-              
+
               // Barra de progreso
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 40),
@@ -61,9 +63,9 @@ class _SixthStepSignupState extends State<SixthStepSignup> {
                   valueColor: AlwaysStoppedAnimation<Color>(Colors.greenAccent),
                 ),
               ),
-              
+
               SizedBox(height: size.height * 0.05),
-              
+
               // Título
               Text(
                 "What’s your goal?",
@@ -75,7 +77,7 @@ class _SixthStepSignupState extends State<SixthStepSignup> {
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: 10),
-              
+
               // Subtítulo
               Text(
                 "Lorem ipsum dolor sit amet, consectetur\nadipiscing elit. Morbi",
@@ -85,9 +87,9 @@ class _SixthStepSignupState extends State<SixthStepSignup> {
                 ),
                 textAlign: TextAlign.center,
               ),
-              
+
               SizedBox(height: size.height * 0.08),
-              
+
               // Contenedor de opciones con posiciones diferentes
               SizedBox(
                 height: size.height * 0.3, // Ajusta según lo necesario
@@ -95,14 +97,16 @@ class _SixthStepSignupState extends State<SixthStepSignup> {
                   children: [
                     Positioned(top: 0, left: 40, child: RoundedBox(size: 80)),
                     Positioned(top: 30, right: 60, child: RoundedBox(size: 80)),
-                    Positioned(bottom: 40, left: 70, child: RoundedBox(size: 80)),
-                    Positioned(bottom: 20, right: 40, child: RoundedBox(size: 80)),
+                    Positioned(
+                        bottom: 40, left: 70, child: RoundedBox(size: 80)),
+                    Positioned(
+                        bottom: 20, right: 40, child: RoundedBox(size: 80)),
                   ],
                 ),
               ),
-              
+
               Spacer(),
-              
+
               // Botones de navegación
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
@@ -115,8 +119,9 @@ class _SixthStepSignupState extends State<SixthStepSignup> {
                           context,
                           PageRouteBuilder(
                             transitionDuration: Duration(milliseconds: 600),
-                            pageBuilder: (context, animation, secondaryAnimation) =>
-                                FifthStepSignup(),
+                            pageBuilder:
+                                (context, animation, secondaryAnimation) =>
+                                    FifthStepSignup(),
                             transitionsBuilder: (context, animation,
                                 secondaryAnimation, child) {
                               return FadeTransition(
@@ -136,10 +141,12 @@ class _SixthStepSignupState extends State<SixthStepSignup> {
                         children: [
                           Transform.rotate(
                             angle: 3.1416,
-                            child: Icon(Icons.play_arrow_rounded, color: Colors.white),
+                            child: Icon(Icons.play_arrow_rounded,
+                                color: Colors.white),
                           ),
                           SizedBox(width: 5),
-                          Text("Previous", style: TextStyle(color: Colors.white)),
+                          Text("Previous",
+                              style: TextStyle(color: Colors.white)),
                         ],
                       ),
                     ),
@@ -149,8 +156,9 @@ class _SixthStepSignupState extends State<SixthStepSignup> {
                           context,
                           PageRouteBuilder(
                             transitionDuration: Duration(milliseconds: 600),
-                            pageBuilder: (context, animation, secondaryAnimation) =>
-                                BottomNavbar(),
+                            pageBuilder:
+                                (context, animation, secondaryAnimation) =>
+                                    BottomNavbar(),
                             transitionsBuilder: (context, animation,
                                 secondaryAnimation, child) {
                               return FadeTransition(
@@ -168,7 +176,8 @@ class _SixthStepSignupState extends State<SixthStepSignup> {
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Color.fromRGBO(45, 124, 181, 1),
-                        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(9),
                         ),

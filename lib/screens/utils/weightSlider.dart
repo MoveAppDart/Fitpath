@@ -49,7 +49,8 @@ class _WeightSliderState extends State<WeightSlider> {
   @override
   void didUpdateWidget(WeightSlider oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.isKG != widget.isKG || oldWidget.initialValue != widget.initialValue) {
+    if (oldWidget.isKG != widget.isKG ||
+        oldWidget.initialValue != widget.initialValue) {
       value = widget.initialValue;
       isUpdating = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -61,7 +62,7 @@ class _WeightSliderState extends State<WeightSlider> {
 
   void _updateValue() {
     if (isUpdating) return;
-    
+
     final page = numbersController?.page ?? 0;
     final newValue = (page - itemsExtension).clamp(0, widget.isKG ? 250 : 551);
 
@@ -77,30 +78,30 @@ class _WeightSliderState extends State<WeightSlider> {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-                  color: Color.fromARGB(229, 255, 255, 255), // Fondo blanco translúcido
-                  borderRadius: BorderRadius.circular(30), // Bordes redondeados
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 10,
-                      offset: Offset(0, 5),
-                    ),
-                  ],
-                ),
+        color: Color.fromARGB(229, 255, 255, 255), // Fondo blanco translúcido
+        borderRadius: BorderRadius.circular(30), // Bordes redondeados
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 10,
+            offset: Offset(0, 5),
+          ),
+        ],
+      ),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final viewPortFraction = 1 / (constraints.maxWidth / 10);
-          
+
           // Initialize controller with correct viewportFraction
           if (numbersController == null) {
             _initializeController(viewPortFraction * 10);
           }
-          
+
           return Column(
             children: [
               const SizedBox(height: 10),
               Text(
-                '${value.toStringAsFixed(1)}',
+                value.toStringAsFixed(1),
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -282,8 +283,8 @@ class _CustomPageScrollPhysics extends ScrollPhysics {
   const _CustomPageScrollPhysics({
     required this.start,
     required this.end,
-    ScrollPhysics? parent,
-  }) : super(parent: parent);
+    super.parent,
+  });
 
   @override
   _CustomPageScrollPhysics applyTo(ScrollPhysics? ancestor) {

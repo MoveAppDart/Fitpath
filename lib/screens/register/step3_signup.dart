@@ -8,6 +8,8 @@ import 'package:FitPath/screens/utils/weightSlider.dart';
 const greenColor = Color(0xff90D855);
 
 class ThirdStepSignup extends StatefulWidget {
+  const ThirdStepSignup({super.key});
+
   @override
   _ThirdStepSignupState createState() => _ThirdStepSignupState();
 }
@@ -172,14 +174,16 @@ class _ThirdStepSignupState extends State<ThirdStepSignup> {
                   ],
                 ),
                 child: WeightSlider(
-                  initialValue: isKG ? selectedWeight : (selectedWeight * 2.20462),
+                  initialValue:
+                      isKG ? selectedWeight : (selectedWeight * 2.20462),
                   isKG: isKG,
                   onChanged: (value) {
                     setState(() {
                       if (isKG) {
                         selectedWeight = value;
                       } else {
-                        selectedWeight = value / 2.20462; // Convert LBS to KG for storage
+                        selectedWeight =
+                            value / 2.20462; // Convert LBS to KG for storage
                       }
                     });
                   },
@@ -188,18 +192,20 @@ class _ThirdStepSignupState extends State<ThirdStepSignup> {
               Expanded(child: Container()),
               // Buttons
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     TextButton(
                       onPressed: () {
-                       Navigator.pushReplacement(
+                        Navigator.pushReplacement(
                           context,
                           PageRouteBuilder(
                             transitionDuration: Duration(milliseconds: 600),
-                            pageBuilder: (context, animation, secondaryAnimation) =>
-                                SecondStepSignup(),
+                            pageBuilder:
+                                (context, animation, secondaryAnimation) =>
+                                    SecondStepSignup(),
                             transitionsBuilder: (context, animation,
                                 secondaryAnimation, child) {
                               return FadeTransition(
@@ -216,8 +222,8 @@ class _ThirdStepSignupState extends State<ThirdStepSignup> {
                         );
                       },
                       style: TextButton.styleFrom(
-                        padding: EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 20),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
                         ),
@@ -235,7 +241,8 @@ class _ThirdStepSignupState extends State<ThirdStepSignup> {
                           Text(
                             "Previous",
                             style: TextStyle(
-                                color: const Color.fromARGB(255, 255, 255, 255)),
+                                color:
+                                    const Color.fromARGB(255, 255, 255, 255)),
                           ),
                         ],
                       ),
@@ -246,8 +253,9 @@ class _ThirdStepSignupState extends State<ThirdStepSignup> {
                           context,
                           PageRouteBuilder(
                             transitionDuration: Duration(milliseconds: 600),
-                            pageBuilder: (context, animation, secondaryAnimation) =>
-                                FourthStepSignup(),
+                            pageBuilder:
+                                (context, animation, secondaryAnimation) =>
+                                    FourthStepSignup(),
                             transitionsBuilder: (context, animation,
                                 secondaryAnimation, child) {
                               return FadeTransition(

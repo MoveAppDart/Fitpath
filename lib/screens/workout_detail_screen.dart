@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'exercise_execution_screen.dart';
-import '../services/data_service.dart';
 
 class WorkoutDetailScreen extends StatefulWidget {
   final String workoutName;
-  
+
   const WorkoutDetailScreen({
-    super.key, 
+    super.key,
     required this.workoutName,
   });
 
@@ -53,7 +52,7 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
                   ],
                 ),
                 const SizedBox(height: 20),
-                
+
                 // Exercise list
                 Expanded(
                   child: ListView.builder(
@@ -67,7 +66,7 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
                     },
                   ),
                 ),
-                
+
                 // Bottom buttons
                 const SizedBox(height: 16),
                 Row(
@@ -119,9 +118,7 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
                           borderRadius: BorderRadius.circular(30),
                         ),
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 24, 
-                          vertical: 16
-                        ),
+                            horizontal: 24, vertical: 16),
                       ),
                       child: const Text(
                         'Add',
@@ -140,7 +137,7 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
       ),
     );
   }
-  
+
   Widget _buildExerciseCard({
     required String exerciseName,
     required String sets,
@@ -178,7 +175,7 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          
+
           // Exercise image
           Row(
             children: [
@@ -189,9 +186,9 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
               ),
             ],
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Sets and reps
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,

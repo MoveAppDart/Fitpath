@@ -4,12 +4,15 @@ import 'package:FitPath/screens/register/step4_signup.dart';
 import 'package:FitPath/screens/register/step6_signup.dart';
 
 class FifthStepSignup extends StatefulWidget {
+  const FifthStepSignup({super.key});
+
   @override
   _FifthStepSignupState createState() => _FifthStepSignupState();
 }
 
 class _FifthStepSignupState extends State<FifthStepSignup> {
-  String? selectedActivityLevel; // Variable para almacenar el género seleccionado
+  String?
+      selectedActivityLevel; // Variable para almacenar el género seleccionado
 
   @override
   Widget build(BuildContext context) {
@@ -126,7 +129,8 @@ class _FifthStepSignupState extends State<FifthStepSignup> {
                     ActivityOptionButton(
                       label: "Professional Athlete",
                       icon: Icons.close,
-                      isSelected: selectedActivityLevel == "Professional Athlete",
+                      isSelected:
+                          selectedActivityLevel == "Professional Athlete",
                       onPressed: () {
                         setState(() {
                           selectedActivityLevel = "Professional Athlete";
@@ -138,7 +142,8 @@ class _FifthStepSignupState extends State<FifthStepSignup> {
               ),
               // Buttons
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 50),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 50),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -148,8 +153,9 @@ class _FifthStepSignupState extends State<FifthStepSignup> {
                           context,
                           PageRouteBuilder(
                             transitionDuration: Duration(milliseconds: 600),
-                            pageBuilder: (context, animation, secondaryAnimation) =>
-                                FourthStepSignup(),
+                            pageBuilder:
+                                (context, animation, secondaryAnimation) =>
+                                    FourthStepSignup(),
                             transitionsBuilder: (context, animation,
                                 secondaryAnimation, child) {
                               return FadeTransition(
@@ -166,8 +172,8 @@ class _FifthStepSignupState extends State<FifthStepSignup> {
                         );
                       },
                       style: TextButton.styleFrom(
-                        padding: EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 20),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
                         ),
@@ -185,7 +191,8 @@ class _FifthStepSignupState extends State<FifthStepSignup> {
                           Text(
                             "Previous",
                             style: TextStyle(
-                                color: const Color.fromARGB(255, 255, 255, 255)),
+                                color:
+                                    const Color.fromARGB(255, 255, 255, 255)),
                           ),
                         ],
                       ),
@@ -196,8 +203,9 @@ class _FifthStepSignupState extends State<FifthStepSignup> {
                           context,
                           PageRouteBuilder(
                             transitionDuration: Duration(milliseconds: 600),
-                            pageBuilder: (context, animation, secondaryAnimation) =>
-                                SixthStepSignup(),
+                            pageBuilder:
+                                (context, animation, secondaryAnimation) =>
+                                    SixthStepSignup(),
                             transitionsBuilder: (context, animation,
                                 secondaryAnimation, child) {
                               return FadeTransition(
@@ -250,6 +258,7 @@ class ActivityOptionButton extends StatelessWidget {
   final VoidCallback onPressed;
 
   const ActivityOptionButton({
+    super.key,
     required this.label,
     required this.icon,
     required this.isSelected,

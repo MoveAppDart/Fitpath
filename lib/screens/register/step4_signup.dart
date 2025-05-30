@@ -4,13 +4,16 @@ import 'package:FitPath/screens/register/step3_signup.dart';
 import 'package:FitPath/screens/register/step5_signup.dart';
 
 class FourthStepSignup extends StatefulWidget {
+  const FourthStepSignup({super.key});
+
   @override
   _FourthStepSignupState createState() => _FourthStepSignupState();
 }
 
 class _FourthStepSignupState extends State<FourthStepSignup> {
   final ScrollController _scrollController = ScrollController();
-  final List<int> ages = List.generate(87, (index) => 14 + index); // Edades de 18 a 100
+  final List<int> ages =
+      List.generate(87, (index) => 14 + index); // Edades de 18 a 100
   int selectedAge = 18; // Edad seleccionada inicialmente
 
   @override
@@ -26,9 +29,11 @@ class _FourthStepSignupState extends State<FourthStepSignup> {
 
   void _onScroll() {
     // Calcular la edad seleccionada basada en la posición del scroll
-    double centerOffset = _scrollController.offset + 75; // Ajusta según el tamaño del ítem
+    double centerOffset =
+        _scrollController.offset + 75; // Ajusta según el tamaño del ítem
     int index = (centerOffset / 50).round(); // Ajusta según el tamaño del ítem
-    index = index.clamp(0, ages.length - 1); // Asegurar que el índice esté dentro del rango
+    index = index.clamp(
+        0, ages.length - 1); // Asegurar que el índice esté dentro del rango
 
     setState(() {
       selectedAge = ages[index];
@@ -44,7 +49,8 @@ class _FourthStepSignupState extends State<FourthStepSignup> {
     if (index != -1) {
       // Calcular la posición del scroll para que la edad esté en el centro
       double offset = index * 51.0 - 75.0; // Ajusta según el tamaño del ítem
-      _scrollController.jumpTo(offset); // Usar jumpTo para un ajuste instantáneo
+      _scrollController
+          .jumpTo(offset); // Usar jumpTo para un ajuste instantáneo
     }
   }
 
@@ -127,7 +133,8 @@ class _FourthStepSignupState extends State<FourthStepSignup> {
               Expanded(child: Container()),
               // Buttons
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -137,8 +144,9 @@ class _FourthStepSignupState extends State<FourthStepSignup> {
                           context,
                           PageRouteBuilder(
                             transitionDuration: Duration(milliseconds: 600),
-                            pageBuilder: (context, animation, secondaryAnimation) =>
-                                ThirdStepSignup(),
+                            pageBuilder:
+                                (context, animation, secondaryAnimation) =>
+                                    ThirdStepSignup(),
                             transitionsBuilder: (context, animation,
                                 secondaryAnimation, child) {
                               return FadeTransition(
@@ -155,8 +163,8 @@ class _FourthStepSignupState extends State<FourthStepSignup> {
                         );
                       },
                       style: TextButton.styleFrom(
-                        padding: EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 20),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
                         ),
@@ -174,7 +182,8 @@ class _FourthStepSignupState extends State<FourthStepSignup> {
                           Text(
                             "Previous",
                             style: TextStyle(
-                                color: const Color.fromARGB(255, 255, 255, 255)),
+                                color:
+                                    const Color.fromARGB(255, 255, 255, 255)),
                           ),
                         ],
                       ),
@@ -185,8 +194,9 @@ class _FourthStepSignupState extends State<FourthStepSignup> {
                           context,
                           PageRouteBuilder(
                             transitionDuration: Duration(milliseconds: 600),
-                            pageBuilder: (context, animation, secondaryAnimation) =>
-                                FifthStepSignup(),
+                            pageBuilder:
+                                (context, animation, secondaryAnimation) =>
+                                    FifthStepSignup(),
                             transitionsBuilder: (context, animation,
                                 secondaryAnimation, child) {
                               return FadeTransition(
