@@ -15,10 +15,20 @@
   "license": "ISC",
   "dependencies": {
     "autoprefixer": "^10.4.21",
-    "postcss": "^8.5.3",
-    "tailwindcss": "^4.0.13"
+    "bootstrap-icons": "^1.13.1",
+    "postcss": "^8.5.4",
+    "tailwindcss": "^4.1.8"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.0.13"
-  }
+    "@tailwindcss/postcss": "^4.1.8"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MoveAppDart/Fitpath.git"
+  },
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/MoveAppDart/Fitpath/issues"
+  },
+  "homepage": "https://github.com/MoveAppDart/Fitpath#readme"
 }

@@ -4,13 +4,13 @@ class DataService {
   // User profile data
   static Map<String, dynamic> getUserProfile() {
     return {
-      'name': 'John Marcus',
-      'email': 'john.marcus@example.com',
+      'name': 'Usuario de Prueba',
+      'email': 'usuario@example.com',
       'profileImage': 'assets/profile.jpg',
-      'memberSince': 'March 2023',
-      'height': '185 cm',
-      'weight': '78 kg',
-      'age': 28,
+      'memberSince': 'Mayo 2025',
+      'height': '170 cm',
+      'weight': '65 kg',
+      'age': 25,
     };
   }
 

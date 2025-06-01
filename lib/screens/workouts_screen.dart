@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'workout_detail_screen.dart';
 import 'create_plan_screen.dart';
-import '../services/data_service.dart'; // Add this import
+import '../providers/workout_provider.dart';
+import '../providers/user_provider.dart';
+import '../models/workout.dart';
+import '../widgets/state_widgets.dart';
+import '../widgets/workout_card.dart';
 
 class WorkoutsScreen extends StatefulWidget {
   const WorkoutsScreen({super.key});
@@ -12,160 +16,214 @@ class WorkoutsScreen extends StatefulWidget {
 }
 
 class _WorkoutsScreenState extends State<WorkoutsScreen> {
-  late List<Map<String, dynamic>> _workoutCollections;
-
+  bool _isLoading = false;
+  String? _error;
+  
   @override
   void initState() {
     super.initState();
-    _workoutCollections = DataService.getWorkoutCollections();
+    _loadWorkouts();
+  }
+  
+  Future<void> _loadWorkouts() async {
+    if (!mounted) return;
+    
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    
+    try {
+      final workoutProvider = Provider.of<WorkoutProvider>(context, listen: false);
+      final success = await workoutProvider.loadWorkouts();
+      
+      if (!success && mounted) {
+        setState(() {
+          _error = workoutProvider.error ?? 'No se pudieron cargar los entrenamientos';
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = 'Error al cargar entrenamientos: $e';
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Obtenemos el provider de entrenamientos para acceder a los datos
+    final workoutProvider = Provider.of<WorkoutProvider>(context);
+    final userProvider = Provider.of<UserProvider>(context);
+    
+    // Colores predefinidos para las tarjetas de entrenamiento
+    final List<Color> workoutColors = [
+      const Color(0xFF4A90E2),
+      const Color(0xFFE2844A),
+      const Color(0xFF50E24A),
+      const Color(0xFFE24A98),
+      const Color(0xFF9E4AE2),
+      const Color(0xFF4AE2C5),
+    ];
+    
     return Scaffold(
       backgroundColor: const Color(0xFF005DC8),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(32.0),
-          child: SingleChildScrollView(
-            physics:
-                const AlwaysScrollableScrollPhysics(), // Ensure scrolling is always enabled
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header with profile picture
-                Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 20,
-                      backgroundColor: Colors.white24,
-                      child: Icon(
-                        Icons.person,
-                        size: 24,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 30), // Increased spacing
-
-                // Your Collections Title
-                Text(
-                  "Your's Collections",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 30), // Increased spacing
-
-                // Routines Section - Using data from DataService
-                Column(
-                  children: [
-                    ..._workoutCollections.map(
-                      (workout) => Column(
+          padding: const EdgeInsets.all(24.0),
+          child: _isLoading
+              ? const LoadingState(message: 'Cargando entrenamientos...')
+              : _error != null
+                  ? ErrorState(
+                      message: _error!,
+                      onRetry: _loadWorkouts,
+                    )
+                  : SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildRoutineButton(
-                            workout['name'],
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => WorkoutDetailScreen(
-                                    workoutName: workout['name'],
+                          // Header con foto de perfil
+                          Row(
+                            children: [
+                              userProvider.user?.profilePicture != null && 
+                              userProvider.user!.profilePicture!.isNotEmpty
+                                  ? CircleAvatar(
+                                      radius: 20,
+                                      backgroundImage: NetworkImage(
+                                          userProvider.user!.profilePicture!),
+                                    )
+                                  : const CircleAvatar(
+                                      radius: 20,
+                                      backgroundColor: Colors.white24,
+                                      child: Icon(
+                                        Icons.person,
+                                        size: 24,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                              const SizedBox(width: 12),
+                              Text(
+                                'Hola, ${userProvider.user?.name.split(' ').first ?? 'Usuario'}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 30),
+
+                          // Título de tus colecciones
+                          const Text(
+                            "Tus Entrenamientos",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+
+                          // Sección de rutinas - Usando datos reales del provider
+                          workoutProvider.workouts.isEmpty
+                              ? EmptyState(
+                                  message: 'No tienes entrenamientos todavía. ¡Crea tu primer entrenamiento!',
+                                  icon: Icons.fitness_center,
+                                  onAction: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => const CreatePlanScreen(),
+                                      ),
+                                    );
+                                  },
+                                  actionLabel: 'Crear Entrenamiento',
+                                )
+                              : Column(
+                                  children: [
+                                    ...workoutProvider.workouts.map(
+                                      (workout) => WorkoutListItem(
+                                        title: workout.name,
+                                        subtitle: '${workout.duration} min · ${workout.type}',
+                                        isCompleted: workout.completed,
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => WorkoutDetailScreen(
+                                                workoutId: workout.id,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                    _buildNewRoutineButton(),
+                                  ],
+                                ),
+                          const SizedBox(height: 40),
+
+                          // Sección de programas
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'Programas',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.add_circle_outline,
+                                    color: Colors.white),
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const CreatePlanScreen(),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+
+                          // Carrusel de programas - Usando datos reales o placeholders
+                          workoutProvider.routines.isEmpty
+                              ? EmptyState(
+                                  message: 'No hay programas disponibles todavía',
+                                  icon: Icons.calendar_today,
+                                )
+                              : SizedBox(
+                                  height: 180,
+                                  child: ListView.builder(
+                                    scrollDirection: Axis.horizontal,
+                                    itemCount: workoutProvider.routines.length,
+                                    itemBuilder: (context, index) {
+                                      final routine = workoutProvider.routines[index];
+                                      return _buildProgramCard(
+                                        title: routine['name'] ?? 'Programa ${index + 1}',
+                                        duration: routine['duration'] ?? '${index + 4} semanas',
+                                        level: routine['level'] ?? (index % 2 == 0 ? 'Intermedio' : 'Avanzado'),
+                                        color: workoutColors[index % workoutColors.length],
+                                      );
+                                    },
                                   ),
                                 ),
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 12),
                         ],
                       ),
                     ),
-                    _buildNewRoutineButton(),
-                  ],
-                ),
-                const SizedBox(height: 40),
-
-                // Programs Section
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Programms',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.add_circle_outline,
-                          color: Colors.white),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const CreatePlanScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-
-                // Programs Carousel - Using workout collections for variety
-                SizedBox(
-                  // Removed Expanded and replaced with SizedBox
-                  height: 380, // Fixed height for both carousels
-                  child: Column(
-                    children: [
-                      SizedBox(
-                        height: 180,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: _workoutCollections.length,
-                          itemBuilder: (context, index) {
-                            return _buildProgramCard(
-                              title: _workoutCollections[index]['name'],
-                              duration: '${index + 4} weeks',
-                              level:
-                                  index % 2 == 0 ? 'Intermediate' : 'Advanced',
-                              color: _workoutCollections[index]['color'],
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      SizedBox(
-                        height: 180,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: _workoutCollections.length,
-                          itemBuilder: (context, index) {
-                            final reversedIndex =
-                                _workoutCollections.length - 1 - index;
-                            return _buildProgramCard(
-                              title:
-                                  '${_workoutCollections[reversedIndex]['name']} Pro',
-                              duration: '${reversedIndex + 6} weeks',
-                              level: reversedIndex % 2 == 0
-                                  ? 'Beginner'
-                                  : 'Expert',
-                              color: _workoutCollections[reversedIndex]
-                                  ['color'],
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
         ),
       ),
     );

@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:FitPath/screens/register/step3_signup.dart';
-import 'package:FitPath/screens/register/step5_signup.dart';
+import 'step3_signup.dart';
+import 'step5_signup.dart';
 
 class FourthStepSignup extends StatefulWidget {
   const FourthStepSignup({super.key});

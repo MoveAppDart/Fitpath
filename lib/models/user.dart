@@ -1,75 +1,156 @@
 class User {
-  final int id;
-  final String name;
+  final String id;  // Cambiado de int a String
   final String email;
-  final String? profilePicture;
-  final double? height;
-  final double? weight;
+  final String name;
+  final String? lastName; // Usamos String? para campos que podrían no venir o ser opcionales
+  final int? age;
   final String? gender;
-  final DateTime? birthDate;
-  final Map<String, dynamic>? preferences;
+  final DateTime? registrationDate;
+  final DateTime? lastLogin;
+  final String? profilePicture;
+  final bool? isActive;
+  final String? role;
 
   User({
     required this.id,
-    required this.name,
     required this.email,
-    this.profilePicture,
-    this.height,
-    this.weight,
+    required this.name,
+    this.lastName,
+    this.age,
     this.gender,
-    this.birthDate,
-    this.preferences,
+    this.registrationDate,
+    this.lastLogin,
+    this.profilePicture,
+    this.isActive = true, // Defaulting isActive to true as per user's example
+    this.role = 'user',   // Defaulting role to 'user' as per user's example
   });
 
+  // Helper para parsear IDs que pueden venir en diferentes formatos
+  static String _parseIdToString(dynamic id) {
+    if (id == null) return '';
+    if (id is String) return id;
+    return id.toString();
+  }
+  
   factory User.fromJson(Map<String, dynamic> json) {
+    // Intentar extraer el ID del usuario de diferentes campos posibles
+    String userId = '';
+    if (json.containsKey('userId') && json['userId'] != null) {
+      userId = _parseIdToString(json['userId']);
+    } else if (json.containsKey('id') && json['id'] != null) {
+      userId = _parseIdToString(json['id']);
+    } else if (json.containsKey('_id') && json['_id'] != null) {
+      userId = _parseIdToString(json['_id']);
+    }
+    
+    // Extraer email y nombre con manejo seguro de tipos
+    String email = '';
+    if (json.containsKey('email') && json['email'] != null) {
+      email = json['email'].toString();
+    }
+    
+    String name = 'Usuario';
+    if (json.containsKey('name') && json['name'] != null) {
+      name = json['name'].toString();
+    } else if (json.containsKey('userName') && json['userName'] != null) {
+      name = json['userName'].toString();
+    }
+    
+    // Extraer campos opcionales con manejo seguro de tipos
+    String? lastName;
+    if (json.containsKey('lastName') && json['lastName'] != null) {
+      lastName = json['lastName'].toString();
+    }
+    
+    int? age;
+    if (json.containsKey('age') && json['age'] != null) {
+      if (json['age'] is int) {
+        age = json['age'];
+      } else if (json['age'] is String) {
+        age = int.tryParse(json['age']);
+      } else if (json['age'] is double) {
+        age = json['age'].toInt();
+      }
+    }
+    
+    String? gender;
+    if (json.containsKey('gender') && json['gender'] != null) {
+      gender = json['gender'].toString();
+    }
+    
+    DateTime? registrationDate;
+    if (json.containsKey('registrationDate') && json['registrationDate'] != null) {
+      try {
+        registrationDate = DateTime.parse(json['registrationDate'].toString());
+      } catch (e) {
+        print('Error parsing registrationDate: $e');
+      }
+    }
+    
+    DateTime? lastLogin;
+    if (json.containsKey('lastLogin') && json['lastLogin'] != null) {
+      try {
+        lastLogin = DateTime.parse(json['lastLogin'].toString());
+      } catch (e) {
+        print('Error parsing lastLogin: $e');
+      }
+    }
+    
+    String? profilePicture;
+    if (json.containsKey('profilePicture') && json['profilePicture'] != null) {
+      profilePicture = json['profilePicture'].toString();
+    }
+    
+    bool? isActive;
+    if (json.containsKey('isActive') && json['isActive'] != null) {
+      if (json['isActive'] is bool) {
+        isActive = json['isActive'];
+      } else if (json['isActive'] is String) {
+        isActive = json['isActive'].toString().toLowerCase() == 'true';
+      } else if (json['isActive'] is num) {
+        isActive = json['isActive'] != 0;
+      }
+    }
+    
+    String? role;
+    if (json.containsKey('role') && json['role'] != null) {
+      role = json['role'].toString();
+    }
+    
     return User(
-      id: json['id'],
-      name: json['name'],
-      email: json['email'],
-      profilePicture: json['profile_picture'],
-      height: json['height']?.toDouble(),
-      weight: json['weight']?.toDouble(),
-      gender: json['gender'],
-      birthDate: json['birth_date'] != null ? DateTime.parse(json['birth_date']) : null,
-      preferences: json['preferences'],
+      id: userId,
+      email: email,
+      name: name,
+      lastName: lastName,
+      age: age,
+      gender: gender,
+      registrationDate: registrationDate,
+      lastLogin: lastLogin,
+      profilePicture: profilePicture,
+      isActive: isActive,
+      role: role,
     );
   }
-
+  
+  // Método para convertir el objeto a JSON
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'name': name,
       'email': email,
-      'profile_picture': profilePicture,
-      'height': height,
-      'weight': weight,
+      'name': name,
+      'lastName': lastName,
+      'age': age,
       'gender': gender,
-      'birth_date': birthDate?.toIso8601String(),
-      'preferences': preferences,
+      'registrationDate': registrationDate?.toIso8601String(),
+      'lastLogin': lastLogin?.toIso8601String(),
+      'profilePicture': profilePicture,
+      'isActive': isActive,
+      'role': role,
     };
   }
-
-  User copyWith({
-    int? id,
-    String? name,
-    String? email,
-    String? profilePicture,
-    double? height,
-    double? weight,
-    String? gender,
-    DateTime? birthDate,
-    Map<String, dynamic>? preferences,
-  }) {
-    return User(
-      id: id ?? this.id,
-      name: name ?? this.name,
-      email: email ?? this.email,
-      profilePicture: profilePicture ?? this.profilePicture,
-      height: height ?? this.height,
-      weight: weight ?? this.weight,
-      gender: gender ?? this.gender,
-      birthDate: birthDate ?? this.birthDate,
-      preferences: preferences ?? this.preferences,
-    );
+  
+  @override
+  String toString() {
+    return 'User(id: $id, name: $name, email: $email)';
   }
 }

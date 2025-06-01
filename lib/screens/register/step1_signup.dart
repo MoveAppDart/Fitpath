@@ -1,7 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:FitPath/screens/register/step2_signup.dart';
+import 'step2_signup.dart';
 
 class FirstStepSignup extends StatefulWidget {
   const FirstStepSignup({super.key});

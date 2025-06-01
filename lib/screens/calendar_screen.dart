@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:intl/intl.dart';
 import '../services/data_service.dart';
+
+// Función auxiliar para comparar fechas
+bool isSameDay(DateTime? a, DateTime? b) {
+  if (a == null || b == null) return false;
+  return a.year == b.year && a.month == b.month && a.day == b.day;
+}
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -27,7 +34,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final userData = DataService.getUserProfile();
     final workoutEvents = _getWorkoutsForDay(_selectedDay ?? _focusedDay);
     
     return Scaffold(
@@ -38,7 +44,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header with profile picture and title
+              // Header con imagen de perfil y título
               Row(
                 children: [
                   CircleAvatar(
@@ -50,9 +56,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       color: Colors.white,
                     ),
                   ),
-                  const SizedBox(width: 16),
-                  Text(
-                    'History',
+                  const SizedBox(width: 12),
+                  const Text(
+                    'Calendario',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 24,
@@ -61,166 +67,97 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
-
-              // Calendar with event markers
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(16),
+              const SizedBox(height: 20),
+              // Calendario
+              Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: TableCalendar(
-                  firstDay: DateTime.utc(2024, 1, 1),
-                  lastDay: DateTime.utc(2025, 12, 31),
-                  focusedDay: _focusedDay,
-                  selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-                  calendarFormat: CalendarFormat.month,
-                  eventLoader: (day) {
-                    return _getWorkoutsForDay(day) ?? [];
-                  },
-                  headerStyle: HeaderStyle(
-                    formatButtonVisible: false,
-                    titleCentered: true,
-                    titleTextStyle: TextStyle(color: Colors.white, fontSize: 20),
-                    leftChevronIcon: Icon(Icons.chevron_left, color: Colors.white),
-                    rightChevronIcon: Icon(Icons.chevron_right, color: Colors.white),
-                  ),
-                  daysOfWeekStyle: DaysOfWeekStyle(
-                    weekdayStyle: TextStyle(color: Colors.white),
-                    weekendStyle: TextStyle(color: Colors.white70),
-                  ),
-                  calendarStyle: CalendarStyle(
-                    defaultTextStyle: TextStyle(color: Colors.white),
-                    weekendTextStyle: TextStyle(color: Colors.white70),
-                    outsideTextStyle: TextStyle(color: Colors.white38),
-                    selectedDecoration: BoxDecoration(
-                      color: Color(0xFF1A4B94),
-                      shape: BoxShape.rectangle,
-                      borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TableCalendar(
+                    firstDay: DateTime.utc(2020, 1, 1),
+                    lastDay: DateTime.utc(2030, 12, 31),
+                    focusedDay: _focusedDay,
+                    selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+                    onDaySelected: (selectedDay, focusedDay) {
+                      setState(() {
+                        _selectedDay = selectedDay;
+                        _focusedDay = focusedDay;
+                      });
+                    },
+                    calendarFormat: CalendarFormat.month,
+                    headerStyle: const HeaderStyle(
+                      formatButtonVisible: false,
+                      titleCentered: true,
                     ),
-                    todayDecoration: BoxDecoration(
-                      color: Colors.transparent,
-                      border: Border.all(color: Colors.white),
-                      shape: BoxShape.rectangle,
-                      borderRadius: BorderRadius.circular(8),
+                    daysOfWeekStyle: const DaysOfWeekStyle(
+                      weekdayStyle: TextStyle(fontWeight: FontWeight.bold),
+                      weekendStyle: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    markerDecoration: BoxDecoration(
-                      color: Colors.green,
-                      shape: BoxShape.circle,
-                    ),
-                    markersMaxCount: 3,
-                  ),
-                  onDaySelected: (selectedDay, focusedDay) {
-                    setState(() {
-                      _selectedDay = selectedDay;
-                      _focusedDay = focusedDay;
-                    });
-                  },
-                ),
-              ),
-              const SizedBox(height: 32),
-
-              // Selected Day Workouts Section
-              if (_selectedDay != null && workoutEvents != null)
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Workouts on ${_selectedDay!.day}/${_selectedDay!.month}/${_selectedDay!.year}',
-                      style: TextStyle(
+                    calendarStyle: CalendarStyle(
+                      todayDecoration: BoxDecoration(
+                        color: const Color(0xFF005DC8).withOpacity(0.5),
+                        shape: BoxShape.circle,
+                      ),
+                      selectedDecoration: const BoxDecoration(
+                        color: Color(0xFF005DC8),
+                        shape: BoxShape.circle,
+                      ),
+                      todayTextStyle: const TextStyle(
                         color: Colors.white,
-                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(12),
+                      selectedTextStyle: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
                       ),
-                      child: Row(
-                        children: [
-                          Container(
-                            height: 50,
-                            width: 50,
-                            decoration: BoxDecoration(
-                              color: Color(0xFF1A4B94),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Icon(
-                              Icons.fitness_center,
-                              color: Colors.white,
-                              size: 28,
-                            ),
-                          ),
-                          SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  workoutEvents[0],
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                SizedBox(height: 4),
-                                Text(
-                                  workoutEvents[1],
-                                  style: TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                      markerDecoration: const BoxDecoration(
+                        color: Colors.green,
+                        shape: BoxShape.circle,
                       ),
+                      markersMaxCount: 3,
                     ),
-                  ],
+                  ),
                 ),
-              
-              const SizedBox(height: 24),
-
-              // Last Workouts Section
+              ),
+              const SizedBox(height: 20),
+              // Eventos del día seleccionado
               Text(
-                'Last Workouts',
-                style: TextStyle(
+                'Entrenamientos para ${DateFormat('EEEE, d MMMM y', 'es_ES').format(_selectedDay ?? _focusedDay)}',
+                style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 24,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 16),
-              
-              // Workout List using example data
+              const SizedBox(height: 10),
+              // Lista de eventos
               Expanded(
-                child: ListView.builder(
-                  itemCount: _workoutHistory.length,
-                  itemBuilder: (context, index) {
-                    final sortedDates = _workoutHistory.keys.toList()
-                      ..sort((a, b) => b.compareTo(a));
-                    
-                    if (index < sortedDates.length) {
-                      final date = sortedDates[index];
-                      final workout = _workoutHistory[date]!;
-                      final now = DateTime.now();
-                      
-                      return _buildWorkoutItem(
-                        date.day.toString(),
-                        _getWeekdayName(date.weekday),
-                        workout[0],
-                        workout[1],
-                      );
-                    }
-                    return SizedBox.shrink();
-                  },
-                ),
+                child: workoutEvents == null || workoutEvents.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'No hay entrenamientos programados',
+                          style: TextStyle(color: Colors.white70),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: workoutEvents.length,
+                        itemBuilder: (context, index) {
+                          return Card(
+                            margin: const EdgeInsets.symmetric(vertical: 4),
+                            child: ListTile(
+                              leading: const Icon(Icons.fitness_center),
+                              title: Text(workoutEvents[index]),
+                              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                              onTap: () {
+                                // Navegar al detalle del entrenamiento
+                              },
+                            ),
+                          );
+                        },
+                      ),
               ),
             ],
           ),
@@ -229,75 +166,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
   
+  // Métodos auxiliares para futuras implementaciones
   String _getWeekdayName(int weekday) {
-    const weekdays = ['', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const weekdays = ['', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
     return weekdays[weekday];
-  }
-
-  Widget _buildWorkoutItem(String day, String weekday, String title, String progress) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          children: [
-            Column(
-              children: [
-                Text(
-                  day,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  weekday,
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ),
-            Container(
-              height: 40,
-              width: 4,
-              margin: EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: Colors.green,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    progress,
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }

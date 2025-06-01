@@ -1,9 +1,8 @@
 import 'dart:ui';
-
 import 'package:flutter/material.dart';
-import 'package:FitPath/screens/register/step2_signup.dart';
-import 'package:FitPath/screens/register/step4_signup.dart';
-import 'package:FitPath/screens/utils/weightSlider.dart';
+import 'step2_signup.dart';
+import 'step4_signup.dart';
+import '../utils/weightSlider.dart';
 
 const greenColor = Color(0xff90D855);
 

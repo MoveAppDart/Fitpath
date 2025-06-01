@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'workout_detail_screen.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-// Servicios y providers
-import '../services/data_service.dart'; // Servicio de datos mock
+// Providers
 import '../providers/user_provider.dart';
 import '../providers/workout_provider.dart';
 import '../models/workout.dart';
+import 'workout_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -24,12 +24,22 @@ class _HomeScreenState extends State<HomeScreen> {
   late final DateTime _weekEnd;
   late final List<DateTime> _weekDays;
 
-  // Add these variables for data
-  late final Map<String, dynamic> _userData;
-  late final List<Map<String, dynamic>> _upcomingWorkouts;
-  late final List<Map<String, dynamic>> _recentWorkouts;
-  late final Map<DateTime, List<String>> _workoutHistory;
-  late final Map<String, dynamic> _nutritionData;
+  // User data
+  final Map<String, dynamic> _userData = {
+    'name': 'Cargando...',
+    'email': '',
+    'profileImage': '',
+    'memberSince': '',
+    'height': '',
+    'weight': '',
+    'age': 0,
+  };
+
+  List<Map<String, dynamic>> _upcomingWorkouts = [];
+  List<Map<String, dynamic>> _recentWorkouts = [];
+  Map<DateTime, List<String>> _workoutHistory = {};
+  Map<String, dynamic> _nutritionData = {};
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -39,93 +49,87 @@ class _HomeScreenState extends State<HomeScreen> {
     // Calculate the end of the week (Sunday)
     _weekEnd = _weekStart.add(const Duration(days: 6));
     // Generate all days of the current week
-    _weekDays =
-        List.generate(7, (index) => _weekStart.add(Duration(days: index)));
+    _weekDays = List.generate(7, (index) => _weekStart.add(Duration(days: index)));
 
-    // Cargar datos iniciales desde el servicio mock
-    _userData = DataService.getUserProfile();
-    _upcomingWorkouts = DataService.getUpcomingWorkouts();
-    _recentWorkouts = DataService.getRecentWorkouts();
-    _workoutHistory = DataService.getWorkoutHistory();
-    _nutritionData = DataService.getNutritionData();
+    // Initialize with empty data
+    _upcomingWorkouts = [];
+    _recentWorkouts = [];
+    _workoutHistory = {};
+    _nutritionData = {};
 
-    // Cargar datos reales desde la API
+    // Load real data from API
     _loadUserData();
     _loadWorkoutData();
   }
 
   Future<void> _loadUserData() async {
-    // Obtener el provider de usuario
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-
     try {
-      // Cargar el perfil del usuario
+      setState(() => _isLoading = true);
       final success = await userProvider.loadUserProfile();
-
-      // Si se obtuvieron datos correctamente, actualizar la UI
+      
       if (success && userProvider.user != null && mounted) {
         setState(() {
-          // Convertir el objeto User a un Map para mantener la compatibilidad con el código existente
-          _userData = userProvider.user!.toJson();
+          _userData.clear();
+          _userData.addAll(userProvider.user!.toJson());
+        });
+      } else {
+        final prefs = await SharedPreferences.getInstance();
+        final savedName = prefs.getString('user_name');
+        
+        setState(() {
+          _userData['name'] = savedName ?? 'Usuario';
         });
       }
     } catch (e) {
-      // En caso de error, mantener los datos mock
-      print('Error al cargar datos del usuario: $e');
+      setState(() => _userData['name'] = 'Usuario');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
   Future<void> _loadWorkoutData() async {
-    // Obtener el provider de entrenamientos
-    final workoutProvider =
-        Provider.of<WorkoutProvider>(context, listen: false);
-
+    final workoutProvider = Provider.of<WorkoutProvider>(context, listen: false);
     try {
-      // Cargar la lista de entrenamientos
       final success = await workoutProvider.loadWorkouts();
-
-      // Si se obtuvieron datos correctamente, actualizar la UI
+      
       if (success && workoutProvider.workouts.isNotEmpty && mounted) {
         setState(() {
-          // Actualizar los entrenamientos próximos y recientes
           _processWorkoutData(workoutProvider.workouts);
         });
       }
       
-      // Cargar el calendario de entrenamientos para la semana actual
       final startDate = _weekStart.toIso8601String().split('T')[0];
       final endDate = _weekEnd.toIso8601String().split('T')[0];
       final calendarSuccess = await workoutProvider.getWorkoutCalendar(startDate, endDate);
       
       if (calendarSuccess && workoutProvider.workoutCalendar != null && mounted) {
         setState(() {
-          // Actualizar el historial de entrenamientos con los datos del calendario
           _processCalendarData(workoutProvider.workoutCalendar!);
         });
       }
     } catch (e) {
-      // En caso de error, mantener los datos mock
-      print('Error al cargar datos de entrenamientos: $e');
+      print('Error loading workout data: $e');
     }
   }
-  
-  // Procesa los datos de entrenamientos para adaptarlos al formato de la UI
+
   void _processWorkoutData(List<Workout> workouts) {
-    // Aquí se mapean los datos de la API al formato esperado por la UI
-    // Por ejemplo, clasificar los entrenamientos en próximos y recientes
     final now = DateTime.now();
     final upcomingList = [];
     final recentList = [];
-    
+
     for (var workout in workouts) {
       final workoutDate = workout.scheduledDate;
-      
+
       if (workoutDate.isAfter(now)) {
-        // Es un entrenamiento próximo
-        final String displayDate = workoutDate.day == now.day ? 'Today' : 
-                                  workoutDate.day == now.day + 1 ? 'Tomorrow' : 
-                                  DateFormat('EEEE').format(workoutDate);
-        
+        final String displayDate = workoutDate.day == now.day
+            ? 'Hoy'
+            : workoutDate.day == now.day + 1
+                ? 'Mañana'
+                : DateFormat('EEEE', 'es').format(workoutDate);
+
         upcomingList.add({
           'id': workout.id,
           'name': workout.name,
@@ -135,11 +139,10 @@ class _HomeScreenState extends State<HomeScreen> {
           'type': workout.type,
         });
       } else if (workoutDate.isAfter(now.subtract(const Duration(days: 7)))) {
-        // Es un entrenamiento reciente (última semana)
         recentList.add({
           'id': workout.id,
           'name': workout.name,
-          'date': DateFormat('EEEE').format(workoutDate),
+          'date': DateFormat('EEEE', 'es').format(workoutDate),
           'time': DateFormat('HH:mm').format(workoutDate),
           'duration': '${workout.duration} min',
           'type': workout.type,
@@ -147,39 +150,37 @@ class _HomeScreenState extends State<HomeScreen> {
         });
       }
     }
-    
-    // Actualizar los datos solo si hay información nueva
+
     if (upcomingList.isNotEmpty) {
-      _upcomingWorkouts = List<Map<String, dynamic>>.from(upcomingList.map((workout) => Map<String, dynamic>.from(workout)));
+      _upcomingWorkouts = List<Map<String, dynamic>>.from(
+          upcomingList.map((workout) => Map<String, dynamic>.from(workout)));
     }
-    
+
     if (recentList.isNotEmpty) {
-      _recentWorkouts = List<Map<String, dynamic>>.from(recentList.map((workout) => Map<String, dynamic>.from(workout)));
+      _recentWorkouts = List<Map<String, dynamic>>.from(
+          recentList.map((workout) => Map<String, dynamic>.from(workout)));
     }
   }
-  
-  // Procesa los datos del calendario para adaptarlos al formato de la UI
+
   void _processCalendarData(Map<String, dynamic> calendarData) {
-    // Convertir los datos del calendario al formato esperado por la UI
     final Map<DateTime, List<String>> historyMap = {};
-    
+
     if (calendarData.containsKey('workouts')) {
       final workoutsList = calendarData['workouts'] as List<dynamic>;
-      
+
       for (var workout in workoutsList) {
         if (workout['completed'] == true) {
           final workoutDate = DateTime.parse(workout['date']);
           final dateKey = DateTime(workoutDate.year, workoutDate.month, workoutDate.day);
-          
+
           if (!historyMap.containsKey(dateKey)) {
             historyMap[dateKey] = [];
           }
-          
+
           historyMap[dateKey]!.add(workout['name']);
         }
       }
-      
-      // Actualizar el historial de entrenamientos
+
       if (historyMap.isNotEmpty) {
         _workoutHistory = historyMap;
       }
@@ -188,31 +189,27 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Get screen dimensions and determine device type
-    final Size screenSize = MediaQuery.of(context).size;
+    final screenSize = MediaQuery.of(context).size;
     final bool isTablet = screenSize.width > 600;
     final bool isDesktop = screenSize.width > 1200;
-
-    // Responsive values
     final double horizontalPadding = isDesktop ? 80 : (isTablet ? 40 : 20);
     final double verticalSpacing = isDesktop ? 40 : (isTablet ? 30 : 24);
-
-    // Responsive text sizes
     final double headerFontSize = isDesktop ? 22 : (isTablet ? 20 : 18);
     final double subHeaderFontSize = isDesktop ? 18 : (isTablet ? 16 : 14);
     final double routineTitleFontSize = isDesktop ? 24 : (isTablet ? 22 : 20);
 
     // Format date range for weekly schedule
     final String weekRangeText =
-        '${DateFormat('MMMM d').format(_weekStart)}-${DateFormat('d').format(_weekEnd)}';
+        '${DateFormat('d MMM', 'es').format(_weekStart)} - ${DateFormat('d MMM y', 'es').format(_weekEnd)}';
 
     // Get today's workout if available
     final todaysWorkout = _upcomingWorkouts.firstWhere(
-      (workout) => workout['date'] == 'Today',
+      (workout) => workout['date'] == 'Hoy',
       orElse: () => {
-        'name': 'Rest Day',
-        'time': 'No workout scheduled',
-        'duration': '0 min'
+        'name': 'Sin entrenamiento',
+        'time': 'No hay entrenamiento programado',
+        'duration': '0 min',
+        'id': ''
       },
     );
 
@@ -224,21 +221,30 @@ class _HomeScreenState extends State<HomeScreen> {
     final int totalPlannedWorkouts = 4; // Example target
     final double progressValue = completedWorkouts / totalPlannedWorkouts;
 
+    // Tamaños de fuente responsivos
+    double textFieldFontSize = isDesktop ? 18 : (isTablet ? 16 : 14);
+    double buttonFontSize = isDesktop ? 20 : (isTablet ? 18 : 16);
+    double socialIconSize = isDesktop ? 40 : (isTablet ? 36 : 32);
+    
+    // Ajustar espaciado vertical si es necesario
+    double adjustedVerticalSpacing = verticalSpacing;
+    if (adjustedVerticalSpacing < 15) adjustedVerticalSpacing = 15;
+    if (adjustedVerticalSpacing > 30) adjustedVerticalSpacing = 30;
+
     return Scaffold(
-        body: Container(
-      width: screenSize.width,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Color(0xFF005DC8),
-            Color(0xFF004AAE),
-          ],
+      body: Container(
+        width: screenSize.width,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF005DC8),
+              Color(0xFF004AAE),
+            ],
+          ),
         ),
-      ),
-      child: SafeArea(
-        child: Center(
+        child: SafeArea(
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             child: Padding(
@@ -253,10 +259,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Top margin
-                    SizedBox(height: verticalSpacing),
-
-                    // Header with user info and notification
+                    // Header with user info
                     Row(
                       children: [
                         CircleAvatar(
@@ -269,27 +272,33 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                         SizedBox(width: horizontalPadding * 0.2),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Nice to see you again,',
-                                style: TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: subHeaderFontSize,
-                                ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Bienvenido,',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: subHeaderFontSize,
                               ),
-                              Text(
-                                _userData['name'],
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: headerFontSize,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                            _isLoading
+                                ? const SizedBox(
+                                    width: 100,
+                                    child: LinearProgressIndicator(
+                                      color: Colors.white,
+                                      backgroundColor: Colors.transparent,
+                                    ),
+                                  )
+                                : Text(
+                                    _userData['name'],
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: headerFontSize,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                          ],
                         ),
                       ],
                     ),
@@ -309,8 +318,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Column(
                         children: [
                           Text(
-                            "Today's routine",
-                            style: TextStyle(
+                            "Rutina de Hoy",
+                            style: GoogleFonts.poppins(
                               color: Colors.white,
                               fontSize: routineTitleFontSize,
                               fontWeight: FontWeight.w600,
@@ -319,18 +328,17 @@ class _HomeScreenState extends State<HomeScreen> {
                           SizedBox(height: verticalSpacing),
                           Container(
                             width: double.infinity,
-                            height: screenSize.height * 0.15,
+                            padding: EdgeInsets.all(horizontalPadding * 0.5),
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.15),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            padding: EdgeInsets.all(horizontalPadding * 0.3),
                             child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   todaysWorkout['name'],
-                                  style: TextStyle(
+                                  style: GoogleFonts.poppins(
                                     color: Colors.white,
                                     fontSize: headerFontSize,
                                     fontWeight: FontWeight.bold,
@@ -350,14 +358,16 @@ class _HomeScreenState extends State<HomeScreen> {
                           SizedBox(height: verticalSpacing * 0.8),
                           ElevatedButton(
                             onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => WorkoutDetailScreen(
-                                    workoutName: todaysWorkout['name'],
+                              if (todaysWorkout['name'] != 'Sin entrenamiento') {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => WorkoutDetailScreen(
+                                      workoutId: todaysWorkout['id'],
+                                    ),
                                   ),
-                                ),
-                              );
+                                );
+                              }
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.white.withOpacity(0.2),
@@ -370,33 +380,10 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             ),
                             child: Text(
-                              'Start',
+                              'Comenzar',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: subHeaderFontSize,
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: verticalSpacing * 0.5),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: () {},
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF003366),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                padding: EdgeInsets.symmetric(
-                                  vertical: verticalSpacing * 0.5,
-                                ),
-                              ),
-                              child: Text(
-                                'My workouts',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: subHeaderFontSize,
-                                ),
                               ),
                             ),
                           ),
@@ -405,7 +392,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     SizedBox(height: verticalSpacing),
 
-                    // Weekly schedule section
+                    // Weekly progress
                     Container(
                       width: double.infinity,
                       decoration: BoxDecoration(
@@ -419,7 +406,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Weekly schedule header
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -427,16 +413,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Weekly schedule',
-                                    style: TextStyle(
+                                    'Progreso Semanal',
+                                    style: GoogleFonts.poppins(
                                       color: Colors.white,
                                       fontSize: headerFontSize,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
-                                  const SizedBox(height: 4),
+                                  SizedBox(height: 4),
                                   Text(
-                                    weekRangeText, // Display actual date range
+                                    weekRangeText,
                                     style: TextStyle(
                                       color: Colors.white70,
                                       fontSize: subHeaderFontSize,
@@ -447,7 +433,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               Row(
                                 children: [
                                   Text(
-                                    'Just ${totalPlannedWorkouts - completedWorkouts} workout more!',
+                                    '¡Vas por buen camino!',
                                     style: TextStyle(
                                       color: Colors.white70,
                                       fontSize: subHeaderFontSize * 0.8,
@@ -455,20 +441,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                   SizedBox(width: horizontalPadding * 0.2),
                                   SizedBox(
-                                    width:
-                                        isDesktop ? 50 : (isTablet ? 45 : 40),
-                                    height:
-                                        isDesktop ? 50 : (isTablet ? 45 : 40),
+                                    width: isDesktop ? 50 : (isTablet ? 45 : 40),
+                                    height: isDesktop ? 50 : (isTablet ? 45 : 40),
                                     child: Stack(
                                       alignment: Alignment.center,
                                       children: [
                                         CircularProgressIndicator(
                                           value: progressValue,
                                           backgroundColor: Colors.white24,
-                                          valueColor:
-                                              const AlwaysStoppedAnimation<
-                                                  Color>(
-                                            Color(0xFF7BA69A),
+                                          valueColor: const AlwaysStoppedAnimation<Color>(
+                                            Color(0xFF00E5FF),
                                           ),
                                           strokeWidth: 4,
                                         ),
@@ -489,240 +471,152 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           SizedBox(height: verticalSpacing),
 
-                          // Day cards
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: List.generate(7, (i) {
-                              // Fixed width for day cards to avoid shrinking
-                              final double cardWidth =
-                                  isDesktop ? 60 : (isTablet ? 55 : 50);
-                              final double cardHeight =
-                                  isDesktop ? 80 : (isTablet ? 70 : 60);
+                          // Weekly calendar
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: List.generate(7, (index) {
+                                final day = _weekDays[index];
+                                final isToday = day.day == _now.day &&
+                                    day.month == _now.month &&
+                                    day.year == _now.year;
+                                final hasWorkout = _workoutHistory.containsKey(
+                                    DateTime(day.year, day.month, day.day));
 
-                              // Get the day for this card
-                              final DateTime day = _weekDays[i];
-                              final bool isToday = day.day == _now.day &&
-                                  day.month == _now.month &&
-                                  day.year == _now.year;
-
-                              // Check if there's a workout for this day
-                              final bool hasWorkout =
-                                  _workoutHistory.containsKey(
-                                      DateTime(day.year, day.month, day.day));
-
-                              return Container(
-                                width: cardWidth,
-                                height: cardHeight,
-                                padding: EdgeInsets.all(
-                                  horizontalPadding * 0.1,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: isToday
-                                      ? const Color(0xFF003366)
-                                      : Colors.white.withOpacity(0.15),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      day.day
-                                          .toString(), // Display actual day number
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: subHeaderFontSize,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    Text(
-                                      DateFormat('E')
-                                          .format(day), // Mon, Tue, etc.
-                                      style: TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: subHeaderFontSize * 0.8,
-                                      ),
-                                    ),
-                                    SizedBox(height: 4),
-                                    // Show indicator for days with workouts
-                                    Container(
-                                      width: 6,
-                                      height: 6,
-                                      decoration: BoxDecoration(
-                                        color: hasWorkout
-                                            ? const Color(0xFF7BA69A)
-                                            : Colors.transparent,
-                                        shape: BoxShape.circle,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            }),
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: verticalSpacing),
-
-                    // Health Care section
-                    Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.2),
-                        ),
-                      ),
-                      padding: EdgeInsets.all(horizontalPadding * 0.5),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Health Care',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: headerFontSize,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          SizedBox(height: verticalSpacing * 0.8),
-                          Row(
-                            children: [
-                              // Day Activity Container
-                              Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: horizontalPadding * 0.2,
-                                  vertical: verticalSpacing * 0.4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF003366),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Column(
-                                  children: [
-                                    Text(
-                                      'Day Activity',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: subHeaderFontSize,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    SizedBox(height: verticalSpacing * 0.2),
-                                    Icon(
-                                      Icons.fitness_center,
-                                      color: Colors.white,
-                                      size:
-                                          isDesktop ? 35 : (isTablet ? 30 : 25),
-                                    ),
-                                    SizedBox(height: verticalSpacing * 0.2),
-                                    Text(
-                                      _nutritionData['calories']['burned']
-                                          .toString(),
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: headerFontSize,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    Text(
-                                      'kcal',
-                                      style: TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: subHeaderFontSize,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              SizedBox(width: horizontalPadding * 0.3),
-                              // Sleep Time Section
-                              Expanded(
-                                child: Container(
-                                  // Increased padding for Sleep Time card
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: horizontalPadding * 0.4,
-                                    vertical: verticalSpacing * 0.4,
-                                  ),
+                                return Container(
+                                  width: 60,
+                                  margin: const EdgeInsets.only(right: 10),
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.1),
+                                    color: isToday
+                                        ? const Color(0xFF00E5FF).withOpacity(0.2)
+                                        : Colors.transparent,
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
-                                      color: Colors.white.withOpacity(0.2),
+                                      color: isToday
+                                          ? const Color(0xFF00E5FF)
+                                          : Colors.transparent,
                                     ),
                                   ),
                                   child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Text(
-                                            'Sleep Time',
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: headerFontSize,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                          Container(
-                                            padding: EdgeInsets.symmetric(
-                                              horizontal:
-                                                  horizontalPadding * 0.1,
-                                              vertical: verticalSpacing * 0.1,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: const Color(0xFF7BA69A)
-                                                  .withOpacity(0.2),
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
-                                            ),
-                                            child: Text(
-                                              '7:30h',
-                                              style: TextStyle(
-                                                color: const Color(0xFF7BA69A),
-                                                fontSize: subHeaderFontSize,
-                                                fontWeight: FontWeight.w500,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      SizedBox(height: verticalSpacing * 0.2),
                                       Text(
-                                        "You're awesome!",
+                                        DateFormat('EEE', 'es').format(day)[0],
                                         style: TextStyle(
-                                          color: Colors.white70,
-                                          fontSize: subHeaderFontSize,
+                                          color: isToday ? Colors.white : Colors.white70,
+                                          fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
                                         ),
                                       ),
-                                      SizedBox(height: verticalSpacing * 0.3),
-                                      ClipRRect(
-                                        borderRadius: BorderRadius.circular(4),
-                                        child: LinearProgressIndicator(
-                                          value: 0.9,
-                                          backgroundColor: Colors.white24,
-                                          valueColor:
-                                              const AlwaysStoppedAnimation<
-                                                  Color>(
-                                            Color(0xFF7BA69A),
+                                      const SizedBox(height: 8),
+                                      Container(
+                                        width: 30,
+                                        height: 30,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: isToday
+                                              ? const Color(0xFF00E5FF)
+                                              : Colors.transparent,
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            '${day.day}',
+                                            style: TextStyle(
+                                              color: isToday ? Colors.black : Colors.white,
+                                              fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
+                                            ),
                                           ),
-                                          minHeight: verticalSpacing * 0.2,
                                         ),
                                       ),
+                                      const SizedBox(height: 8),
+                                      if (hasWorkout)
+                                        Container(
+                                          width: 6,
+                                          height: 6,
+                                          decoration: const BoxDecoration(
+                                            color: Color(0xFF00E5FF),
+                                            shape: BoxShape.circle,
+                                          ),
+                                        )
+                                      else
+                                        const SizedBox(height: 6),
                                     ],
                                   ),
-                                ),
-                              ),
-                            ],
+                                );
+                              }),
+                            ),
                           ),
                         ],
                       ),
                     ),
                     SizedBox(height: verticalSpacing),
+
+                    // Recent activities
+                    if (_recentWorkouts.isNotEmpty) ...[
+                      Text(
+                        'Actividades Recientes',
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: headerFontSize,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      SizedBox(height: verticalSpacing * 0.5),
+                      ..._recentWorkouts.take(3).map((workout) => Card(
+                        color: Colors.white.withOpacity(0.1),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(
+                            color: Colors.white.withOpacity(0.2),
+                          ),
+                        ),
+                        child: ListTile(
+                          leading: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF00E5FF).withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.directions_run,
+                              color: Color(0xFF00E5FF),
+                            ),
+                          ),
+                          title: Text(
+                            workout['name'],
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          subtitle: Text(
+                            '${workout['date']} • ${workout['time']}',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: subHeaderFontSize * 0.9,
+                            ),
+                          ),
+                          trailing: Text(
+                            workout['duration'],
+                            style: const TextStyle(
+                              color: Color(0xFF00E5FF),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => WorkoutDetailScreen(
+                                  workoutId: workout['id'],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      )).toList(),
+                      SizedBox(height: verticalSpacing),
+                    ],
                   ],
                 ),
               ),
@@ -730,6 +624,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-    ));
+    );
   }
 }

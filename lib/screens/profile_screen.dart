@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'login_screen.dart';
 import 'profile_settings_screen.dart';
 import 'app_settings_screen.dart';
-import '../services/data_service.dart'; // Add this import
+import '../providers/user_provider.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -12,7 +14,9 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  String _selectedLanguage = 'English'; // Add this variable declaration
+  String _selectedLanguage = 'English';
+  bool _isLoading = false;
+  String? _errorMessage;
 
   // Move dialog methods here, outside build()
   void _showLanguageDialog(BuildContext context) {
@@ -61,27 +65,92 @@ class _ProfileScreenState extends State<ProfileScreen> {
         language,
         style: const TextStyle(color: Colors.white),
       ),
-      trailing: _selectedLanguage == language // Modified this line
+      trailing: _selectedLanguage == language
           ? const Icon(Icons.check, color: Colors.white)
           : null,
       onTap: () {
         setState(() {
-          _selectedLanguage = language; // Add this line
+          _selectedLanguage = language;
         });
+        _savePreferredLanguage(language);
         Navigator.pop(context);
-        // You can add your localization logic here
+        // Aquí se podría implementar la lógica de cambio de idioma
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Idioma cambiado a $language')),
+        );
       },
     );
   }
 
   @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+    _loadPreferredLanguage();
+  }
+
+  Future<void> _loadUserData() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final success = await userProvider.loadUserProfile();
+      
+      if (!success && mounted) {
+        setState(() {
+          _errorMessage = userProvider.error ?? 'No se pudo cargar el perfil';
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Error al cargar datos: $e';
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadPreferredLanguage() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedLanguage = prefs.getString('preferred_language');
+      
+      if (savedLanguage != null && mounted) {
+        setState(() {
+          _selectedLanguage = savedLanguage;
+        });
+      }
+    } catch (e) {
+      print('Error al cargar preferencia de idioma: $e');
+    }
+  }
+
+  Future<void> _savePreferredLanguage(String language) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('preferred_language', language);
+    } catch (e) {
+      print('Error al guardar preferencia de idioma: $e');
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Get user data from DataService
-    final userData = DataService.getUserProfile();
+    // Usar el provider para obtener datos del usuario
+    final userProvider = Provider.of<UserProvider>(context);
 
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
@@ -92,13 +161,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
         child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
+          child: _isLoading
+              ? const Center(
+                  child: CircularProgressIndicator(color: Colors.white),
+                )
+              : _errorMessage != null
+                  ? _buildErrorView()
+                  : Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Column(
               children: [
                 // Profile Section - Using Icon instead of missing image
-                CircleAvatar(
-                  radius: 50,
+                userProvider.user?.profilePicture != null && userProvider.user!.profilePicture!.isNotEmpty
+                    ? CircleAvatar(
+                        radius: 50,
+                        backgroundImage: NetworkImage(userProvider.user!.profilePicture!),
+                      )
+                    : CircleAvatar(
+                        radius: 50,
                   backgroundColor: Colors.white24,
                   child: Icon(
                     Icons.person,
@@ -108,7 +188,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 SizedBox(height: 16),
                 Text(
-                  userData['name'],
+                  userProvider.user?.name ?? 'Usuario',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 24,
@@ -116,7 +196,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 Text(
-                  userData['email'],
+                  userProvider.user?.email ?? 'email@ejemplo.com',
                   style: TextStyle(
                     color: Colors.white70,
                     fontSize: 16,
@@ -130,13 +210,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   title: const Text('Profile',
                       style: TextStyle(color: Colors.white)),
                   trailing: Icon(Icons.arrow_forward_ios, color: Colors.white),
-                  onTap: () => Navigator.push(
+                  onTap: () async {
+                    final result = await Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => ProfileSettingsScreen())),
+                        builder: (context) => const ProfileSettingsScreen(),
+                      ),
+                    );
+                    
+                    // Si se actualizó el perfil, recargar los datos
+                    if (result == true) {
+                      _loadUserData();
+                    }
+                  },
                 ),
                 Divider(color: Colors.white24),
-                // Add this method to _ProfileScreenState class
                 ListTile(
                   leading: const Icon(Icons.language, color: Colors.white),
                   title: const Text('Language',
@@ -160,10 +248,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   title:
                       Text('Settings', style: TextStyle(color: Colors.white)),
                   trailing: Icon(Icons.arrow_forward_ios, color: Colors.white),
-                  onTap: () => Navigator.push(
+                  onTap: () {
+                    Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => AppSettingsScreen())),
+                        builder: (context) => const AppSettingsScreen(),
+                      ),
+                    );
+                  },
                 ),
                 Divider(color: Colors.white24),
                 ListTile(
@@ -174,8 +266,47 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       MaterialPageRoute(builder: (context) => LoginScreen())),
                 ),
               ],
+                  ),
+                ),
+        ),
+      ),
+      floatingActionButton: _errorMessage != null
+          ? FloatingActionButton(
+              onPressed: _loadUserData,
+              child: const Icon(Icons.refresh),
+            )
+          : null,
+    );
+  }
+  
+  Widget _buildErrorView() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.error_outline,
+              color: Colors.white,
+              size: 60,
             ),
-          ),
+            const SizedBox(height: 16),
+            Text(
+              _errorMessage ?? 'Error desconocido',
+              style: const TextStyle(color: Colors.white, fontSize: 16),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: _loadUserData,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: const Color.fromARGB(255, 0, 93, 200),
+              ),
+              child: const Text('Reintentar'),
+            ),
+          ],
         ),
       ),
     );

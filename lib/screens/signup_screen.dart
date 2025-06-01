@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'login_screen.dart';
 import 'dart:ui';
 
@@ -18,12 +19,14 @@ class SignupScreen extends StatefulWidget {
 }
 
 class _SignupScreenState extends State<SignupScreen> {
+  final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _passwordController2 = TextEditingController();
 
   @override
   void dispose() {
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _passwordController2.dispose();
@@ -36,12 +39,12 @@ class _SignupScreenState extends State<SignupScreen> {
     final Size screenSize = MediaQuery.of(context).size;
     final bool isTablet = screenSize.width > 600;
     final bool isDesktop = screenSize.width > 1200;
-    
+
     // Calculate responsive values
     final double titleFontSize = isDesktop ? 60 : (isTablet ? 54 : 48);
     final double horizontalPadding = isDesktop ? 80 : (isTablet ? 40 : 16);
     final double verticalSpacing = isDesktop ? 50 : (isTablet ? 40 : 30);
-    
+
     return Scaffold(
       body: LayoutBuilder(
         builder: (context, constraints) {
@@ -74,7 +77,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           SizedBox(height: verticalSpacing),
-                          
+
                           // Title
                           Center(
                             child: Text(
@@ -87,7 +90,7 @@ class _SignupScreenState extends State<SignupScreen> {
                             ),
                           ),
                           SizedBox(height: verticalSpacing),
-                          
+
                           // Sign Up Text
                           Row(
                             children: [
@@ -95,13 +98,22 @@ class _SignupScreenState extends State<SignupScreen> {
                                 'Sign Up',
                                 style: TextStyle(
                                   color: Colors.white,
-                                  fontSize: isDesktop ? 42 : (isTablet ? 38 : 34),
+                                  fontSize:
+                                      isDesktop ? 42 : (isTablet ? 38 : 34),
                                   letterSpacing: 1,
                                 ),
                               ),
                             ],
                           ),
                           SizedBox(height: verticalSpacing * 0.7),
+
+                          // Nombre field
+                          _buildTextField(
+                            controller: _nameController,
+                            hintText: 'Name',
+                            keyboardType: TextInputType.name,
+                          ),
+                          SizedBox(height: 30),
 
                           // Email field
                           _buildTextField(
@@ -118,7 +130,7 @@ class _SignupScreenState extends State<SignupScreen> {
                             isPassword: true,
                           ),
                           SizedBox(height: 30),
-                          
+
                           // Confirm Password field
                           _buildTextField(
                             controller: _passwordController2,
@@ -127,7 +139,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           ),
                           SizedBox(height: verticalSpacing),
 
-                           // Sign Up button
+                          // Sign Up button
                           _buildSignUpButton(context),
                           SizedBox(height: 40),
 
@@ -180,7 +192,8 @@ class _SignupScreenState extends State<SignupScreen> {
           borderRadius: BorderRadius.circular(15),
         ),
         focusedBorder: OutlineInputBorder(
-          borderSide: const BorderSide(color: Color.fromARGB(255, 0, 85, 77), width: 1.5),
+          borderSide: const BorderSide(
+              color: Color.fromARGB(255, 0, 85, 77), width: 1.5),
           borderRadius: BorderRadius.circular(15),
         ),
       ),
@@ -227,7 +240,7 @@ class _SignupScreenState extends State<SignupScreen> {
         ],
       );
     }
-    
+
     // For mobile, keep the original row layout
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -238,27 +251,27 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 
-
   // Sign Up button
   Widget _buildSignUpButton(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    
+
     return Center(
       child: ElevatedButton(
         onPressed: () async {
           // Basic validation
-          if (_emailController.text.isEmpty ||
+          if (_nameController.text.isEmpty ||
+              _emailController.text.isEmpty ||
               _passwordController.text.isEmpty ||
               _passwordController2.text.isEmpty) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Please fill in all fields'),
+                content: Text('Por favor, completa todos los campos'),
                 backgroundColor: Colors.red,
               ),
             );
             return;
           }
-          
+
           // Check if passwords match
           if (_passwordController.text != _passwordController2.text) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -269,14 +282,19 @@ class _SignupScreenState extends State<SignupScreen> {
             );
             return;
           }
-          
+
+          // Guardar el nombre del usuario en las preferencias compartidas
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('user_name', _nameController.text.trim());
+
           // Attempt to register the user
           final success = await authProvider.register(
             _emailController.text.trim(),
             _passwordController.text,
-            'New User', // Nombre temporal, se actualizará en los siguientes pasos
+            _nameController.text
+                .trim(), // Usar el nombre ingresado por el usuario
           );
-          
+
           if (success && mounted) {
             // Navigate to the first step of the registration process
             Navigator.push(
@@ -313,10 +331,10 @@ class _SignupScreenState extends State<SignupScreen> {
   Widget _buildSocialButton(String assetPath) {
     return InkWell(
       child: Container(
-        margin: const EdgeInsets.all(8), 
-        padding: const EdgeInsets.all(10),  
+        margin: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),  
+          borderRadius: BorderRadius.circular(10),
           color: Colors.white,
           boxShadow: [
             BoxShadow(
@@ -329,7 +347,7 @@ class _SignupScreenState extends State<SignupScreen> {
         ),
         child: Image.asset(
           assetPath,
-          height: 35,  // Increased icon size
+          height: 35, // Increased icon size
           errorBuilder: (context, error, stackTrace) =>
               const Icon(Icons.error, color: Colors.red, size: 35),
         ),
@@ -339,7 +357,6 @@ class _SignupScreenState extends State<SignupScreen> {
       },
     );
   }
-
 
   // Login link widget
   Widget _buildLoginLink(BuildContext context) {
@@ -359,12 +376,16 @@ class _SignupScreenState extends State<SignupScreen> {
                 context,
                 PageRouteBuilder(
                   transitionDuration: Duration(milliseconds: 600),
-                  pageBuilder: (context, animation, secondaryAnimation) => LoginScreen(),
-                  transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                  pageBuilder: (context, animation, secondaryAnimation) =>
+                      LoginScreen(),
+                  transitionsBuilder:
+                      (context, animation, secondaryAnimation, child) {
                     return FadeTransition(
                       opacity: animation,
                       child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: animation.value * 5, sigmaY: animation.value * 5),
+                        filter: ImageFilter.blur(
+                            sigmaX: animation.value * 5,
+                            sigmaY: animation.value * 5),
                         child: child,
                       ),
                     );

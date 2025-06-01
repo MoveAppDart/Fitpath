@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'signup_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/auth_provider.dart';
+import 'home_screen.dart';
+import './signup_screen.dart';
+
+// Mueve el enum SocialLogin aquí, a nivel superior (fuera de la clase)
+enum SocialLogin { google, apple }
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -12,9 +16,10 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  bool rememberMe = false;
+  final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -23,368 +28,361 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {    
-    final Size screenSize = MediaQuery.of(context).size;
-    final bool isTablet = screenSize.width > 600;
-    final bool isDesktop = screenSize.width > 1200;
-    
-    // Calcul dels valors responsive
-    final double titleFontSize = isDesktop ? 90 : (isTablet ? 72 : 60); // Larger base values
-    final double horizontalPadding = isDesktop ? 80 : (isTablet ? 40 : 16);
-    final double verticalSpacing = isDesktop ? 50 : (isTablet ? 40 : 30);
-    
-    return Scaffold(
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          return Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Color.fromARGB(255, 0, 93, 200),
-                  Color.fromARGB(255, 1, 69, 148),
-                  Color.fromARGB(255, 1, 51, 109),
-                  Color.fromARGB(255, 2, 45, 96),
-                ],
-              ),
-            ),
-            child: SafeArea(
-              child: Center(
-                child: SingleChildScrollView(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: horizontalPadding,
-                      vertical: 16.0,
-                    ),
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxWidth: isDesktop ? 600 : double.infinity,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SizedBox(height: 40),
-                          
-                          // Title
-                          Center(
-                            child: Text(
-                              'FitPath',
-                              style: GoogleFonts.genos(
-                                fontSize: titleFontSize,
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: 60),
-                          
-                          // Login Text
-                          Row(
-                            children: [
-                              Text(
-                                'Login',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: isDesktop ? 42 : (isTablet ? 38 : 34),
-                                  letterSpacing: 1,
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 30),
-
-                          // Email field
-                          _buildTextField(
-                            controller: _emailController,
-                            hintText: 'example@example.com',
-                          ),
-                          const SizedBox(height: 30),
-
-                          // Password field
-                          _buildTextField(
-                            controller: _passwordController,
-                            hintText: 'Password',
-                            isPassword: true,
-                          ),
-                          SizedBox(height: 30),
-
-                          // Login button
-                          _buildLoginButton(context),
-                          const SizedBox(height: 40),
-
-                          // OR divider
-                          _buildOrDivider(),
-                          SizedBox(height: 40),
-
-                          // Social login buttons
-                          _buildSocialLoginButtons(isTablet),
-                          SizedBox(height: 25),
-
-                          // Sign up link
-                          _buildSignUpLink(context),
-                          SizedBox(height: 20),  // Add spacing at the bottom
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  // Reusable text field widget
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String hintText,
-    bool isPassword = false,
-  }) {
-    return TextField(
-      controller: controller,
-      obscureText: isPassword,
-      style: const TextStyle(color: Colors.black),
-      decoration: InputDecoration(
-        contentPadding: const EdgeInsets.all(12.5),
-        hintText: hintText,
-        hintStyle: const TextStyle(color: Color.fromARGB(170, 255, 253, 253)),
-        filled: true,
-        fillColor: const Color.fromARGB(135, 255, 255, 255),
-        enabledBorder: OutlineInputBorder(
-          borderSide: const BorderSide(
-            color: Color.fromARGB(170, 255, 255, 255),
-          ),
-          borderRadius: BorderRadius.circular(15),
-        ),
-      ),
-    );
-  }
-
-  // Login button widget
-  Widget _buildLoginButton(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    
-    return Center(
-      child: ElevatedButton(
-        onPressed: () async {
-          if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Please enter both email and password'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          } else {
-            final success = await authProvider.login(
-              _emailController.text.trim(),
-              _passwordController.text,
-            );
-            
-            if (!success && mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(authProvider.errorMessage),
-                  backgroundColor: Colors.red,
-                  duration: const Duration(seconds: 4),
-                  action: SnackBarAction(
-                    label: 'OK',
-                    textColor: Colors.white,
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                    },
-                  ),
-                ),
-              );
-            }
-            // No need to navigate - the Consumer in main.dart will handle navigation
-          }
-        },
-        style: ElevatedButton.styleFrom(
-          foregroundColor: Colors.white,
-          backgroundColor: const Color.fromARGB(148, 0, 0, 0),
-          minimumSize: const Size(260, 50),
-        ),
-        child: Consumer<AuthProvider>(
-          builder: (context, authProvider, child) {
-            return authProvider.isLoading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2,
-                    ),
-                  )
-                : const Text(
-                    'Login',
-                    style: TextStyle(fontSize: 16),
-                  );
-          },
-        ),
-      ),
-    );
-  }
-
-  // OR divider widget
-  Widget _buildOrDivider() {
-    return const Row(
-      children: [
-        Expanded(
-          child: Divider(
-            color: Colors.white,
-            thickness: 1,
-          ),
-        ),
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 10.0),
-          child: Text(
-            'OR',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 15,
-            ),
-          ),
-        ),
-        Expanded(
-          child: Divider(
-            color: Colors.white,
-            thickness: 1,
-          ),
-        ),
-      ],
-    );
-  }
-
-  // Social login buttons widget
-  Widget _buildSocialLoginButtons(bool isTablet) {
-    // For tablet and above, show buttons side by side
-    if (isTablet) {
-      return Row(
-        children: [
-          Expanded(child: _buildGoogleButton()),
-          const SizedBox(width: 70),
-          Expanded(child: _buildAppleButton()),
-        ],
-      );
+  Future<void> _tryLogin() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
     }
     
-    // For mobile, stack buttons vertically
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    setState(() {
+      _isLoading = true;
+    });
+    
+    try {
+      final success = await authProvider.login(
+        _emailController.text.trim(),
+        _passwordController.text,
+      );
+      
+      if (!mounted) return;
+
+      if (success) {
+        if (!mounted) return;
+        // Navigate to home screen and remove all previous routes
+        Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+          (route) => false, // This removes all previous routes
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(authProvider.errorMessage ?? 'Error signing in. Please try again.'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('An unexpected error occurred. Please try again.'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
+    final screenWidth = screenSize.width;
+    final screenHeight = screenSize.height;
+    final orientation = MediaQuery.of(context).orientation;
+
+    double titleFontSize = screenWidth * 0.1;
+    if (titleFontSize > 60) titleFontSize = 60;
+    if (titleFontSize < 36) titleFontSize = 36;
+
+    double subtitleFontSize = screenWidth * 0.07;
+    if (subtitleFontSize > 34) subtitleFontSize = 34;
+    if (subtitleFontSize < 22) subtitleFontSize = 22;
+    
+    double textFieldFontSize = screenWidth * 0.04;
+    if (textFieldFontSize > 18) textFieldFontSize = 18;
+    if (textFieldFontSize < 14) textFieldFontSize = 14;
+
+    double buttonVPadding = screenHeight * 0.02;
+    if (buttonVPadding > 20) buttonVPadding = 20;
+    if (buttonVPadding < 12) buttonVPadding = 12;
+
+    double horizontalPadding = screenWidth * 0.08; 
+    if (screenWidth > 800) horizontalPadding = screenWidth * 0.2; 
+    
+    double verticalPadding = screenHeight * 0.05;
+
+    return Scaffold(
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF005DC8), 
+              Color(0xFF014594),
+              Color(0xFF01336D),
+              Color(0xFF001f4a), 
+            ],
+            stops: [0.0, 0.3, 0.6, 1.0],
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: verticalPadding),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 500),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      SizedBox(height: screenHeight * 0.05),
+                      Text(
+                        'FitPath',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.genos(
+                          fontSize: titleFontSize,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                      SizedBox(height: screenHeight * 0.03),
+                      Text(
+                        'Login',
+                        textAlign: TextAlign.left,
+                        style: GoogleFonts.poppins(
+                          fontSize: subtitleFontSize,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      SizedBox(height: screenHeight * 0.04),
+                      _buildEmailField(textFieldFontSize),
+                      SizedBox(height: screenHeight * 0.025),
+                      _buildPasswordField(textFieldFontSize),
+                      SizedBox(height: screenHeight * 0.04),
+                      _buildLoginButton(buttonVPadding),
+                      SizedBox(height: screenHeight * 0.03),
+                      _buildOrDivider(),
+                      SizedBox(height: screenHeight * 0.025),
+                      _buildSocialLoginSection(orientation, screenWidth),
+                      SizedBox(height: screenHeight * 0.04),
+                      _buildSignUpLink(context),
+                      SizedBox(height: screenHeight * 0.05),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmailField(double fontSize) {
+    return TextFormField(
+      controller: _emailController,
+      style: TextStyle(color: Colors.white, fontSize: fontSize),
+      keyboardType: TextInputType.emailAddress,
+      decoration: InputDecoration(
+        labelText: 'Email',
+        labelStyle: TextStyle(color: Colors.white70, fontSize: fontSize * 0.9),
+        hintText: 'tu@email.com',
+        hintStyle: TextStyle(color: Colors.white54, fontSize: fontSize * 0.9),
+        prefixIcon: const Icon(Icons.email_outlined, color: Colors.white70),
+        filled: true,
+        fillColor: Colors.white.withOpacity(0.15),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.white, width: 1.5),
+        ),
+        errorStyle: TextStyle(color: Colors.yellowAccent[700], fontSize: fontSize * 0.8),
+      ),
+      validator: (value) {
+        if (value == null || value.trim().isEmpty) {
+          return 'Por favor, ingresa tu email.';
+        }
+        if (!RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+").hasMatch(value)) {
+          return 'Por favor, ingresa un email válido.';
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _buildPasswordField(double fontSize) {
+    return TextFormField(
+      controller: _passwordController,
+      obscureText: true,
+      style: TextStyle(color: Colors.white, fontSize: fontSize),
+      decoration: InputDecoration(
+        labelText: 'Password',
+        labelStyle: TextStyle(color: Colors.white70, fontSize: fontSize * 0.9),
+        hintText: 'Ingresa tu contraseña',
+        hintStyle: TextStyle(color: Colors.white54, fontSize: fontSize * 0.9),
+        prefixIcon: const Icon(Icons.lock_outline, color: Colors.white70),
+        filled: true,
+        fillColor: Colors.white.withOpacity(0.15),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.white, width: 1.5),
+        ),
+        errorStyle: TextStyle(color: Colors.yellowAccent[700], fontSize: fontSize * 0.8),
+      ),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Por favor, ingresa tu contraseña.';
+        }
+        return null;
+      },
+    );
+  }
+
+  Widget _buildLoginButton(double verticalPadding) {
+    return ElevatedButton(
+      onPressed: _isLoading ? null : _tryLogin,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.white,
+        foregroundColor: const Color(0xFF01336D),
+        padding: EdgeInsets.symmetric(vertical: verticalPadding),
+        textStyle: GoogleFonts.poppins(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        elevation: 5,
+      ),
+      child: _isLoading
+          ? const SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(
+                strokeWidth: 3,
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF01336D)),
+              ),
+            )
+          : const Text('LOGIN'),
+    );
+  }
+
+  Widget _buildOrDivider() {
+    return Row(
       children: [
-        _buildGoogleButton(),
-        const SizedBox(height: 40),
-        _buildAppleButton(),
+        const Expanded(child: Divider(color: Colors.white54, thickness: 0.5)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12.0),
+          child: Text(
+            'OR',
+            style: GoogleFonts.poppins(color: Colors.white70, fontSize: 12),
+          ),
+        ),
+        const Expanded(child: Divider(color: Colors.white54, thickness: 0.5)),
       ],
     );
   }
 
-  // Google login button
-  Widget _buildGoogleButton() {
-    return Center(
-      child: OutlinedButton.icon(
-        onPressed: () {},
-        icon: Image.asset(
-          'assets/google_logo.png',
-          width: 18,
-          height: 18,
-          errorBuilder: (context, error, stackTrace) =>
-              const Icon(Icons.error, color: Colors.red),
+  Widget _buildSocialLoginSection(Orientation orientation, double screenWidth) {
+    bool useRow = (orientation == Orientation.landscape && screenWidth > 600) || screenWidth > 450;
+
+    List<Widget> socialButtons = [
+      Expanded(child: _buildSocialButton(SocialLogin.google)),
+      SizedBox(width: useRow ? 16 : 0, height: useRow ? 0 : 16),
+      Expanded(child: _buildSocialButton(SocialLogin.apple)),
+    ];
+    
+    return useRow
+      ? Row(children: socialButtons)
+      : Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: socialButtons);
+  }
+
+  Widget _buildSocialButton(SocialLogin type) {
+    void socialLoginHandler() {
+      print('Login with ${type.name}');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text('${type.name} login not implemented yet.'),
+            backgroundColor: Colors.blueGrey),
+      );
+    }
+
+    IconData iconData = type == SocialLogin.google ? Icons.g_mobiledata : Icons.apple;
+    String label = type == SocialLogin.google ? 'Continue with Google' : 'Continue with Apple';
+    Color iconColor = type == SocialLogin.google ? Colors.red.shade700 : Colors.black87;
+    Color buttonTextColor = Colors.black87;
+
+    return ElevatedButton.icon(
+      onPressed: socialLoginHandler,
+      icon: Icon(iconData, color: iconColor, size: 20),
+      label: Text(
+        label,
+        style: GoogleFonts.poppins(
+          color: buttonTextColor,
+          fontWeight: FontWeight.w500,
+          fontSize: 14,
         ),
-        label: const Text(
-          'Continue with Google',
-          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-          
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.white,
+        foregroundColor: buttonTextColor,
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
         ),
-        style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.all(18),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30),
-          ),
-          side: const BorderSide(color: Colors.black12), 
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black,
-        ),
+        side: BorderSide(color: Colors.grey[300]!),
+        elevation: 1,
+        minimumSize: const Size(double.infinity, 48),
       ),
     );
   }
 
-  // Apple login button
-  Widget _buildAppleButton() {
-    return Center(
-      child: OutlinedButton.icon(
-        onPressed: () {},
-        icon: Image.asset(
-          'assets/apple_logo.png',
-          width: 19,
-          height: 19,
-          errorBuilder: (context, error, stackTrace) =>
-              const Icon(Icons.error, color: Colors.red),
-        ),
-        label: const Text(
-          'Continue with Apple',
-          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-        ),
-        style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.all(18),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30),
-          ),
-          side: const BorderSide(color: Colors.black12), // Fixed opacity
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black,
-        ),
-      ),
-    );
-  }
-
-  // Sign up link widget
   Widget _buildSignUpLink(BuildContext context) {
-    return Center(
-      child: TextButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            PageRouteBuilder(
-              pageBuilder: (context, animation, secondaryAnimation) =>
-                  const SignupScreen(),
-              transitionsBuilder:
-                  (context, animation, secondaryAnimation, child) {
-                const begin = Offset(1.0, 0.0);
-                const end = Offset.zero;
-                const curve = Curves.ease;
-
-                var tween = Tween(begin: begin, end: end)
-                    .chain(CurveTween(curve: curve));
-
-                return SlideTransition(
-                  position: animation.drive(tween),
-                  child: child,
-                );
-              },
-            ),
-          );
-        },
-        child: Column(
-          children: const [
-            Text(
-              'Don\'t Have An Account?',
-              style: TextStyle(color: Colors.white),
-            ),
-            SizedBox(height: 8),
-            Text(
-              'Sign Up Here!',
-              style: TextStyle(
+    return Padding(
+      padding: const EdgeInsets.only(top: 16.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            "Don't have an account? ",
+            style: GoogleFonts.poppins(color: Colors.white70, fontSize: 14),
+          ),
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SignupScreen()),
+              );
+            },
+            child: Text(
+              'Sign Up',
+              style: GoogleFonts.poppins(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
+                fontSize: 14,
+                decoration: TextDecoration.underline,
+                decorationColor: Colors.white,
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

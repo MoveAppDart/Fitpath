@@ -1,8 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:FitPath/screens/register/step1_signup.dart';
-import 'package:FitPath/screens/register/step3_signup.dart';
+import 'step1_signup.dart';
+import 'step3_signup.dart';
 
 class SecondStepSignup extends StatefulWidget {
   const SecondStepSignup({super.key});
