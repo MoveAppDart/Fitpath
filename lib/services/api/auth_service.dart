@@ -1,15 +1,26 @@
 
 import 'dart:async';
 
-/// Interface defining the required methods for the authentication service
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:fitpath/config/env_config.dart';
 import 'package:fitpath/models/auth_success_response.dart';
 import 'package:fitpath/models/auth_error_response.dart';
 
-class AuthService {
+/// Interface defining the required methods for the authentication service
+abstract class AuthService {
   final Dio _dio;
   String? _accessToken;
+  
+  /// Get the Dio instance used for HTTP requests
+  Dio get dio => _dio;
+  
+  /// Get the current access token
+  String? get accessToken => _accessToken;
+  
+  /// Set the access token
+  @protected
+  void setAccessToken(String? token) => _accessToken = token;
 
   AuthService([Dio? dio]) : _dio = dio ?? Dio(BaseOptions(baseUrl: EnvConfig.apiBaseUrl));
 
@@ -47,11 +58,18 @@ class AuthService {
     }
   }
 
-  Future<AuthSuccessResponse?> register(String email, String password, String name) async {
+  Future<AuthSuccessResponse> register({
+    required String email,
+    required String password,
+    required String name,
+    required String lastName,
+    required int age,
+    required String gender,
+  }) async {
     try {
       final response = await _dio.post(
         '/register',
-        data: {'email': email, 'password': password, 'name': name},
+        data: {'email': email, 'password': password, 'name': name, 'lastName': lastName, 'age': age, 'gender': gender},
       );
       if (response.data['success'] == true) {
         final authResp = AuthSuccessResponse.fromJson(response.data);
@@ -68,10 +86,20 @@ class AuthService {
     }
   }
 
-  String? get accessToken => _accessToken;
+  
+  /// Refreshes the authentication token using the refresh token
+  /// Returns true if the token was refreshed successfully, false otherwise
+  Future<bool> refreshToken();
 
-  // Stubs temporales para evitar errores de referencia
-  Future<void> logout() async {}
-  Future<bool> isLoggedIn() async => _accessToken != null;
-  Future<Map<String, dynamic>?> getUserProfile() async { return null; }
+  Future<void> logout();
+  Future<bool> isLoggedIn();
+  Future<Map<String, dynamic>?> getUserProfile();
+  
+  /// Updates the user's profile information
+  Future<bool> updateProfile({
+    required String name,
+    required String lastName,
+    required int age,
+    required String gender,
+  });
 }

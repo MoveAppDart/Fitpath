@@ -27,6 +27,31 @@ class ApiResponse<T> {
     this.statusCode,
   });
 
+  /// Creates a successful ApiResponse with the given data
+  factory ApiResponse.success(T data, {String message = 'Success'}) {
+    return ApiResponse<T>(
+      success: true,
+      data: data,
+      message: message,
+    );
+  }
+
+  /// Creates an error ApiResponse with the given message and optional error details
+  factory ApiResponse.error({
+    required String message,
+    String? errorType,
+    String? errorCode,
+    int? statusCode,
+  }) {
+    return ApiResponse<T>(
+      success: false,
+      message: message,
+      errorType: errorType,
+      errorCode: errorCode,
+      statusCode: statusCode,
+    );
+  }
+
   /// Crea una instancia de ApiResponse a partir de un Map JSON
   /// 
   /// [json] El mapa JSON de la respuesta

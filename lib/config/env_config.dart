@@ -1,85 +1,164 @@
 class EnvConfig {
-  static const String apiBaseUrl = 'http://10.0.2.2:3000';
-}
+  // Base URL configuration
+  static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    // Usar 10.0.2.2 para emulador Android, localhost para iOS o web
+    // Use 10.0.2.2 for Android emulator, localhost for iOS or web
     defaultValue: 'http://10.0.2.2:3000',
   );
-  // Para Flutter web o iOS puedes usar: 'http://localhost:3000'
+  
+  // For web or iOS you can use: 'http://localhost:3000'
 
-  // Indica si la aplicación está en modo producción
+  // Indicates if the app is in production mode
   static const bool isProduction = bool.fromEnvironment(
     'IS_PRODUCTION',
     defaultValue: false,
   );
 
-  // Tiempo de expiración del token en minutos
+  // Token expiration time in minutes
   static const int tokenExpirationMinutes = int.fromEnvironment(
     'TOKEN_EXPIRATION_MINUTES',
-    defaultValue: 60,
+    defaultValue: 60 * 24 * 7, // 1 week by default
   );
 
-  // Habilitar logs detallados de peticiones API
+  // Enable detailed API request logs
   static const bool logRequests = bool.fromEnvironment(
     'LOG_REQUESTS',
     defaultValue: true,
   );
 
-  // Ya no usamos versionado ni prefijo /api/
+  // Base path for API (empty for no versioning)
   static String get basePath => '';
 
-  // Endpoints de Autenticación
-  static String get loginEndpoint => '/login';
-  static String get registerEndpoint => '/register';
-  static String get logoutEndpoint => '/logout';
-  static String get refreshTokenEndpoint =>
-      '/auth/refresh'; // Mantenemos auth/ para el refresh si es necesario
+  // ========== Authentication Endpoints ==========
+  static String get loginEndpoint => '/auth/login';
+  static String get registerEndpoint => '/auth/register';
+  static String get logoutEndpoint => '/auth/logout';
+  static String get refreshTokenEndpoint => '/auth/refresh';
+  static String get verifyEmailEndpoint => '/auth/verify-email';
+  static String get requestPasswordResetEndpoint => '/auth/forgot-password';
+  static String get resetPasswordEndpoint => '/auth/reset-password';
 
-  // Endpoints de Perfil
-  static String get profileEndpoint => '/profile';
-  static String get userStatsEndpoint => '/profile/stats';
-  static String get userPreferencesEndpoint => '/profile/preferences';
-
-  // Alias para compatibilidad con código existente
+  // ========== User & Profile Endpoints ==========
+  static String get profileEndpoint => '/users/me';
+  static String get userStatsEndpoint => '/users/me/stats';
+  static String get userPreferencesEndpoint => '/users/me/preferences';
+  
+  // Alias for backward compatibility
   static String get profileStatsEndpoint => userStatsEndpoint;
   static String get profilePreferencesEndpoint => userPreferencesEndpoint;
 
-  // Endpoints de Entrenamientos (sin versionado)
+  // ========== Workout & Exercise Endpoints ==========
   static String get workoutsEndpoint => '/workouts';
-  static String get routinesEndpoint => '/routines';
+  static String get workoutTemplatesEndpoint => '/workouts/templates';
+  static String get workoutLogsEndpoint => '/workouts/logs';
+  
   static String get exercisesEndpoint => '/exercises';
+  static String get exerciseCategoriesEndpoint => '/exercises/categories';
+  static String get exerciseEquipmentEndpoint => '/exercises/equipment';
+  
+  static String get routinesEndpoint => '/routines';
+  static String get routineTemplatesEndpoint => '/routines/templates';
+  
+  // ========== Calendar & Scheduling ==========
   static String get calendarEndpoint => '/calendar';
-
-  // Endpoints de Seguimiento (sin versionado)
-  static String get weightLogsEndpoint => '/weight-logs';
-
-  // Endpoints de Estadísticas (sin versionado)
+  static String get calendarEventsEndpoint => '/calendar/events';
+  static String get scheduleEndpoint => '/schedule';
+  
+  // ========== Stats & Analytics ==========
   static String get statsEndpoint => '/stats';
-  static String get weightEvolutionEndpoint =>
-      '$statsEndpoint/weight-evolution';
-  static String personalBestEndpoint(String exerciseId) =>
-      '$statsEndpoint/exercises/$exerciseId/personal-best';
-  static String get workoutFrequencyEndpoint =>
-      '$statsEndpoint/workout-frequency';
-
-  // Endpoints de WGER
-  static String getwgerSearchEndpoint => '$exercisesEndpoint/search';
-  static String wgerExerciseEndpoint(int id) => '$exercisesEndpoint/$id';
+  static String get statsWeightEndpoint => '$statsEndpoint/weight';
+  static String get statsWorkoutsEndpoint => '$statsEndpoint/workouts';
+  static String get statsExercisesEndpoint => '$statsEndpoint/exercises';
+  static String get statsMeasurementsEndpoint => '$statsEndpoint/measurements';
+  static String get weightEvolutionEndpoint => '$statsEndpoint/weight-evolution';
+  static String get workoutFrequencyEndpoint => '$statsEndpoint/workout-frequency';
+  static String personalBestEndpoint(String exerciseId) => 
+      '$exercisesEndpoint/$exerciseId/personal-best';
+      
+  // Weight tracking
+  static String get weightLogsEndpoint => '/weight-logs';
+  
+  // ========== WGER Integration ==========
+  static String get wgerBaseUrl => 'https://wger.de/api/v2';
+  static String get wgerExerciseEndpoint => '$wgerBaseUrl/exercise';
+  static String get wgerExerciseInfoEndpoint => '$wgerBaseUrl/exerciseinfo';
+  static String get wgerExerciseImageEndpoint => '$wgerBaseUrl/exerciseimage';
+  static String get wgerExerciseCategoryEndpoint => '$wgerBaseUrl/exercisecategory';
+  static String get wgerEquipmentEndpoint => '$wgerBaseUrl/equipment';
+  static String get wgerMuscleEndpoint => '$wgerBaseUrl/muscle';
+  
+  // Helper method to get WGER exercise endpoint by ID
+  static String wgerExerciseByIdEndpoint(int id) => '$wgerExerciseEndpoint/$id';
+  
+  // Helper method to get exercise by ID
   static String exerciseByIdEndpoint(String id) => '$exercisesEndpoint/$id';
 
-  // Configuración de caché
+  // ========== Cache Configuration ==========
   static const int cacheDurationMinutes = int.fromEnvironment(
     'CACHE_DURATION_MINUTES',
     defaultValue: 30,
   );
+  
+  static const int imageCacheDurationDays = int.fromEnvironment(
+    'IMAGE_CACHE_DURATION_DAYS',
+    defaultValue: 7,
+  );
+  
+  // ========== Pagination Defaults ==========
+  static const int defaultPageSize = 20;
+  static const int maxPageSize = 100;
+  
+  // ========== Feature Flags ==========
+  static bool get enableAnalytics => bool.fromEnvironment(
+    'ENABLE_ANALYTICS',
+    defaultValue: !isProduction, // Disabled in production by default for privacy
+  );
+  
+  static bool get enableCrashReporting => bool.fromEnvironment(
+    'ENABLE_CRASH_REPORTING',
+    defaultValue: true,
+  );
+  
+  // ========== Third-party API Keys ==========
+  static String get sentryDsn => const String.fromEnvironment('SENTRY_DSN');
+  static String get googleMapsApiKey => const String.fromEnvironment('GOOGLE_MAPS_API_KEY');
+  static String get onesignalAppId => const String.fromEnvironment('ONESIGNAL_APP_ID');
+  
+  // ========== App Settings ==========
+  static const String appName = 'FitPath';
+  static const String appVersion = '1.0.0';
+  static const String appBuildNumber = '1';
+  
+  // ========== Validation Patterns ==========
+  static final RegExp emailRegex = RegExp(
+    r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+  );
+  
+  static final RegExp passwordRegex = RegExp(
+    r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$',
+  );
+  
+  // ========== Other Constants ==========
+  static const List<String> supportedLocales = ['en', 'es'];
+  static const String defaultLocale = 'en';
+  
+  // ========== Debug Settings ==========
+  static bool get isDebugMode {
+    bool inDebugMode = false;
+    assert(() {
+      inDebugMode = true;
+      return true;
+    }());
+    return inDebugMode;
+  }
 
-  // Configuración de reintentos
+  // ========== Retry Configuration ==========
   static const int maxRetryAttempts = int.fromEnvironment(
     'MAX_RETRY_ATTEMPTS',
     defaultValue: 3,
   );
 
-  // Configuración de timeout
+  // ========== Timeout Configuration ==========
   static const int connectionTimeoutSeconds = int.fromEnvironment(
     'CONNECTION_TIMEOUT_SECONDS',
     defaultValue: 10,
@@ -89,4 +168,7 @@ class EnvConfig {
     'RECEIVE_TIMEOUT_SECONDS',
     defaultValue: 10,
   );
+  
+  // ========== WGER Search ==========
+  static String get wgerSearchEndpoint => '$exercisesEndpoint/search';
 }

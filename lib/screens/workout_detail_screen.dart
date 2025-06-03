@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'exercise_execution_screen.dart';
 import '../providers/workout_provider.dart';
 import '../widgets/state_widgets.dart';
 import '../models/workout.dart';
@@ -352,29 +351,32 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
       context,
       MaterialPageRoute(
         builder: (context) => ExerciseDetailScreen(
-          exerciseId: exercise.id ?? '',
+          exerciseId: exercise.id ?? '0',
           exercise: exercise, // Pasamos el ejercicio directamente para evitar otra llamada a la API
         ),
       ),
     );
-  }
-
-  // Usar las instrucciones directamente ya que son List<String>?
-  final instructionsList = exercise.instructions ?? ['No hay instrucciones disponibles'];
-  
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => ExerciseExecutionScreen(
-        exerciseName: exercise.name,
-        imageAsset: exercise.imageUrl ?? '',
-        instructions: instructionsList,
-        reps: 12, // Valor por defecto, se puede obtener de la configuración del ejercicio
-        weight: '10kg', // Valor por defecto, se puede obtener de la configuración del ejercicio
-        totalSets: 3, // Valor por defecto, se puede obtener de la configuración del ejercicio
+    
+    // Si prefieres navegar directamente a la pantalla de ejecución del ejercicio, 
+    // descomenta el siguiente código y comenta o elimina el Navigator.push anterior
+    /*
+    final instructionsList = exercise.instructions ?? ['No hay instrucciones disponibles'];
+    
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ExerciseExecutionScreen(
+          exerciseName: exercise.name,
+          imageAsset: exercise.imageUrl ?? '',
+          instructions: instructionsList,
+          reps: 12, // Valor por defecto, se puede obtener de la configuración del ejercicio
+          weight: '10kg', // Valor por defecto, se puede obtener de la configuración del ejercicio
+          totalSets: 3, // Valor por defecto, se puede obtener de la configuración del ejercicio
+        ),
       ),
-    ),
-  );
+    );
+    */
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -2,248 +2,303 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
-import 'package:fitpath/providers/user_provider.dart';
-import 'package:fitpath/services/api/auth_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:pretty_dio_logger/pretty_dio_logger.dart';
+import 'package:fitpath/models/auth_success_response.dart';
+import 'package:fitpath/models/auth_error_response.dart';
+import 'auth_service.dart';
 
-import 'package:dio/dio.dart';
-import '../../models/auth_success_response.dart';
-import '../../models/auth_error_response.dart';
-
-class AuthServiceImpl {
-  final Dio _dio;
-  String? _accessToken;
-
-  AuthServiceImpl([Dio? dio]) : _dio = dio ?? Dio();
-
-  void addAuthInterceptor() {
-    _dio.interceptors.add(
-      InterceptorsWrapper(
-        onRequest: (options, handler) {
-          if (_accessToken != null) {
-            options.headers['Authorization'] = 'Bearer $_accessToken';
+class AuthServiceImpl extends AuthService {
+  static const String _accessTokenKey = 'access_token';
+  static const String _refreshTokenKey = 'refresh_token';
+  static const String _userKey = 'user';
+  
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
+  
+  AuthServiceImpl([Dio? dio]) : super(dio) {
+    // Initialize interceptors
+    this.dio.interceptors.add(InterceptorsWrapper(
+      onRequest: (options, handler) {
+        if (accessToken != null) {
+          options.headers['Authorization'] = 'Bearer $accessToken';
+        }
+        return handler.next(options);
+      },
+      onError: (DioException error, handler) async {
+        if (error.response?.statusCode == 401) {
+          try {
+            await refreshToken();
+            final response = await _retry(error.requestOptions);
+            return handler.resolve(response);
+          } catch (e) {
+            return handler.next(error);
           }
-          return handler.next(options);
-        },
-      ),
-    );
+        }
+        return handler.next(error);
+      },
+    ));
   }
 
-  Future<AuthSuccessResponse?> login(String email, String password) async {
-    try {
-      final response = await _dio.post(
-        '/login',
-        data: {'email': email, 'password': password},
-      );
-      if (response.data['success'] == true) {
-        final authResp = AuthSuccessResponse.fromJson(response.data);
-        _accessToken = authResp.accessToken;
-        return authResp;
-      } else {
-        throw AuthErrorResponse.fromJson(response.data);
-      }
-    } on DioException catch (e) {
-      if (e.response?.data != null && e.response?.data is Map<String, dynamic>) {
-        throw AuthErrorResponse.fromJson(e.response!.data);
-      }
-      rethrow;
-    }
-  }
-
-  Future<AuthSuccessResponse?> register(String email, String password, String name) async {
-    try {
-      final response = await _dio.post(
-        '/register',
-        data: {'email': email, 'password': password, 'name': name},
-      );
-      if (response.data['success'] == true) {
-        final authResp = AuthSuccessResponse.fromJson(response.data);
-        _accessToken = authResp.accessToken;
-        return authResp;
-      } else {
-        throw AuthErrorResponse.fromJson(response.data);
-      }
-    } on DioException catch (e) {
-      if (e.response?.data != null && e.response?.data is Map<String, dynamic>) {
-        throw AuthErrorResponse.fromJson(e.response!.data);
-      }
-      rethrow;
-    }
-  }
-
-  String? get accessToken => _accessToken;
-
-  Future<void> logout() async {
-    _accessToken = null;
-  }
-
-  Future<bool> isLoggedIn() async => _accessToken != null;
-
-  Future<Map<String, dynamic>?> getUserProfile() async {
-    // Stub implementation, returns null
-    return null;
-  }
-}
+  @override
   Future<bool> isLoggedIn() async {
-    final token = await _storage.read(key: _authTokenKey);
-    if (token == null || token.isEmpty) return false;
-
-    final userJson = await _storage.read(key: _userProfileKey);
-    if (userJson != null) {
-      try {
-        _userProvider.setUserFromMap(jsonDecode(userJson));
-        return true;
-      } catch (_) {}
-    }
-
     try {
-      final response = await _dio.get('\/profile');
-      return response.statusCode == 200 && response.data['success'] == true;
-    } catch (_) {
+      // Check if we have an access token
+      final token = await _secureStorage.read(key: _accessTokenKey);
+      if (token == null) return false;
+      
+      // Set the current access token
+      setAccessToken(token);
+      
+      // Verify the token is still valid by making an authenticated request
+      final response = await dio.get('/auth/verify');
+      return response.statusCode == 200;
+    } catch (e) {
       return false;
     }
   }
 
   @override
-  Future<void> logout() async {
+  Future<AuthSuccessResponse> login(String email, String password) async {
     try {
-      await _dio.post('\/logout');
-    } catch (_) {}
-    await _clearAuthData();
-    _userProvider.clearUser();
-  }
-
-  @override
-  Future<Map<String, dynamic>> login(String email, String password) async {
-    try {
-      final response = await _dio.post(
-        '/login',
-        data: {'email': email, 'password': password},
-        options: Options(headers: {'Content-Type': 'application/json'}),
+      final response = await dio.post<Map<String, dynamic>>(
+        '/auth/login',
+        data: {
+          'email': email,
+          'password': password,
+        },
       );
-
-      final data = response.data['data'] as Map<String, dynamic>;
-      final token = data['access_token'] as String?;
-      if (token == null || token.isEmpty) {
-        return {
-          'success': false,
-          'message': 'No se recibió el token de autenticación',
-          'error': 'no_auth_token',
-        };
+      
+      if (response.statusCode == 200 && response.data != null) {
+        final authResponse = AuthSuccessResponse.fromJson(response.data!);
+        await _saveTokens(authResponse);
+        return authResponse;
+      } else {
+        throw AuthErrorResponse(
+          success: false,
+          message: 'Failed to login',
+          error: 'login_failed',
+          details: 'Failed to login',
+        );
       }
-
-      await _storage.write(key: _authTokenKey, value: token);
-
-      final profile = await getUserProfile();
-      if (profile != null) {
-        _userProvider.setUserFromMap(profile);
-        return {
-          'success': true,
-          'message': 'Inicio de sesión exitoso',
-          'user': profile,
-        };
-      }
-
-      return {
-        'success': true,
-        'message': 'Inicio de sesión exitoso, sin perfil completo',
-        'user': {'email': email, 'name': '', 'id': ''},
-      };
     } on DioException catch (e) {
-      return {
-        'success': false,
-        'message': e.response?.data['message'] ?? 'Error de autenticación',
-        'error': e.response?.data['error'] ?? 'authentication_error',
-      };
+      throw _handleDioError(e, 'Login failed');
     } catch (e) {
-      return {
-        'success': false,
-        'message': 'Error inesperado en login',
-        'error': e.toString(),
-      };
-    }
-  }
-
-  @override
-  Future<Map<String, dynamic>> register(
-      String email, String password, String name) async {
-    try {
-      final response = await _dio.post(
-        '/register',
-        data: {'email': email, 'password': password, 'name': name},
+      throw AuthErrorResponse(
+        success: false,
+        message: 'An unexpected error occurred',
+        error: 'unexpected_error',
+        details: e.toString(),
       );
-
-      final data = response.data['data'] as Map<String, dynamic>;
-      final token = data['access_token'] as String?;
-      final refreshToken = data['refresh_token'] as String?;
-      final user = data['user'] as Map<String, dynamic>?;
-
-      if (token == null || user == null) {
-        return {
-          'success': false,
-          'message': 'Datos inválidos del servidor',
-          'error': 'invalid_server_response',
-        };
-      }
-
-      await _storage.write(key: _authTokenKey, value: token);
-      if (refreshToken != null) {
-        await _storage.write(key: _refreshTokenKey, value: refreshToken);
-      }
-
-      final userMap = {
-        'id': user['id'].toString(),
-        'email': user['email'] ?? email,
-        'name': user['name'] ?? name,
-        'lastName': user['lastName'] ?? '',
-      };
-
-      _userProvider.setUserFromMap(userMap, isNewRegistration: true);
-
-      return {
-        'success': true,
-        'message': 'Registro exitoso',
-        'data': userMap,
-      };
-    } on DioException catch (e) {
-      return {
-        'success': false,
-        'message': e.response?.data['message'] ?? 'Error al registrar',
-        'error': e.response?.data['error'] ?? 'registration_error',
-      };
-    } catch (e) {
-      return {
-        'success': false,
-        'message': 'Error inesperado en el registro',
-        'error': e.toString(),
-      };
     }
   }
 
   @override
   Future<Map<String, dynamic>?> getUserProfile() async {
     try {
-      final token = await _storage.read(key: _authTokenKey);
-      if (token == null) return null;
-
-      final response = await _dio.get('\/profile');
-      final profile = response.data['data'] as Map<String, dynamic>?;
-      if (profile == null) return null;
-
-      final user = profile['user'] as Map<String, dynamic>? ?? {};
-      final userData = {
-        'id': user['id']?.toString() ?? profile['userId']?.toString() ?? '',
-        'email': user['email'] ?? '',
-        'name': user['name'] ?? 'Usuario',
-        'lastName': user['lastName'] ?? '',
-      };
-
-      await _storage.write(key: _userProfileKey, value: jsonEncode(profile));
-      return userData;
-    } catch (_) {
-      return null;
+      final response = await dio.get('/profile');
+      if (response.data['success'] == true) {
+        return response.data['data'] as Map<String, dynamic>;
+      } else {
+        throw AuthErrorResponse.fromJson(response.data);
+      }
+    } on DioException catch (e) {
+      throw _handleDioError(e, 'Failed to fetch user profile');
     }
+  }
+  
+  @override
+  Future<bool> updateProfile({
+    required String name,
+    required String lastName,
+    required int age,
+    required String gender,
+  }) async {
+    try {
+      final response = await dio.put(
+        '/profile',
+        data: {
+          'name': name,
+          'lastName': lastName,
+          'age': age,
+          'gender': gender,
+        },
+      );
+      
+      if (response.data['success'] == true) {
+        // Update the stored user data if available
+        final userJson = await _secureStorage.read(key: _userKey);
+        if (userJson != null) {
+          final userData = jsonDecode(userJson) as Map<String, dynamic>;
+          userData.addAll({
+            'name': name,
+            'lastName': lastName,
+            'age': age,
+            'gender': gender,
+          });
+          await _secureStorage.write(key: _userKey, value: jsonEncode(userData));
+        }
+        return true;
+      } else {
+        throw AuthErrorResponse.fromJson(response.data);
+      }
+    } on DioException catch (e) {
+      throw _handleDioError(e, 'Failed to update profile');
+    } catch (e) {
+      throw AuthErrorResponse(
+        success: false,
+        error: 'profile_update_failed',
+        message: 'An unexpected error occurred while updating profile',
+        details: e.toString(),
+      );
+    }
+  }
+
+  @override
+  Future<void> logout() async {
+    try {
+      // Clear secure storage
+      await _secureStorage.deleteAll();
+      
+      // Clear in-memory token
+      setAccessToken(null);
+      
+      // Make API call to invalidate the token on the server
+      await dio.post('/auth/logout');
+    } catch (e) {
+      // Even if logout fails on the server, we still want to clear local storage
+      await _secureStorage.deleteAll();
+      setAccessToken(null);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<bool> refreshToken() async {
+    try {
+      // Get the refresh token from secure storage
+      String? token;
+      try {
+        // Read the token and handle potential null/empty cases
+        final tokenData = await _secureStorage.read(key: _refreshTokenKey);
+        
+        // The analyzer incorrectly assumes tokenData can't be null due to FlutterSecureStorage's type definition
+        // However, in practice, it can be null if the key doesn't exist
+        // ignore: unnecessary_null_comparison
+        if (tokenData == null) {
+          debugPrint('No refresh token available (null)');
+          return false;
+        }
+        
+        // Convert to string and trim whitespace
+        token = tokenData.toString().trim();
+        if (token.isEmpty) {
+          debugPrint('Refresh token is empty');
+          return false;
+        }
+      } catch (e) {
+        debugPrint('Error reading refresh token: $e');
+        return false;
+      }
+      
+      // At this point, we have a non-null, non-empty token
+
+      final response = await dio.post<Map<String, dynamic>>(
+        '/auth/refresh',
+        data: {'refreshToken': token},
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = response.data;
+        if (responseData == null) {
+          debugPrint('Refresh token response data is null');
+          return false;
+        }
+        
+        try {
+          final authResponse = AuthSuccessResponse.fromJson(responseData);
+          await _saveTokens(authResponse);
+          return true;
+        } catch (e) {
+          debugPrint('Error parsing refresh token response: $e');
+          return false;
+        }
+      }
+      
+      debugPrint('Refresh token request failed with status: ${response.statusCode}');
+      return false;
+    } catch (e) {
+      debugPrint('Error in refreshToken: $e');
+      return false;
+    }
+  }
+
+  Future<Response<dynamic>> _retry(RequestOptions requestOptions) async {
+    final options = Options(
+      method: requestOptions.method,
+      headers: requestOptions.headers,
+    );
+    
+    // Add the access token to the headers if available
+    final token = accessToken;
+    if (token != null) {
+      options.headers!['Authorization'] = 'Bearer $token';
+    }
+    
+    return dio.request<dynamic>(
+      requestOptions.path,
+      data: requestOptions.data,
+      queryParameters: requestOptions.queryParameters,
+      options: options,
+    );
+  }
+
+  Future<void> _saveTokens(AuthSuccessResponse response) async {
+    // Access token is required and non-nullable in AuthSuccessResponse
+    final accessToken = response.accessToken;
+    setAccessToken(accessToken);
+    await _secureStorage.write(key: _accessTokenKey, value: accessToken);
+    
+    // Only save refresh token if provided (it's nullable)
+    final refreshToken = response.refreshToken;
+    if (refreshToken != null) {
+      await _secureStorage.write(key: _refreshTokenKey, value: refreshToken);
+    }
+    
+    // Save user data if available
+    final user = response.user;
+    if (user != null) {
+      try {
+        final userJson = jsonEncode(user.toJson());
+        await _secureStorage.write(key: _userKey, value: userJson);
+      } catch (e) {
+        // Log the error but don't fail the token save operation
+        debugPrint('Failed to save user data: $e');
+      }
+    }
+  }
+
+  AuthErrorResponse _handleDioError(DioException e, String defaultMessage) {
+    if (e.response != null) {
+      try {
+        final errorData = e.response!.data as Map<String, dynamic>?;
+        if (errorData != null) {
+          return AuthErrorResponse(
+            success: errorData['success'] as bool? ?? false,
+            error: errorData['error']?.toString() ?? 'unknown_error',
+            message: errorData['message']?.toString() ?? defaultMessage,
+            details: errorData['details']?.toString(),
+          );
+        }
+      } catch (_) {
+        // If we can't parse the error response, continue with the default error
+      }
+    }
+    
+    return AuthErrorResponse(
+      success: false,
+      error: 'network_error',
+      message: e.message ?? defaultMessage,
+      details: e.toString(),
+    );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/user.dart';
 import '../models/profile.dart';
 import '../services/api/user_service.dart';
@@ -43,6 +44,13 @@ class UserProvider with ChangeNotifier {
 
   /// Whether the user has just registered and needs to complete profile setup
   bool get isNewlyRegistered => _isNewlyRegistered;
+
+  /// Updates the current user with the provided user data
+  void setUser(User user, {bool isNewRegistration = false}) {
+    _user = user;
+    _isNewlyRegistered = isNewRegistration;
+    notifyListeners();
+  }
 
   /// Clears all user data (used on logout)
   void clearUser() {
@@ -230,3 +238,9 @@ class UserProvider with ChangeNotifier {
     notifyListeners();
   }
 }
+
+// === PROVIDER GLOBAL DE RIVERPOD ===
+final userProvider = ChangeNotifierProvider<UserProvider>((ref) {
+  final userService = UserService(); // Ajusta aquí si requiere argumentos
+  return UserProvider(userService);
+});

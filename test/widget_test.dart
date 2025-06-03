@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:FitPath/main.dart';  // Updated import path
+import 'package:fitpath/main.dart'; // Updated import path
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // Import SharedPreferences
+import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/auth_provider.dart';
 import '../providers/user_provider.dart';
-import '../main.dart' show navigatorKey; // Import navigatorKey
-import 'login_screen.dart';
-import 'signup_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -20,25 +17,26 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Future<void> _completeOnboardingAndNavigate(String routeName) async {
     try {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
+      final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('hasSeenOnboarding', true);
       debugPrint("[OnboardingScreen] hasSeenOnboarding set to true.");
 
-      if (mounted) {
-        if (routeName == '/login') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const LoginScreen()),
-          );
-        } else if (routeName == '/register') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const SignupScreen()),
-          );
-        }
+      if (!mounted) return;
+      
+      // Usar Navigator.pushReplacementNamed para limpiar el stack de navegación
+      if (routeName == '/login' || routeName == '/signup') {
+        Navigator.of(context).pushReplacementNamed(routeName);
       }
     } catch (e) {
       debugPrint("[OnboardingScreen] Error in _completeOnboardingAndNavigate: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error al navegar. Por favor, inténtalo de nuevo.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -59,10 +57,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       if (authProvider.isLoggedIn) {
         if (userProvider.isNewlyRegistered) {
           debugPrint("[OnboardingScreen] User logged in & newly registered. Navigating to /step1_signup.");
-          navigatorKey.currentState?.pushNamedAndRemoveUntil('/step1_signup', (route) => false);
+          Navigator.of(context).pushNamedAndRemoveUntil('/step1_signup', (route) => false);
         } else {
           debugPrint("[OnboardingScreen] User logged in & profile complete. Navigating to /home.");
-          navigatorKey.currentState?.pushNamedAndRemoveUntil('/home', (route) => false);
+          Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
         }
       }
     });
