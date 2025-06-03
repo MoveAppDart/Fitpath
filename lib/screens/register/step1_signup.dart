@@ -1,7 +1,12 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'step2_signup.dart';
+import '../../providers/signup_flow_provider.dart';
+import '../../widgets/signup/gradient_background.dart';
+import '../../widgets/signup/progress_bar.dart';
+import '../../widgets/signup/signup_header.dart';
+import '../../widgets/signup/navigation_buttons.dart';
+import '../../widgets/signup/signup_page_transition.dart';
 
 class FirstStepSignup extends StatefulWidget {
   const FirstStepSignup({super.key});
@@ -11,207 +16,92 @@ class FirstStepSignup extends StatefulWidget {
 }
 
 class _FirstStepSignupState extends State<FirstStepSignup> {
-  String? selectedGender; // Variable para almacenar el género seleccionado
-
   @override
   Widget build(BuildContext context) {
-    dynamic size, heights, width;
-    size = MediaQuery.of(context).size;
-    heights = size.height;
-    width = size.width;
+    // Obtenemos el provider para acceder al estado del flujo de registro
+    final signupFlowProvider = Provider.of<SignupFlowProvider>(context);
+    final String? selectedGender = signupFlowProvider.gender;
 
-    return SafeArea(
-      child: Scaffold(
-        body: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Color.fromARGB(255, 0, 93, 200),
-                Color.fromARGB(255, 1, 69, 148),
-                Color.fromARGB(255, 1, 51, 109),
-                Color.fromARGB(255, 2, 45, 96),
-              ],
+    return Scaffold(
+      body: GradientBackground(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const SizedBox(height: 60),
+
+            // Barra de progreso reutilizable
+            const SignupProgressBar(currentStep: 1, totalSteps: 6),
+
+            const SizedBox(height: 40),
+
+            // Título y subtítulo reutilizables
+            const SignupHeader(
+              title: "Let's get to know you",
+              subtitle:
+                  "Select your gender to personalize your fitness journey",
             ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              SizedBox(height: heights / 30),
-              // Progress Bar
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(6, (index) {
-                    return Container(
-                      margin: EdgeInsets.symmetric(horizontal: 2.0),
-                      width: width / 8,
-                      height: 5,
-                      decoration: BoxDecoration(
-                        color: index == 0
-                            ? const Color.fromARGB(255, 10, 187, 37)
-                            : const Color.fromARGB(178, 163, 172, 164),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    );
-                  }),
-                ),
+
+            const SizedBox(height: 30),
+
+            // Options
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                children: [
+                  GenderOptionButton(
+                    label: "Male",
+                    icon: Icons.male,
+                    isSelected: selectedGender == "Male",
+                    onPressed: () {
+                      // Actualizar el género en el provider
+                      signupFlowProvider.setGender("Male");
+                    },
+                  ),
+                  GenderOptionButton(
+                    label: "Female",
+                    icon: Icons.female,
+                    isSelected: selectedGender == "Female",
+                    onPressed: () {
+                      // Actualizar el género en el provider
+                      signupFlowProvider.setGender("Female");
+                    },
+                  ),
+                  GenderOptionButton(
+                    label: "Non-Binary",
+                    icon: Icons.transgender,
+                    isSelected: selectedGender == "Non-Binary",
+                    onPressed: () {
+                      // Actualizar el género en el provider
+                      signupFlowProvider.setGender("Non-Binary");
+                    },
+                  ),
+                  GenderOptionButton(
+                    label: "Prefer Not to disclose",
+                    icon: Icons.close,
+                    isSelected: selectedGender == "Prefer Not to disclose",
+                    onPressed: () {
+                      // Actualizar el género en el provider
+                      signupFlowProvider.setGender("Prefer Not to disclose");
+                    },
+                  ),
+                ],
               ),
-              SizedBox(height: heights / 20),
-              // Title and Subtitle
-              Text(
-                "How do you identify?",
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: heights / 40),
-              Text(
-                "Lorem ipsum dolor sit amet, consectetur\nadipiscing elit. Morbi",
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.white70,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: heights / 20),
-              // Options
-              Expanded(
-                child: ListView(
-                  padding: EdgeInsets.symmetric(horizontal: 10),
-                  children: [
-                    GenderOptionButton(
-                      label: "Male",
-                      icon: Icons.male,
-                      isSelected: selectedGender == "Male",
-                      onPressed: () {
-                        setState(() {
-                          selectedGender = "Male";
-                        });
-                      },
-                    ),
-                    GenderOptionButton(
-                      label: "Female",
-                      icon: Icons.female,
-                      isSelected: selectedGender == "Female",
-                      onPressed: () {
-                        setState(() {
-                          selectedGender = "Female";
-                        });
-                      },
-                    ),
-                    GenderOptionButton(
-                      label: "Non-Binary",
-                      icon: Icons.transgender,
-                      isSelected: selectedGender == "Non-Binary",
-                      onPressed: () {
-                        setState(() {
-                          selectedGender = "Non-Binary";
-                        });
-                      },
-                    ),
-                    GenderOptionButton(
-                      label: "Prefer Not to disclose",
-                      icon: Icons.close,
-                      isSelected: selectedGender == "Prefer Not to disclose",
-                      onPressed: () {
-                        setState(() {
-                          selectedGender = "Prefer Not to disclose";
-                        });
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              // Buttons
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    TextButton(
-                      onPressed: () {},
-                      style: TextButton.styleFrom(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Transform.rotate(
-                            angle: 3.1416,
-                            child: Icon(
-                              Icons.play_arrow_rounded,
-                              color: Colors.white,
-                            ),
-                          ),
-                          SizedBox(width: 5),
-                          Text(
-                            "Previous",
-                            style: TextStyle(
-                                color:
-                                    const Color.fromARGB(255, 255, 255, 255)),
-                          ),
-                        ],
-                      ),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.pushReplacement(
-                          context,
-                          PageRouteBuilder(
-                            transitionDuration: Duration(milliseconds: 600),
-                            pageBuilder:
-                                (context, animation, secondaryAnimation) =>
-                                    SecondStepSignup(),
-                            transitionsBuilder: (context, animation,
-                                secondaryAnimation, child) {
-                              return FadeTransition(
-                                opacity: animation,
-                                child: BackdropFilter(
-                                  filter: ImageFilter.blur(
-                                      sigmaX: animation.value * 5,
-                                      sigmaY: animation.value * 5),
-                                  child: child,
-                                ),
-                              );
-                            },
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromRGBO(45, 124, 181, 1),
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 15, vertical: 15),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(9),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Text(
-                            "Continue",
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          SizedBox(width: 5),
-                          Icon(Icons.fast_forward_rounded, color: Colors.white),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: heights / 30),
-            ],
-          ),
+            ),
+            // Usar el componente reutilizable para botones de navegación
+            SignupNavigationButtons(
+              showPreviousButton: false, // Primer paso, no hay botón anterior
+              disableNextButton: selectedGender == null,
+              onNext: () {
+                // Navegar al siguiente paso usando la transición personalizada
+                Navigator.pushReplacement(
+                  context,
+                  SignupPageTransition(page: const SecondStepSignup()),
+                );
+              },
+            ),
+
+            const SizedBox(height: 20),
+          ],
         ),
       ),
     );
@@ -242,7 +132,7 @@ class GenderOptionButton extends StatelessWidget {
           backgroundColor: isSelected
               ? const Color.fromARGB(255, 45, 83, 181)
               : const Color.fromARGB(201, 255, 255, 255),
-          padding: EdgeInsets.all(25),
+          padding: const EdgeInsets.all(25),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -256,7 +146,7 @@ class GenderOptionButton extends StatelessWidget {
                     ? Colors.white
                     : const Color.fromARGB(255, 126, 126, 126),
                 size: 30),
-            SizedBox(width: 10),
+            const SizedBox(width: 10),
             Text(
               label,
               style: TextStyle(

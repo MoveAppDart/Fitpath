@@ -1,15 +1,12 @@
+import 'dart:ui';
+import 'package:fitpath/screens/register/step1_signup.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'login_screen.dart';
-import 'dart:ui';
 
 // Providers
 import '../providers/auth_provider.dart';
-
-// Assuming FirstStepSignup is in this path, if not, adjust the import
-import 'register/step1_signup.dart';
+import '../main.dart' show navigatorKey;
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -49,7 +46,7 @@ class _SignupScreenState extends State<SignupScreen> {
       body: LayoutBuilder(
         builder: (context, constraints) {
           return Container(
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
@@ -113,7 +110,7 @@ class _SignupScreenState extends State<SignupScreen> {
                             hintText: 'Name',
                             keyboardType: TextInputType.name,
                           ),
-                          SizedBox(height: 30),
+                          const SizedBox(height: 30),
 
                           // Email field
                           _buildTextField(
@@ -121,7 +118,7 @@ class _SignupScreenState extends State<SignupScreen> {
                             hintText: 'Email',
                             keyboardType: TextInputType.emailAddress,
                           ),
-                          SizedBox(height: 30),
+                          const SizedBox(height: 30),
 
                           // Password field
                           _buildTextField(
@@ -129,7 +126,7 @@ class _SignupScreenState extends State<SignupScreen> {
                             hintText: 'Password',
                             isPassword: true,
                           ),
-                          SizedBox(height: 30),
+                          const SizedBox(height: 30),
 
                           // Confirm Password field
                           _buildTextField(
@@ -141,7 +138,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
                           // Sign Up button
                           _buildSignUpButton(context),
-                          SizedBox(height: 40),
+                          const SizedBox(height: 40),
 
                           // OR divider
                           _buildOrDivider(),
@@ -181,7 +178,7 @@ class _SignupScreenState extends State<SignupScreen> {
         contentPadding: const EdgeInsets.all(12.5),
         hintText: hintText,
         labelText: hintText,
-        labelStyle: TextStyle(color: Color.fromARGB(190, 255, 255, 255)),
+        labelStyle: const TextStyle(color: Color.fromARGB(190, 255, 255, 255)),
         filled: true,
         floatingLabelBehavior: FloatingLabelBehavior.never,
         fillColor: const Color.fromARGB(148, 224, 224, 224),
@@ -263,51 +260,112 @@ class _SignupScreenState extends State<SignupScreen> {
               _emailController.text.isEmpty ||
               _passwordController.text.isEmpty ||
               _passwordController2.text.isEmpty) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Por favor, completa todos los campos'),
-                backgroundColor: Colors.red,
-              ),
-            );
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Por favor, completa todos los campos'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
             return;
           }
 
           // Check if passwords match
           if (_passwordController.text != _passwordController2.text) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Passwords do not match'),
-                backgroundColor: Colors.red,
-              ),
-            );
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Las contraseñas no coinciden'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
             return;
           }
 
-          // Guardar el nombre del usuario en las preferencias compartidas
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('user_name', _nameController.text.trim());
-
-          // Attempt to register the user
-          final success = await authProvider.register(
-            _emailController.text.trim(),
-            _passwordController.text,
-            _nameController.text
-                .trim(), // Usar el nombre ingresado por el usuario
-          );
-
-          if (success && mounted) {
-            // Navigate to the first step of the registration process
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => FirstStepSignup()),
+          try {
+            // Attempt to register the user
+            final result = await authProvider.register(
+              _emailController.text.trim(),
+              _passwordController.text,
+              _nameController.text.trim(),
             );
-          } else if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(authProvider.error ?? 'Failed to register'),
-                backgroundColor: Colors.red,
-              ),
-            );
+
+            // Verificar si el registro fue exitoso
+            if (result['success'] == true && mounted) {
+              // Limpiar los controladores después del registro exitoso
+              _nameController.clear();
+              _emailController.clear();
+              _passwordController.clear();
+              _passwordController2.clear();
+
+              // Usar navigatorKey global para navegar a la primera pantalla del flujo de registro
+              // y limpiar el stack de navegación
+              Future.microtask(() {
+                debugPrint("[SignupScreen] Registro exitoso. Navegando a /step1_signup y limpiando stack.");
+                navigatorKey.currentState?.pushNamedAndRemoveUntil(
+                  '/step1_signup',
+                  (route) => false, // Esto elimina todas las rutas anteriores del stack
+                );
+              });
+            } else if (mounted) {
+              // Verificar si es un error de correo ya registrado
+              final bool isEmailExists = result['isEmailExists'] == true;
+              
+              if (isEmailExists) {
+                // Mostrar diálogo específico para correo ya registrado
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: const Text('Correo ya registrado'),
+                      content: const Text(
+                        'Este correo electrónico ya está asociado a una cuenta. '  
+                        '¿Deseas iniciar sesión con esta cuenta?',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop(); // Cerrar diálogo
+                          },
+                          child: const Text('Usar otro correo'),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop(); // Cerrar diálogo
+                            Navigator.of(context).pushReplacementNamed('/login', 
+                              arguments: _emailController.text.trim()
+                            );
+                          },
+                          style: TextButton.styleFrom(
+                            foregroundColor: Theme.of(context).primaryColor,
+                          ),
+                          child: const Text('Iniciar sesión'),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              } else {
+                // Mostrar mensaje de error general
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(result['message'] ?? authProvider.error ?? 'Error en el registro'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            }
+          } catch (e) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Error durante el registro: ${e.toString()}'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
           }
         },
         style: ElevatedButton.styleFrom(
@@ -341,7 +399,7 @@ class _SignupScreenState extends State<SignupScreen> {
               color: Colors.black.withOpacity(0.3),
               spreadRadius: 1,
               blurRadius: 5,
-              offset: Offset(0, 3),
+              offset: const Offset(0, 3),
             )
           ],
         ),
@@ -363,7 +421,7 @@ class _SignupScreenState extends State<SignupScreen> {
     return Center(
       child: Column(
         children: [
-          Text(
+          const Text(
             'Already have an account?',
             style: TextStyle(
               color: Color.fromARGB(255, 255, 255, 255),
@@ -375,9 +433,9 @@ class _SignupScreenState extends State<SignupScreen> {
               Navigator.pushReplacement(
                 context,
                 PageRouteBuilder(
-                  transitionDuration: Duration(milliseconds: 600),
+                  transitionDuration: const Duration(milliseconds: 600),
                   pageBuilder: (context, animation, secondaryAnimation) =>
-                      LoginScreen(),
+                      const FirstStepSignup(),
                   transitionsBuilder:
                       (context, animation, secondaryAnimation, child) {
                     return FadeTransition(

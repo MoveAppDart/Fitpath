@@ -27,11 +27,28 @@ class ApiClient {
   void _setupInterceptors() {
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
-        final token = await _storage.read(key: 'auth_token');
-        if (token != null) {
-          options.headers['Authorization'] = 'Bearer $token';
+        // Asegurarse de que la URL base se maneje correctamente
+        if (!options.path.startsWith('http')) {
+          // Asegurarse de que no haya doble barra al unir baseUrl y path
+          final baseUrl = _dio.options.baseUrl.endsWith('/') 
+              ? _dio.options.baseUrl.substring(0, _dio.options.baseUrl.length - 1)
+              : _dio.options.baseUrl;
+          final path = options.path.startsWith('/') 
+              ? options.path.substring(1) 
+              : options.path;
+          options.path = '$baseUrl/$path';
         }
+        // Añadimos logs para depuración
+        debugPrint('API Request: ${options.method} ${options.path}');
         return handler.next(options);
+      },
+      onResponse: (response, handler) {
+        debugPrint('API Response: ${response.statusCode} ${response.requestOptions.path}');
+        return handler.next(response);
+      },
+      onError: (DioException error, handler) async {
+        debugPrint('API Error: ${error.response?.statusCode} ${error.requestOptions.path}');
+        return handler.next(error);
       },
     ));
 

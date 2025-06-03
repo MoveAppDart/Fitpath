@@ -1,7 +1,6 @@
 import 'package:fitpath/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'calendar_screen.dart';
-import 'home_screen.dart';
 import 'profile_screen.dart';
 import 'workouts_screen.dart';
 import 'stats_screen.dart';
@@ -25,11 +24,11 @@ class _BottomNavbarState extends State<BottomNavbar> {
   ];
 
   final List<Widget> pages = [
-    CalendarScreen(),
-    HomeScreen(),
-    ProfileScreen(),
-    StatsScreen(),
-    WorkoutsScreen(),
+    const CalendarScreen(),
+    const HomeScreen(),
+    const ProfileScreen(),
+    const StatsScreen(),
+    const WorkoutsScreen(),
   ];
 
   void onButtonTapped(int index) {
@@ -55,7 +54,7 @@ class _BottomNavbarState extends State<BottomNavbar> {
             right: 20,
             child: Container(
               decoration: BoxDecoration(
-                gradient: LinearGradient(
+                gradient: const LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   stops: [0.78, 0.81, 0.84, 0.88, 1.0],
@@ -73,7 +72,7 @@ class _BottomNavbarState extends State<BottomNavbar> {
                     color: Colors.black.withOpacity(0.2),
                     spreadRadius: 1,
                     blurRadius: 10,
-                    offset: Offset(0, 5),
+                    offset: const Offset(0, 5),
                   ),
                 ],
               ),
@@ -93,9 +92,9 @@ class _BottomNavbarState extends State<BottomNavbar> {
                           });
                         },
                         child: AnimatedContainer(
-                          duration: Duration(milliseconds: 300),
+                          duration: const Duration(milliseconds: 300),
                           decoration: BoxDecoration(
-                            gradient: LinearGradient(
+                            gradient: const LinearGradient(
                               begin: Alignment.centerLeft,
                               end: Alignment.centerRight,
                               stops: [0.0, 0.31],
@@ -112,7 +111,7 @@ class _BottomNavbarState extends State<BottomNavbar> {
                                 color: Colors.black.withOpacity(0.2),
                                 spreadRadius: 1,
                                 blurRadius: 10,
-                                offset: Offset(0, 5),
+                                offset: const Offset(0, 5),
                               ),
                             ],
                           ),
@@ -126,7 +125,7 @@ class _BottomNavbarState extends State<BottomNavbar> {
                               if (isSelected) ...[
                                 Text(
                                   buttons[index]['label'],
-                                  style: TextStyle(color: Colors.white),
+                                  style: const TextStyle(color: Colors.white),
                                 ),
                               ],
                             ],

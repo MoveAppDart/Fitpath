@@ -1,12 +1,72 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // Import SharedPreferences
+import '../providers/auth_provider.dart';
+import '../providers/user_provider.dart';
+import '../main.dart' show navigatorKey; // Import navigatorKey
 import 'login_screen.dart';
-import 'register/step1_signup.dart';
+import 'signup_screen.dart';
 
-class OnboardingScreen extends StatelessWidget {
+class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
 
+  @override
+  State<OnboardingScreen> createState() => _OnboardingScreenState();
+}
+
+class _OnboardingScreenState extends State<OnboardingScreen> {
   static const Color accent = Color(0xFF1B3AE5); // Accent color
+
+  Future<void> _completeOnboardingAndNavigate(String routeName) async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('hasSeenOnboarding', true);
+      debugPrint("[OnboardingScreen] hasSeenOnboarding set to true.");
+
+      if (mounted) {
+        if (routeName == '/login') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const LoginScreen()),
+          );
+        } else if (routeName == '/register') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const SignupScreen()),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint("[OnboardingScreen] Error in _completeOnboardingAndNavigate: $e");
+    }
+  }
+
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Perform navigation checks after the first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return; // Ensure widget is still in the tree
+
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final currentRouteName = ModalRoute.of(context)?.settings.name;
+      debugPrint(
+          "[OnboardingScreen] didChangeDependencies: isLoggedIn=${authProvider.isLoggedIn}, " "isNewlyRegistered=${userProvider.isNewlyRegistered}, currentRoute=$currentRouteName");
+
+      if (authProvider.isLoggedIn) {
+        if (userProvider.isNewlyRegistered) {
+          debugPrint("[OnboardingScreen] User logged in & newly registered. Navigating to /step1_signup.");
+          navigatorKey.currentState?.pushNamedAndRemoveUntil('/step1_signup', (route) => false);
+        } else {
+          debugPrint("[OnboardingScreen] User logged in & profile complete. Navigating to /home.");
+          navigatorKey.currentState?.pushNamedAndRemoveUntil('/home', (route) => false);
+        }
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -72,13 +132,13 @@ class OnboardingScreen extends StatelessWidget {
                 _primaryButton(
                   context,
                   text: 'Log In',
-                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen())),
+                  onPressed: () => _completeOnboardingAndNavigate('/login'),
                 ),
                 const SizedBox(height: 12),
                 _secondaryButton(
                   context,
                   text: 'Create Account',
-                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FirstStepSignup())),
+                  onPressed: () => _completeOnboardingAndNavigate('/register'),
                 ),
                 const SizedBox(height: 24),
                 Text(
@@ -178,7 +238,7 @@ class OnboardingScreen extends StatelessWidget {
       child: OutlinedButton(
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
-          side: BorderSide(color: accent, width: 2),
+          side: const BorderSide(color: accent, width: 2),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         ),
         child: Text(

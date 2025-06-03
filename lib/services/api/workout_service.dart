@@ -1,21 +1,58 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
+
 import 'api_client.dart';
+import 'auth_service.dart';
 import '../../config/env_config.dart';
 
 class WorkoutService {
   final ApiClient _apiClient;
+  final AuthService _authService;
 
-  WorkoutService(this._apiClient);
+  WorkoutService(this._apiClient, this._authService);
+
+  /// Verifica si el token es válido antes de hacer una petición
+  /// Si no es válido, intenta refrescarlo
+  Future<bool> _ensureValidToken() async {
+    debugPrint('Verificando validez del token antes de petición');
+    if (!await _authService.isLoggedIn()) {
+      debugPrint('Usuario no autenticado o token inválido');
+      return await _authService.refreshToken();
+    }
+    return true;
+  }
 
   /// Obtiene la lista de entrenamientos del usuario
   /// Retorna un mapa con la lista de entrenamientos o un mapa con error
   Future<Map<String, dynamic>> getWorkouts() async {
     try {
+      if (!await _ensureValidToken()) {
+        return {
+          'success': false,
+          'message': 'No autorizado',
+          'statusCode': 401
+        };
+      }
+
       final response = await _apiClient.get(EnvConfig.workoutsEndpoint);
-      return {'success': true, 'data': response};
+      final responseData = response.data;
+      
+      if (responseData is Map<String, dynamic> && responseData['success'] == true) {
+        return {'success': true, 'data': responseData['data']};
+      } else {
+        return {'success': true, 'data': responseData};
+      }
     } on DioException catch (e) {
-      return _handleError(e, 'Error al obtener entrenamientos');
+      final error = _handleError(e, 'Error al obtener entrenamientos');
+      if (error['statusCode'] == 401) {
+        // Si es error 401, intentar refrescar token y reintentar
+        if (await _authService.refreshToken()) {
+          return getWorkouts(); // Reintento recursivo
+        }
+      }
+      return error;
     } catch (e) {
+      debugPrint('Error inesperado en getWorkouts: $e');
       return {'success': false, 'message': 'Error inesperado: $e'};
     }
   }
@@ -24,12 +61,33 @@ class WorkoutService {
   /// Retorna un mapa con el entrenamiento o un mapa con error
   Future<Map<String, dynamic>> getWorkout(String id) async {
     try {
-      final response =
-          await _apiClient.get('${EnvConfig.workoutsEndpoint}/$id');
-      return {'success': true, 'data': response};
+      if (!await _ensureValidToken()) {
+        return {
+          'success': false,
+          'message': 'No autorizado',
+          'statusCode': 401
+        };
+      }
+
+      final response = await _apiClient.get('${EnvConfig.workoutsEndpoint}/$id');
+      final responseData = response.data;
+      
+      if (responseData is Map<String, dynamic> && responseData['success'] == true) {
+        return {'success': true, 'data': responseData['data']};
+      } else {
+        return {'success': true, 'data': responseData};
+      }
     } on DioException catch (e) {
-      return _handleError(e, 'Error al obtener el entrenamiento');
+      final error = _handleError(e, 'Error al obtener el entrenamiento');
+      if (error['statusCode'] == 401) {
+        // Si es error 401, intentar refrescar token y reintentar
+        if (await _authService.refreshToken()) {
+          return getWorkout(id); // Reintento recursivo
+        }
+      }
+      return error;
     } catch (e) {
+      debugPrint('Error inesperado en getWorkout: $e');
       return {'success': false, 'message': 'Error inesperado: $e'};
     }
   }
@@ -38,12 +96,34 @@ class WorkoutService {
   /// Retorna un mapa con la lista de ejercicios o un mapa con error
   Future<Map<String, dynamic>> getExercisesForWorkout(String workoutId) async {
     try {
+      if (!await _ensureValidToken()) {
+        return {
+          'success': false,
+          'message': 'No autorizado',
+          'statusCode': 401
+        };
+      }
+
       final response = await _apiClient
           .get('${EnvConfig.workoutsEndpoint}/$workoutId/exercises');
-      return {'success': true, 'data': response};
+      final responseData = response.data;
+      
+      if (responseData is Map<String, dynamic> && responseData['success'] == true) {
+        return {'success': true, 'data': responseData['data']};
+      } else {
+        return {'success': true, 'data': responseData};
+      }
     } on DioException catch (e) {
-      return _handleError(e, 'Error al obtener ejercicios del entrenamiento');
+      final error = _handleError(e, 'Error al obtener ejercicios del entrenamiento');
+      if (error['statusCode'] == 401) {
+        // Si es error 401, intentar refrescar token y reintentar
+        if (await _authService.refreshToken()) {
+          return getExercisesForWorkout(workoutId); // Reintento recursivo
+        }
+      }
+      return error;
     } catch (e) {
+      debugPrint('Error inesperado en getExercisesForWorkout: $e');
       return {'success': false, 'message': 'Error inesperado: $e'};
     }
   }
@@ -53,12 +133,34 @@ class WorkoutService {
   Future<Map<String, dynamic>> createWorkout(
       Map<String, dynamic> workoutData) async {
     try {
+      if (!await _ensureValidToken()) {
+        return {
+          'success': false,
+          'message': 'No autorizado',
+          'statusCode': 401
+        };
+      }
+
       final response =
           await _apiClient.post(EnvConfig.workoutsEndpoint, data: workoutData);
-      return {'success': true, 'data': response};
+      final responseData = response.data;
+      
+      if (responseData is Map<String, dynamic> && responseData['success'] == true) {
+        return {'success': true, 'data': responseData['data']};
+      } else {
+        return {'success': true, 'data': responseData};
+      }
     } on DioException catch (e) {
-      return _handleError(e, 'Error al crear el entrenamiento');
+      final error = _handleError(e, 'Error al crear el entrenamiento');
+      if (error['statusCode'] == 401) {
+        // Si es error 401, intentar refrescar token y reintentar
+        if (await _authService.refreshToken()) {
+          return createWorkout(workoutData); // Reintento recursivo
+        }
+      }
+      return error;
     } catch (e) {
+      debugPrint('Error inesperado en createWorkout: $e');
       return {'success': false, 'message': 'Error inesperado: $e'};
     }
   }
@@ -68,12 +170,34 @@ class WorkoutService {
   Future<Map<String, dynamic>> updateWorkout(
       String id, Map<String, dynamic> workoutData) async {
     try {
+      if (!await _ensureValidToken()) {
+        return {
+          'success': false,
+          'message': 'No autorizado',
+          'statusCode': 401
+        };
+      }
+
       final response = await _apiClient.put('${EnvConfig.workoutsEndpoint}/$id',
           data: workoutData);
-      return {'success': true, 'data': response};
+      final responseData = response.data;
+      
+      if (responseData is Map<String, dynamic> && responseData['success'] == true) {
+        return {'success': true, 'data': responseData['data']};
+      } else {
+        return {'success': true, 'data': responseData};
+      }
     } on DioException catch (e) {
-      return _handleError(e, 'Error al actualizar el entrenamiento');
+      final error = _handleError(e, 'Error al actualizar el entrenamiento');
+      if (error['statusCode'] == 401) {
+        // Si es error 401, intentar refrescar token y reintentar
+        if (await _authService.refreshToken()) {
+          return updateWorkout(id, workoutData); // Reintento recursivo
+        }
+      }
+      return error;
     } catch (e) {
+      debugPrint('Error inesperado en updateWorkout: $e');
       return {'success': false, 'message': 'Error inesperado: $e'};
     }
   }
@@ -82,12 +206,34 @@ class WorkoutService {
   /// Retorna un mapa con el resultado de la operación
   Future<Map<String, dynamic>> deleteWorkout(String id) async {
     try {
+      if (!await _ensureValidToken()) {
+        return {
+          'success': false,
+          'message': 'No autorizado',
+          'statusCode': 401
+        };
+      }
+
       final response =
           await _apiClient.delete('${EnvConfig.workoutsEndpoint}/$id');
-      return {'success': true, 'data': response};
+      final responseData = response.data;
+      
+      if (responseData is Map<String, dynamic> && responseData['success'] == true) {
+        return {'success': true, 'data': responseData['data']};
+      } else {
+        return {'success': true, 'data': responseData};
+      }
     } on DioException catch (e) {
-      return _handleError(e, 'Error al eliminar el entrenamiento');
+      final error = _handleError(e, 'Error al eliminar el entrenamiento');
+      if (error['statusCode'] == 401) {
+        // Si es error 401, intentar refrescar token y reintentar
+        if (await _authService.refreshToken()) {
+          return deleteWorkout(id); // Reintento recursivo
+        }
+      }
+      return error;
     } catch (e) {
+      debugPrint('Error inesperado en deleteWorkout: $e');
       return {'success': false, 'message': 'Error inesperado: $e'};
     }
   }
@@ -97,13 +243,35 @@ class WorkoutService {
   Future<Map<String, dynamic>> logCompletedWorkout(
       String workoutId, Map<String, dynamic> completionData) async {
     try {
+      if (!await _ensureValidToken()) {
+        return {
+          'success': false,
+          'message': 'No autorizado',
+          'statusCode': 401
+        };
+      }
+
       final response = await _apiClient.post(
           '${EnvConfig.workoutsEndpoint}/$workoutId/complete',
           data: completionData);
-      return {'success': true, 'data': response};
+      final responseData = response.data;
+      
+      if (responseData is Map<String, dynamic> && responseData['success'] == true) {
+        return {'success': true, 'data': responseData['data']};
+      } else {
+        return {'success': true, 'data': responseData};
+      }
     } on DioException catch (e) {
-      return _handleError(e, 'Error al registrar entrenamiento completado');
+      final error = _handleError(e, 'Error al registrar entrenamiento completado');
+      if (error['statusCode'] == 401) {
+        // Si es error 401, intentar refrescar token y reintentar
+        if (await _authService.refreshToken()) {
+          return logCompletedWorkout(workoutId, completionData); // Reintento recursivo
+        }
+      }
+      return error;
     } catch (e) {
+      debugPrint('Error inesperado en logCompletedWorkout: $e');
       return {'success': false, 'message': 'Error inesperado: $e'};
     }
   }
@@ -113,12 +281,34 @@ class WorkoutService {
   Future<Map<String, dynamic>> getWorkoutCalendar(
       String startDate, String endDate) async {
     try {
+      if (!await _ensureValidToken()) {
+        return {
+          'success': false,
+          'message': 'No autorizado',
+          'statusCode': 401
+        };
+      }
+
       final response = await _apiClient.get(
           '${EnvConfig.calendarEndpoint}?start_date=$startDate&end_date=$endDate');
-      return {'success': true, 'data': response};
+      final responseData = response.data;
+      
+      if (responseData is Map<String, dynamic> && responseData['success'] == true) {
+        return {'success': true, 'data': responseData['data']};
+      } else {
+        return {'success': true, 'data': responseData};
+      }
     } on DioException catch (e) {
-      return _handleError(e, 'Error al obtener el calendario');
+      final error = _handleError(e, 'Error al obtener el calendario');
+      if (error['statusCode'] == 401) {
+        // Si es error 401, intentar refrescar token y reintentar
+        if (await _authService.refreshToken()) {
+          return getWorkoutCalendar(startDate, endDate); // Reintento recursivo
+        }
+      }
+      return error;
     } catch (e) {
+      debugPrint('Error inesperado en getWorkoutCalendar: $e');
       return {'success': false, 'message': 'Error inesperado: $e'};
     }
   }
@@ -127,11 +317,33 @@ class WorkoutService {
   /// Retorna un mapa con la lista de rutinas o un mapa con error
   Future<Map<String, dynamic>> getRoutines() async {
     try {
+      if (!await _ensureValidToken()) {
+        return {
+          'success': false,
+          'message': 'No autorizado',
+          'statusCode': 401
+        };
+      }
+
       final response = await _apiClient.get(EnvConfig.routinesEndpoint);
-      return {'success': true, 'data': response};
+      final responseData = response.data;
+      
+      if (responseData is Map<String, dynamic> && responseData['success'] == true) {
+        return {'success': true, 'data': responseData['data']};
+      } else {
+        return {'success': true, 'data': responseData};
+      }
     } on DioException catch (e) {
-      return _handleError(e, 'Error al obtener rutinas');
+      final error = _handleError(e, 'Error al obtener rutinas');
+      if (error['statusCode'] == 401) {
+        // Si es error 401, intentar refrescar token y reintentar
+        if (await _authService.refreshToken()) {
+          return getRoutines(); // Reintento recursivo
+        }
+      }
+      return error;
     } catch (e) {
+      debugPrint('Error inesperado en getRoutines: $e');
       return {'success': false, 'message': 'Error inesperado: $e'};
     }
   }
@@ -140,12 +352,34 @@ class WorkoutService {
   /// Retorna un mapa con la rutina o un mapa con error
   Future<Map<String, dynamic>> getRoutine(String id) async {
     try {
+      if (!await _ensureValidToken()) {
+        return {
+          'success': false,
+          'message': 'No autorizado',
+          'statusCode': 401
+        };
+      }
+
       final response =
           await _apiClient.get('${EnvConfig.routinesEndpoint}/$id');
-      return {'success': true, 'data': response};
+      final responseData = response.data;
+      
+      if (responseData is Map<String, dynamic> && responseData['success'] == true) {
+        return {'success': true, 'data': responseData['data']};
+      } else {
+        return {'success': true, 'data': responseData};
+      }
     } on DioException catch (e) {
-      return _handleError(e, 'Error al obtener la rutina');
+      final error = _handleError(e, 'Error al obtener la rutina');
+      if (error['statusCode'] == 401) {
+        // Si es error 401, intentar refrescar token y reintentar
+        if (await _authService.refreshToken()) {
+          return getRoutine(id); // Reintento recursivo
+        }
+      }
+      return error;
     } catch (e) {
+      debugPrint('Error inesperado en getRoutine: $e');
       return {'success': false, 'message': 'Error inesperado: $e'};
     }
   }

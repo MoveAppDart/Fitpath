@@ -2,34 +2,76 @@
 import 'dart:async';
 
 /// Interface defining the required methods for the authentication service
-abstract class AuthService {
-  /// Logs in a user with email and password
-  ///
-  /// Returns a Map with fields: success, message, data
-  Future<Map<String, dynamic>> login(String email, String password);
+import 'package:dio/dio.dart';
+import 'package:fitpath/config/env_config.dart';
+import 'package:fitpath/models/auth_success_response.dart';
+import 'package:fitpath/models/auth_error_response.dart';
 
-  /// Registers a new user with email, password, and name
-  ///
-  /// Returns a Map with fields: success, message, data
-  Future<Map<String, dynamic>> register(String email, String password, String name);
+class AuthService {
+  final Dio _dio;
+  String? _accessToken;
 
-  /// Logs out the current user
-  ///
-  /// Clears stored tokens and makes a request to the logout endpoint if it exists
-  Future<void> logout();
+  AuthService([Dio? dio]) : _dio = dio ?? Dio(BaseOptions(baseUrl: EnvConfig.apiBaseUrl));
 
-  /// Checks if a user is currently logged in
-  ///
-  /// Returns true if there is a stored auth token
-  Future<bool> isLoggedIn();
-  
-  /// Gets the current authentication token
-  ///
-  /// Returns the JWT token if available, null otherwise
-  Future<String?> getToken();
-  
-  /// Gets the current user's profile data
-  ///
-  /// Returns a Map containing the user's profile data if available
-  Future<Map<String, dynamic>?> getUserProfile();
+  void addAuthInterceptor() {
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          if (_accessToken != null) {
+            options.headers['Authorization'] = 'Bearer $_accessToken';
+          }
+          return handler.next(options);
+        },
+      ),
+    );
+  }
+
+  Future<AuthSuccessResponse?> login(String email, String password) async {
+    try {
+      final response = await _dio.post(
+        '/login',
+        data: {'email': email, 'password': password},
+      );
+      if (response.data['success'] == true) {
+        final authResp = AuthSuccessResponse.fromJson(response.data);
+        _accessToken = authResp.accessToken;
+        return authResp;
+      } else {
+        throw AuthErrorResponse.fromJson(response.data);
+      }
+    } on DioException catch (e) {
+      if (e.response?.data != null && e.response?.data is Map<String, dynamic>) {
+        throw AuthErrorResponse.fromJson(e.response!.data);
+      }
+      rethrow;
+    }
+  }
+
+  Future<AuthSuccessResponse?> register(String email, String password, String name) async {
+    try {
+      final response = await _dio.post(
+        '/register',
+        data: {'email': email, 'password': password, 'name': name},
+      );
+      if (response.data['success'] == true) {
+        final authResp = AuthSuccessResponse.fromJson(response.data);
+        _accessToken = authResp.accessToken;
+        return authResp;
+      } else {
+        throw AuthErrorResponse.fromJson(response.data);
+      }
+    } on DioException catch (e) {
+      if (e.response?.data != null && e.response?.data is Map<String, dynamic>) {
+        throw AuthErrorResponse.fromJson(e.response!.data);
+      }
+      rethrow;
+    }
+  }
+
+  String? get accessToken => _accessToken;
+
+  // Stubs temporales para evitar errores de referencia
+  Future<void> logout() async {}
+  Future<bool> isLoggedIn() async => _accessToken != null;
+  Future<Map<String, dynamic>?> getUserProfile() async { return null; }
 }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:fitpath/models/models.dart';
 import 'package:fitpath/providers/providers.dart';
 import 'package:fitpath/screens/wger_exercise_details_screen.dart';
 

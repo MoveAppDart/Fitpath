@@ -12,7 +12,9 @@ class UserService {
   Future<Map<String, dynamic>> getProfile() async {
     try {
       final response = await _apiClient.get(EnvConfig.profileEndpoint);
-      return {'success': true, 'data': response};
+      // Extraer los datos del objeto Response
+      final responseData = response.data;
+      return {'success': true, 'data': responseData};
     } on DioException catch (e) {
       return _handleError(e, 'Error al obtener el perfil');
     } catch (e) {

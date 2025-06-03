@@ -76,7 +76,7 @@ class _StatsScreenState extends State<StatsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Profile icon in top left
-                Row(
+                const Row(
                   children: [
                     CircleAvatar(
                       radius: 20,
@@ -93,7 +93,7 @@ class _StatsScreenState extends State<StatsScreen> {
                     color: Colors.blue.shade800,
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   child: Row(
                     mainAxisSize: MainAxisSize.max,
                     children: [
@@ -114,7 +114,7 @@ class _StatsScreenState extends State<StatsScreen> {
                     children: [
                       Image.asset('body_front.png',
                           height: height * 0.2, color: Colors.black38),
-                      SizedBox(width: 20),
+                      const SizedBox(width: 20),
                       Image.asset('body_back.png',
                           height: height * 0.2, color: Colors.black38),
                     ],
@@ -129,8 +129,8 @@ class _StatsScreenState extends State<StatsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.all(12.0),
+                      const Padding(
+                        padding: EdgeInsets.all(12.0),
                         child: Text('Done exercises',
                             style: TextStyle(
                                 fontSize: 16,
@@ -199,12 +199,12 @@ class _StatsScreenState extends State<StatsScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Trained regions',
+                              const Text('Trained regions',
                                   style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.black)),
-                              SizedBox(height: 10),
+                              const SizedBox(height: 10),
                               _buildLegendItem('Arms', Colors.blue,
                                   regionStats[selectedDays]!['Arms']!),
                               _buildLegendItem('Back', Colors.green,
@@ -232,7 +232,7 @@ class _StatsScreenState extends State<StatsScreen> {
                   ),
                 ),
 
-                Spacer(),
+                const Spacer(),
 
                 // Bottom navigation
                 SizedBox(
@@ -247,11 +247,11 @@ class _StatsScreenState extends State<StatsScreen> {
                       Container(
                         width: 40,
                         height: 40,
-                        decoration: BoxDecoration(
+                        decoration: const BoxDecoration(
                           color: Colors.blue,
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(Icons.add, color: Colors.white),
+                        child: const Icon(Icons.add, color: Colors.white),
                       ),
                     ],
                   ),
@@ -283,8 +283,8 @@ class _StatsScreenState extends State<StatsScreen> {
     return GestureDetector(
       onTap: () => setState(() => selectedDays = days),
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        margin: EdgeInsets.symmetric(horizontal: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        margin: const EdgeInsets.symmetric(horizontal: 4),
         decoration: BoxDecoration(
           color: selectedDays == days ? Colors.white : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
@@ -317,9 +317,9 @@ class _StatsScreenState extends State<StatsScreen> {
   Widget _buildExerciseStats(String name, String percentage) {
     return Column(
       children: [
-        Text(name, style: TextStyle(fontSize: 12, color: Colors.white)),
+        Text(name, style: const TextStyle(fontSize: 12, color: Colors.white)),
         Text(percentage,
-            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+            style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
       ],
     );
   }
@@ -337,12 +337,12 @@ class _StatsScreenState extends State<StatsScreen> {
               shape: BoxShape.circle,
             ),
           ),
-          SizedBox(width: 8),
-          Text(text, style: TextStyle(color: Colors.white)),
-          SizedBox(width: 8),
+          const SizedBox(width: 8),
+          Text(text, style: const TextStyle(color: Colors.white)),
+          const SizedBox(width: 8),
           Text(percentage,
               style:
-                  TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         ],
       ),
     );

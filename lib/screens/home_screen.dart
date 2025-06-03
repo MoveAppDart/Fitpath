@@ -7,623 +7,683 @@ import 'package:shared_preferences/shared_preferences.dart';
 // Providers
 import '../providers/user_provider.dart';
 import '../providers/workout_provider.dart';
+// Models
 import '../models/workout.dart';
-import 'workout_detail_screen.dart';
+// Screens
+// import './workout_detail_screen.dart'; // Ensure this screen exists and takes workoutId (Currently unused)
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  _HomeScreenState createState() => _HomeScreenState();
+  HomeScreenState createState() => HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
-  // Get current date and calculate the week range
+class HomeScreenState extends State<HomeScreen> {
   final DateTime _now = DateTime.now();
-  late final DateTime _weekStart;
-  late final DateTime _weekEnd;
-  late final List<DateTime> _weekDays;
+  late DateTime _weekStart;
+  late DateTime _weekEnd; // Now used for weekRangeText
+  late List<DateTime> _weekDays;
 
-  // User data
-  final Map<String, dynamic> _userData = {
-    'name': 'Cargando...',
-    'email': '',
-    'profileImage': '',
-    'memberSince': '',
-    'height': '',
-    'weight': '',
-    'age': 0,
-  };
+  Map<String, dynamic> _userData = {'name': 'Loading...'};
+  List<Workout> _upcomingWorkouts = [];
+  List<Workout> _recentWorkouts = [];
+  Map<DateTime, List<Workout>> _workoutCalendarEvents =
+      {}; // Store full Workout objects for calendar events
 
-  List<Map<String, dynamic>> _upcomingWorkouts = [];
-  List<Map<String, dynamic>> _recentWorkouts = [];
-  Map<DateTime, List<String>> _workoutHistory = {};
-  Map<String, dynamic> _nutritionData = {};
-  bool _isLoading = false;
+  bool _isLoadingUserData = true;
+  bool _isLoadingWorkouts = true;
+
+  // Theme Colors (consider moving to a central theme file)
+  static const Color primaryBlue =
+      Color(0xFF0A7AFF); // A slightly brighter, modern blue
+  static const Color darkBackgroundBlue = Color(0xFF001E3C);
+  static const Color cardBlue = Color(0xFF003D7A); // For cards
+  static const Color accentColor =
+      Color(0xFF00E676); // A vibrant green/teal for accents
+  static const Color textWhite = Colors.white;
+  static const Color textWhite70 = Colors.white70;
+  static const Color textWhite54 = Colors.white54;
 
   @override
   void initState() {
     super.initState();
-    // Calculate the start of the week (Monday)
+    _calculateWeekRange();
+    // Load data after the first frame to allow context to be available
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadInitialData();
+    });
+  }
+
+  void _calculateWeekRange() {
     _weekStart = _now.subtract(Duration(days: _now.weekday - 1));
-    // Calculate the end of the week (Sunday)
     _weekEnd = _weekStart.add(const Duration(days: 6));
-    // Generate all days of the current week
-    _weekDays = List.generate(7, (index) => _weekStart.add(Duration(days: index)));
+    _weekDays =
+        List.generate(7, (index) => _weekStart.add(Duration(days: index)));
+  }
 
-    // Initialize with empty data
-    _upcomingWorkouts = [];
-    _recentWorkouts = [];
-    _workoutHistory = {};
-    _nutritionData = {};
-
-    // Load real data from API
-    _loadUserData();
-    _loadWorkoutData();
+  Future<void> _loadInitialData() async {
+    if (!mounted) return;
+    // Load user data first, then workouts as they might depend on user context
+    // (though current implementation doesn't show direct dependency for workout loading)
+    await _loadUserData();
+    await _loadWorkoutData();
   }
 
   Future<void> _loadUserData() async {
+    if (!mounted) return;
+    setState(() => _isLoadingUserData = true);
+
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     try {
-      setState(() => _isLoading = true);
-      final success = await userProvider.loadUserProfile();
-      
-      if (success && userProvider.user != null && mounted) {
-        setState(() {
-          _userData.clear();
-          _userData.addAll(userProvider.user!.toJson());
-        });
+      bool profileLoaded = await userProvider.loadUserProfile();
+      if (profileLoaded && userProvider.user != null && mounted) {
+        setState(() => _userData = userProvider.user!.toJson());
+        print('HomeScreen: User profile loaded: ${_userData['name']}');
       } else {
         final prefs = await SharedPreferences.getInstance();
         final savedName = prefs.getString('user_name');
-        
-        setState(() {
-          _userData['name'] = savedName ?? 'Usuario';
-        });
+        if (mounted) setState(() => _userData['name'] = savedName ?? 'User');
+        print('HomeScreen: Used fallback name: ${_userData['name']}');
       }
     } catch (e) {
-      setState(() => _userData['name'] = 'Usuario');
+      if (mounted) setState(() => _userData['name'] = 'User');
+      print('HomeScreen: Error loading user data: $e');
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoadingUserData = false);
     }
   }
 
   Future<void> _loadWorkoutData() async {
-    final workoutProvider = Provider.of<WorkoutProvider>(context, listen: false);
+    if (!mounted) return;
+    setState(() => _isLoadingWorkouts = true);
+
+    final workoutProvider =
+        Provider.of<WorkoutProvider>(context, listen: false);
     try {
-      final success = await workoutProvider.loadWorkouts();
-      
-      if (success && workoutProvider.workouts.isNotEmpty && mounted) {
-        setState(() {
-          _processWorkoutData(workoutProvider.workouts);
-        });
+      await workoutProvider
+          .loadWorkouts(); // Assumes this fetches all user's workouts
+      if (mounted) {
+        _processAndSetWorkoutData(workoutProvider.workouts);
       }
-      
-      final startDate = _weekStart.toIso8601String().split('T')[0];
-      final endDate = _weekEnd.toIso8601String().split('T')[0];
-      final calendarSuccess = await workoutProvider.getWorkoutCalendar(startDate, endDate);
-      
-      if (calendarSuccess && workoutProvider.workoutCalendar != null && mounted) {
-        setState(() {
-          _processCalendarData(workoutProvider.workoutCalendar!);
-        });
-      }
+      // Load calendar-specific view if your API supports it, or process all workouts
+      // For now, _processAndSetWorkoutData also populates _workoutCalendarEvents
     } catch (e) {
-      print('Error loading workout data: $e');
+      print('HomeScreen: Error loading workout data: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading workouts: ${e.toString()}')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoadingWorkouts = false);
     }
   }
 
-  void _processWorkoutData(List<Workout> workouts) {
+  void _processAndSetWorkoutData(List<Workout> allWorkouts) {
     final now = DateTime.now();
-    final upcomingList = [];
-    final recentList = [];
+    final todayDateOnly = DateTime(now.year, now.month, now.day);
 
-    for (var workout in workouts) {
+    List<Workout> upcoming = [];
+    List<Workout> recent = [];
+    Map<DateTime, List<Workout>> calendarEvents = {};
+
+    for (var workout in allWorkouts) {
       final workoutDate = workout.scheduledDate;
+      final workoutDateOnly =
+          DateTime(workoutDate.year, workoutDate.month, workoutDate.day);
 
-      if (workoutDate.isAfter(now)) {
-        final String displayDate = workoutDate.day == now.day
-            ? 'Hoy'
-            : workoutDate.day == now.day + 1
-                ? 'Mañana'
-                : DateFormat('EEEE', 'es').format(workoutDate);
+      // Populate calendar events
+      if (calendarEvents.containsKey(workoutDateOnly)) {
+        calendarEvents[workoutDateOnly]!.add(workout);
+      } else {
+        calendarEvents[workoutDateOnly] = [workout];
+      }
 
-        upcomingList.add({
-          'id': workout.id,
-          'name': workout.name,
-          'date': displayDate,
-          'time': DateFormat('HH:mm').format(workoutDate),
-          'duration': '${workout.duration} min',
-          'type': workout.type,
-        });
-      } else if (workoutDate.isAfter(now.subtract(const Duration(days: 7)))) {
-        recentList.add({
-          'id': workout.id,
-          'name': workout.name,
-          'date': DateFormat('EEEE', 'es').format(workoutDate),
-          'time': DateFormat('HH:mm').format(workoutDate),
-          'duration': '${workout.duration} min',
-          'type': workout.type,
-          'completed': workout.completed,
-        });
+      // Populate upcoming and recent lists
+      if (workoutDateOnly.isAfter(todayDateOnly) ||
+          workoutDateOnly.isAtSameMomentAs(todayDateOnly)) {
+        upcoming.add(workout);
+      } else if (workoutDateOnly
+          .isAfter(todayDateOnly.subtract(const Duration(days: 7)))) {
+        recent.add(workout);
       }
     }
 
-    if (upcomingList.isNotEmpty) {
-      _upcomingWorkouts = List<Map<String, dynamic>>.from(
-          upcomingList.map((workout) => Map<String, dynamic>.from(workout)));
-    }
+    upcoming.sort((a, b) => a.scheduledDate.compareTo(b.scheduledDate));
+    recent.sort((a, b) => b.scheduledDate.compareTo(a.scheduledDate));
 
-    if (recentList.isNotEmpty) {
-      _recentWorkouts = List<Map<String, dynamic>>.from(
-          recentList.map((workout) => Map<String, dynamic>.from(workout)));
+    if (mounted) {
+      setState(() {
+        _upcomingWorkouts = upcoming;
+        _recentWorkouts = recent;
+        _workoutCalendarEvents = calendarEvents;
+      });
     }
   }
 
-  void _processCalendarData(Map<String, dynamic> calendarData) {
-    final Map<DateTime, List<String>> historyMap = {};
-
-    if (calendarData.containsKey('workouts')) {
-      final workoutsList = calendarData['workouts'] as List<dynamic>;
-
-      for (var workout in workoutsList) {
-        if (workout['completed'] == true) {
-          final workoutDate = DateTime.parse(workout['date']);
-          final dateKey = DateTime(workoutDate.year, workoutDate.month, workoutDate.day);
-
-          if (!historyMap.containsKey(dateKey)) {
-            historyMap[dateKey] = [];
-          }
-
-          historyMap[dateKey]!.add(workout['name']);
-        }
-      }
-
-      if (historyMap.isNotEmpty) {
-        _workoutHistory = historyMap;
-      }
-    }
+  // Helper to get events for TableCalendar
+  List<Workout> _getEventsForCalendarDay(DateTime day) {
+    return _workoutCalendarEvents[DateTime(day.year, day.month, day.day)] ?? [];
   }
 
   @override
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
-    final bool isTablet = screenSize.width > 600;
-    final bool isDesktop = screenSize.width > 1200;
-    final double horizontalPadding = isDesktop ? 80 : (isTablet ? 40 : 20);
-    final double verticalSpacing = isDesktop ? 40 : (isTablet ? 30 : 24);
-    final double headerFontSize = isDesktop ? 22 : (isTablet ? 20 : 18);
-    final double subHeaderFontSize = isDesktop ? 18 : (isTablet ? 16 : 14);
-    final double routineTitleFontSize = isDesktop ? 24 : (isTablet ? 22 : 20);
+    final bool isTablet = screenSize.width >= 600;
+    final bool isDesktop = screenSize.width >=
+        960; // Adjusted for better desktop layout consideration
 
-    // Format date range for weekly schedule
+    final double horizontalPadding = isDesktop ? 32 : (isTablet ? 24 : 16);
+    final double verticalCardSpacing = isDesktop ? 24 : (isTablet ? 20 : 16);
+    final double headerFontSize = (screenSize.width * 0.05).clamp(20.0, 28.0);
+    final double subHeaderFontSize =
+        (screenSize.width * 0.035).clamp(14.0, 18.0);
+    final double cardTitleFontSize =
+        (screenSize.width * 0.045).clamp(18.0, 22.0);
+
+    String greetingName =
+        _isLoadingUserData ? "Loading..." : (_userData['name'] ?? 'User');
+
+    Workout? todaysWorkout;
+    if (_upcomingWorkouts.isNotEmpty) {
+      final today = DateTime.now();
+      todaysWorkout = _upcomingWorkouts.firstWhere(
+        (w) =>
+            w.scheduledDate.year == today.year &&
+            w.scheduledDate.month == today.month &&
+            w.scheduledDate.day == today.day,
+        orElse: () => _upcomingWorkouts
+            .first, // Fallback to next upcoming if none for today
+      );
+    }
+
+    int completedThisWeek = 0;
+    for (var day in _weekDays) {
+      if (_workoutCalendarEvents[DateTime(day.year, day.month, day.day)]
+              ?.any((w) => w.completed) ??
+          false) {
+        completedThisWeek++;
+      }
+    }
+    // Define weekRangeText here
     final String weekRangeText =
-        '${DateFormat('d MMM', 'es').format(_weekStart)} - ${DateFormat('d MMM y', 'es').format(_weekEnd)}';
+        "${DateFormat.MMMd().format(_weekStart)} - ${DateFormat.MMMd().format(_weekEnd)}";
 
-    // Get today's workout if available
-    final todaysWorkout = _upcomingWorkouts.firstWhere(
-      (workout) => workout['date'] == 'Hoy',
-      orElse: () => {
-        'name': 'Sin entrenamiento',
-        'time': 'No hay entrenamiento programado',
-        'duration': '0 min',
-        'id': ''
-      },
-    );
-
-    // Calculate completed workouts for the week
-    final int completedWorkouts = _weekDays
-        .where((day) =>
-            _workoutHistory.containsKey(DateTime(day.year, day.month, day.day)))
-        .length;
-    final int totalPlannedWorkouts = 4; // Example target
-    final double progressValue = completedWorkouts / totalPlannedWorkouts;
-
-    // Tamaños de fuente responsivos
-    double textFieldFontSize = isDesktop ? 18 : (isTablet ? 16 : 14);
-    double buttonFontSize = isDesktop ? 20 : (isTablet ? 18 : 16);
-    double socialIconSize = isDesktop ? 40 : (isTablet ? 36 : 32);
-    
-    // Ajustar espaciado vertical si es necesario
-    double adjustedVerticalSpacing = verticalSpacing;
-    if (adjustedVerticalSpacing < 15) adjustedVerticalSpacing = 15;
-    if (adjustedVerticalSpacing > 30) adjustedVerticalSpacing = 30;
+    // TODO: Get totalPlannedWorkouts dynamically or from user settings
+    int totalPlannedWorkouts = 5; // Example
+    double weeklyProgress = totalPlannedWorkouts > 0
+        ? (completedThisWeek / totalPlannedWorkouts).clamp(0.0, 1.0)
+        : 0.0;
 
     return Scaffold(
-      body: Container(
-        width: screenSize.width,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF005DC8),
-              Color(0xFF004AAE),
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: horizontalPadding,
-                vertical: verticalSpacing,
-              ),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxWidth: isDesktop ? 800 : double.infinity,
+      backgroundColor: darkBackgroundBlue,
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: _loadInitialData,
+          color: textWhite,
+          backgroundColor: primaryBlue,
+          child: CustomScrollView(
+            // Use CustomScrollView for more complex scrollable layouts
+            slivers: [
+              SliverPadding(
+                padding: EdgeInsets.symmetric(
+                    horizontal: horizontalPadding,
+                    vertical: verticalCardSpacing * 0.8),
+                sliver: SliverToBoxAdapter(
+                  child: _buildUserHeader(
+                      greetingName,
+                      _userData['profileImage'],
+                      headerFontSize,
+                      subHeaderFontSize,
+                      isDesktop,
+                      isTablet),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header with user info
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          radius: isDesktop ? 35 : (isTablet ? 30 : 25),
-                          backgroundColor: Colors.white24,
-                          child: Icon(
-                            Icons.person,
-                            size: isDesktop ? 40 : (isTablet ? 35 : 30),
-                            color: Colors.white,
-                          ),
-                        ),
-                        SizedBox(width: horizontalPadding * 0.2),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Bienvenido,',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: subHeaderFontSize,
-                              ),
-                            ),
-                            _isLoading
-                                ? const SizedBox(
-                                    width: 100,
-                                    child: LinearProgressIndicator(
-                                      color: Colors.white,
-                                      backgroundColor: Colors.transparent,
-                                    ),
-                                  )
-                                : Text(
-                                    _userData['name'],
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: headerFontSize,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: verticalSpacing),
+              ),
 
-                    // Today's routine card
-                    Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.2),
-                        ),
-                      ),
-                      padding: EdgeInsets.all(horizontalPadding * 0.5),
+              if (_isLoadingWorkouts && _upcomingWorkouts.isEmpty)
+                const SliverFillRemaining(
+                    child: Center(
+                        child: CircularProgressIndicator(color: textWhite))),
+
+              if (!_isLoadingWorkouts && todaysWorkout != null)
+                SliverPadding(
+                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                  sliver: SliverToBoxAdapter(
+                      child: _buildTodaysRoutineCard(
+                          todaysWorkout,
+                          cardTitleFontSize,
+                          subHeaderFontSize,
+                          verticalCardSpacing)),
+                ),
+
+              if (!_isLoadingWorkouts)
+                SliverPadding(
+                  padding: EdgeInsets.fromLTRB(
+                      horizontalPadding,
+                      verticalCardSpacing,
+                      horizontalPadding,
+                      verticalCardSpacing),
+                  sliver: SliverToBoxAdapter(
+                      child: _buildWeeklyProgressSection(
+                          weekRangeText, // Now defined
+                          completedThisWeek,
+                          totalPlannedWorkouts,
+                          weeklyProgress,
+                          headerFontSize,
+                          subHeaderFontSize,
+                          isDesktop,
+                          isTablet)),
+                ),
+
+              if (!_isLoadingWorkouts && _recentWorkouts.isNotEmpty)
+                SliverPadding(
+                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                  sliver: _buildRecentActivitySection(
+                      _recentWorkouts,
+                      cardTitleFontSize,
+                      subHeaderFontSize,
+                      verticalCardSpacing),
+                ),
+
+              if (!_isLoadingWorkouts &&
+                  _upcomingWorkouts.isEmpty &&
+                  _recentWorkouts.isEmpty)
+                SliverFillRemaining(
+                  // Use SliverFillRemaining to center content if list is empty
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
                       child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
+                          const Icon(Icons.fitness_center_outlined,
+                              size: 60, color: textWhite54),
+                          const SizedBox(height: 16),
                           Text(
-                            "Rutina de Hoy",
+                            "No workouts scheduled or completed recently.\nPlan your next session!",
+                            textAlign: TextAlign.center,
                             style: GoogleFonts.poppins(
-                              color: Colors.white,
-                              fontSize: routineTitleFontSize,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          SizedBox(height: verticalSpacing),
-                          Container(
-                            width: double.infinity,
-                            padding: EdgeInsets.all(horizontalPadding * 0.5),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  todaysWorkout['name'],
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.white,
-                                    fontSize: headerFontSize,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                SizedBox(height: 8),
-                                Text(
-                                  '${todaysWorkout['time']} • ${todaysWorkout['duration']}',
-                                  style: TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: subHeaderFontSize,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          SizedBox(height: verticalSpacing * 0.8),
-                          ElevatedButton(
-                            onPressed: () {
-                              if (todaysWorkout['name'] != 'Sin entrenamiento') {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => WorkoutDetailScreen(
-                                      workoutId: todaysWorkout['id'],
-                                    ),
-                                  ),
-                                );
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white.withOpacity(0.2),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
-                              ),
-                              padding: EdgeInsets.symmetric(
-                                horizontal: horizontalPadding * 0.5,
-                                vertical: verticalSpacing * 0.3,
-                              ),
-                            ),
-                            child: Text(
-                              'Comenzar',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: subHeaderFontSize,
-                              ),
-                            ),
+                                color: textWhite70,
+                                fontSize: subHeaderFontSize),
                           ),
                         ],
                       ),
                     ),
-                    SizedBox(height: verticalSpacing),
-
-                    // Weekly progress
-                    Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.2),
-                        ),
-                      ),
-                      padding: EdgeInsets.all(horizontalPadding * 0.5),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Progreso Semanal',
-                                    style: GoogleFonts.poppins(
-                                      color: Colors.white,
-                                      fontSize: headerFontSize,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  SizedBox(height: 4),
-                                  Text(
-                                    weekRangeText,
-                                    style: TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: subHeaderFontSize,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              Row(
-                                children: [
-                                  Text(
-                                    '¡Vas por buen camino!',
-                                    style: TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: subHeaderFontSize * 0.8,
-                                    ),
-                                  ),
-                                  SizedBox(width: horizontalPadding * 0.2),
-                                  SizedBox(
-                                    width: isDesktop ? 50 : (isTablet ? 45 : 40),
-                                    height: isDesktop ? 50 : (isTablet ? 45 : 40),
-                                    child: Stack(
-                                      alignment: Alignment.center,
-                                      children: [
-                                        CircularProgressIndicator(
-                                          value: progressValue,
-                                          backgroundColor: Colors.white24,
-                                          valueColor: const AlwaysStoppedAnimation<Color>(
-                                            Color(0xFF00E5FF),
-                                          ),
-                                          strokeWidth: 4,
-                                        ),
-                                        Text(
-                                          '$completedWorkouts/$totalPlannedWorkouts',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: subHeaderFontSize * 0.8,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: verticalSpacing),
-
-                          // Weekly calendar
-                          SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Row(
-                              children: List.generate(7, (index) {
-                                final day = _weekDays[index];
-                                final isToday = day.day == _now.day &&
-                                    day.month == _now.month &&
-                                    day.year == _now.year;
-                                final hasWorkout = _workoutHistory.containsKey(
-                                    DateTime(day.year, day.month, day.day));
-
-                                return Container(
-                                  width: 60,
-                                  margin: const EdgeInsets.only(right: 10),
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
-                                  decoration: BoxDecoration(
-                                    color: isToday
-                                        ? const Color(0xFF00E5FF).withOpacity(0.2)
-                                        : Colors.transparent,
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: isToday
-                                          ? const Color(0xFF00E5FF)
-                                          : Colors.transparent,
-                                    ),
-                                  ),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        DateFormat('EEE', 'es').format(day)[0],
-                                        style: TextStyle(
-                                          color: isToday ? Colors.white : Colors.white70,
-                                          fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Container(
-                                        width: 30,
-                                        height: 30,
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          color: isToday
-                                              ? const Color(0xFF00E5FF)
-                                              : Colors.transparent,
-                                        ),
-                                        child: Center(
-                                          child: Text(
-                                            '${day.day}',
-                                            style: TextStyle(
-                                              color: isToday ? Colors.black : Colors.white,
-                                              fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      if (hasWorkout)
-                                        Container(
-                                          width: 6,
-                                          height: 6,
-                                          decoration: const BoxDecoration(
-                                            color: Color(0xFF00E5FF),
-                                            shape: BoxShape.circle,
-                                          ),
-                                        )
-                                      else
-                                        const SizedBox(height: 6),
-                                    ],
-                                  ),
-                                );
-                              }),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: verticalSpacing),
-
-                    // Recent activities
-                    if (_recentWorkouts.isNotEmpty) ...[
-                      Text(
-                        'Actividades Recientes',
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontSize: headerFontSize,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      SizedBox(height: verticalSpacing * 0.5),
-                      ..._recentWorkouts.take(3).map((workout) => Card(
-                        color: Colors.white.withOpacity(0.1),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: BorderSide(
-                            color: Colors.white.withOpacity(0.2),
-                          ),
-                        ),
-                        child: ListTile(
-                          leading: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF00E5FF).withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Icon(
-                              Icons.directions_run,
-                              color: Color(0xFF00E5FF),
-                            ),
-                          ),
-                          title: Text(
-                            workout['name'],
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          subtitle: Text(
-                            '${workout['date']} • ${workout['time']}',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: subHeaderFontSize * 0.9,
-                            ),
-                          ),
-                          trailing: Text(
-                            workout['duration'],
-                            style: const TextStyle(
-                              color: Color(0xFF00E5FF),
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => WorkoutDetailScreen(
-                                  workoutId: workout['id'],
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      )).toList(),
-                      SizedBox(height: verticalSpacing),
-                    ],
-                  ],
+                  ),
                 ),
-              ),
-            ),
+              SliverToBoxAdapter(
+                  child:
+                      SizedBox(height: verticalCardSpacing)), // Bottom padding
+            ],
           ),
         ),
       ),
     );
+  }
+
+  Widget _buildUserHeader(String name, String? profileImageUrl, double headerFs,
+      double subHeaderFs, bool isDesktop, bool isTablet) {
+    return Row(
+      children: [
+        CircleAvatar(
+          radius: isDesktop ? 32 : (isTablet ? 28 : 24),
+          backgroundColor: cardBlue,
+          backgroundImage:
+              (profileImageUrl != null && profileImageUrl.isNotEmpty)
+                  ? NetworkImage(profileImageUrl)
+                  : null,
+          onBackgroundImageError:
+              profileImageUrl != null && profileImageUrl.isNotEmpty
+                  ? (_, __) {}
+                  : null, // Basic error handling
+          child: (profileImageUrl == null || profileImageUrl.isEmpty)
+              ? Icon(Icons.person,
+                  size: isDesktop ? 36 : (isTablet ? 32 : 28),
+                  color: textWhite70)
+              : null,
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Welcome,',
+                style: GoogleFonts.poppins(
+                    color: textWhite70, fontSize: subHeaderFs * 0.9),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                name,
+                style: GoogleFonts.poppins(
+                    color: textWhite,
+                    fontSize: headerFs,
+                    fontWeight: FontWeight.w600),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+        IconButton(
+          icon: Icon(Icons.notifications_none_outlined,
+              color: textWhite70, size: isDesktop ? 28 : 24),
+          onPressed: () {/* TODO: Navigate to notifications */},
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTodaysRoutineCard(
+      Workout workout, double titleFs, double subFs, double vSpacing) {
+    return Card(
+      elevation: 4,
+      color: cardBlue,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: EdgeInsets.all(vSpacing * 0.8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Today's Focus",
+              style: GoogleFonts.poppins(
+                  color: textWhite,
+                  fontSize: titleFs,
+                  fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: vSpacing * 0.5),
+            Text(
+              workout.name,
+              style: GoogleFonts.poppins(
+                  color: accentColor,
+                  fontSize: titleFs * 0.9,
+                  fontWeight: FontWeight.w600),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            SizedBox(height: vSpacing * 0.3),
+            Row(
+              children: [
+                Icon(Icons.timer_outlined, color: textWhite70, size: subFs),
+                const SizedBox(width: 8),
+                Text(
+                  "${workout.duration} min", // Assuming duration is in minutes
+                  style:
+                      GoogleFonts.poppins(color: textWhite70, fontSize: subFs),
+                ),
+                const SizedBox(width: 16),
+                Icon(Icons.category_outlined, color: textWhite70, size: subFs),
+                const SizedBox(width: 8),
+                Text(
+                  workout.type,
+                  style:
+                      GoogleFonts.poppins(color: textWhite70, fontSize: subFs),
+                ),
+              ],
+            ),
+            SizedBox(height: vSpacing * 0.7),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.play_arrow_rounded,
+                    color: darkBackgroundBlue),
+                label: Text(
+                  'Start Workout',
+                  style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.bold, color: darkBackgroundBlue),
+                ),
+                onPressed: () {
+                  // Navigator.push(context, MaterialPageRoute(builder: (context) => WorkoutDetailScreen(workoutId: workout.id)));
+                  print("Start workout: ${workout.id}");
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: accentColor,
+                  padding: EdgeInsets.symmetric(vertical: vSpacing * 0.6),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWeeklyProgressSection(
+      String weekRange,
+      int completed,
+      int total,
+      double progress,
+      double headerFs,
+      double subFs,
+      bool isDesktop,
+      bool isTablet) {
+    return Card(
+      elevation: 4,
+      color: cardBlue,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: EdgeInsets.all(isDesktop ? 20 : 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Weekly Progress',
+                        style: GoogleFonts.poppins(
+                            color: textWhite,
+                            fontSize: headerFs * 0.9,
+                            fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 4),
+                    Text(weekRange,
+                        style: GoogleFonts.poppins(
+                            color: textWhite70, fontSize: subFs * 0.9)),
+                  ],
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text('$completed/$total Done',
+                        style: GoogleFonts.poppins(
+                            color: accentColor,
+                            fontSize: subFs,
+                            fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 4),
+                    SizedBox(
+                      width: isTablet ? 100 : 80, // Bar width
+                      child: LinearProgressIndicator(
+                        value: progress,
+                        backgroundColor:
+                            textWhite.withAlpha((255 * 0.2).round()),
+                        valueColor:
+                            const AlwaysStoppedAnimation<Color>(accentColor),
+                        minHeight: 6,
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                    ),
+                  ],
+                )
+              ],
+            ),
+            const SizedBox(height: 20),
+            SingleChildScrollView(
+              // Allow horizontal scroll for day cards
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: List.generate(7, (index) {
+                  final day = _weekDays[index];
+                  final isToday = isSameDay(day, _now);
+                  final eventsOnDay = _getEventsForCalendarDay(day);
+                  final bool hasCompletedWorkout =
+                      eventsOnDay.any((w) => w.completed);
+
+                  return Container(
+                    width: isTablet ? 65 : 55,
+                    margin: EdgeInsets.only(
+                        right: index == 6 ? 0 : (isTablet ? 10 : 8)),
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
+                    decoration: BoxDecoration(
+                      color: isToday
+                          ? accentColor.withAlpha((255 * 0.9).round())
+                          : primaryBlue.withAlpha((255 * 0.5).round()),
+                      borderRadius: BorderRadius.circular(12),
+                      border: isToday
+                          ? Border.all(color: accentColor, width: 2)
+                          : null,
+                      boxShadow: isToday
+                          ? [
+                              BoxShadow(
+                                  color: accentColor
+                                      .withAlpha((255 * 0.3).round()),
+                                  blurRadius: 8,
+                                  spreadRadius: 1)
+                            ]
+                          : [],
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          DateFormat('E', 'en_US')
+                              .format(day)
+                              .substring(0, 1), // Just "M", "T", "W"
+                          style: GoogleFonts.poppins(
+                            color: isToday ? darkBackgroundBlue : textWhite,
+                            fontWeight: FontWeight.bold,
+                            fontSize: subFs * 0.85,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          '${day.day}',
+                          style: GoogleFonts.poppins(
+                            color: isToday ? darkBackgroundBlue : textWhite,
+                            fontWeight:
+                                isToday ? FontWeight.bold : FontWeight.w600,
+                            fontSize: subFs * 1.1,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        if (eventsOnDay.isNotEmpty)
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: hasCompletedWorkout
+                                  ? Colors.white
+                                  : Colors
+                                      .amberAccent, // Different color if completed
+                              shape: BoxShape.circle,
+                            ),
+                          )
+                        else
+                          const SizedBox(
+                              height: 8), // Placeholder for alignment
+                      ],
+                    ),
+                  );
+                }),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRecentActivitySection(List<Workout> recentWorkouts,
+      double titleFs, double subFs, double verticalCardSpacing) {
+    return SliverList(
+      delegate: SliverChildListDelegate([
+        Padding(
+          padding: EdgeInsets.only(
+              top: verticalCardSpacing *
+                  0.5), // Now verticalCardSpacing is in scope
+          child: Text(
+            'Recent Activities',
+            style: GoogleFonts.poppins(
+                color: textWhite,
+                fontSize: titleFs,
+                fontWeight: FontWeight.w600),
+          ),
+        ),
+        const SizedBox(height: 12),
+        ...recentWorkouts.take(3).map((workout) {
+          // Show max 3 recent
+          return Card(
+            elevation: 3,
+            margin: const EdgeInsets.symmetric(vertical: 6),
+            color: cardBlue.withAlpha((255 * 0.9).round()),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            child: ListTile(
+              contentPadding:
+                  const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              leading: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: primaryBlue.withAlpha((255 * 0.7).round()),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: _getWorkoutTypeIcon(workout.type), // Helper for icon
+              ),
+              title: Text(
+                workout.name,
+                style: GoogleFonts.poppins(
+                    color: textWhite,
+                    fontWeight: FontWeight.w500,
+                    fontSize: subFs * 1.1),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              subtitle: Text(
+                "${DateFormat('MMM d, yyyy').format(workout.scheduledDate)} • ${workout.duration} min",
+                style: GoogleFonts.poppins(
+                    color: textWhite70, fontSize: subFs * 0.9),
+              ),
+              trailing: workout.completed
+                  ? const Icon(Icons.check_circle, color: accentColor, size: 22)
+                  : const Icon(Icons.pending_outlined,
+                      color: textWhite54, size: 22),
+              onTap: () {
+                // Navigator.push(context, MaterialPageRoute(builder: (context) => WorkoutDetailScreen(workoutId: workout.id)));
+                print("Navigate to recent workout: ${workout.id}");
+              },
+            ),
+          );
+        }).toList(),
+      ]),
+    );
+  }
+
+  Icon _getWorkoutTypeIcon(String type) {
+    // Example: map workout type to an icon
+    switch (type.toLowerCase()) {
+      case 'strength':
+        return const Icon(Icons.fitness_center, color: textWhite, size: 24);
+      case 'cardio':
+        return const Icon(Icons.directions_run, color: textWhite, size: 24);
+      case 'flexibility':
+      case 'yoga':
+        return const Icon(Icons.self_improvement, color: textWhite, size: 24);
+      default:
+        return const Icon(Icons.sports_gymnastics, color: textWhite, size: 24);
+    }
+  }
+
+  // Helper method to check if two DateTime objects represent the same day.
+  bool isSameDay(DateTime? a, DateTime? b) {
+    if (a == null || b == null) {
+      return false;
+    }
+    return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 }

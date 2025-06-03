@@ -1,5 +1,16 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+
+// Importaciones de componentes y providers
+import '../../providers/signup_flow_provider.dart';
+import '../../widgets/signup/gradient_background.dart';
+import '../../widgets/signup/progress_bar.dart';
+import '../../widgets/signup/signup_header.dart';
+import '../../widgets/signup/navigation_buttons.dart';
+import '../../widgets/signup/signup_page_transition.dart';
+
+// Pantallas adyacentes
 import 'step4_signup.dart';
 import 'step6_signup.dart';
 
@@ -11,239 +22,112 @@ class FifthStepSignup extends StatefulWidget {
 }
 
 class _FifthStepSignupState extends State<FifthStepSignup> {
-  String?
-      selectedActivityLevel; // Variable para almacenar el género seleccionado
+  // Los niveles de actividad disponibles
+  final List<ActivityOption> _activityOptions = [
+    ActivityOption(
+        label: "Sedentary",
+        icon: Icons.weekend_outlined,
+        description: "Little to no exercise"),
+    ActivityOption(
+        label: "Lightly Active",
+        icon: Icons.directions_walk_outlined,
+        description: "Light exercise 1-3 days a week"),
+    ActivityOption(
+        label: "Moderately Active",
+        icon: Icons.directions_run_outlined,
+        description: "Moderate exercise 3-5 days a week"),
+    ActivityOption(
+        label: "Very Active",
+        icon: Icons.fitness_center_outlined,
+        description: "Hard exercise 6-7 days a week"),
+    ActivityOption(
+        label: "Professional Athlete",
+        icon: Icons.sports_gymnastics_outlined,
+        description: "Hard exercise twice a day"),
+  ];
+
+  // Navegación a la pantalla anterior
+  void _goToPreviousStep() {
+    Navigator.pushReplacement(
+      context,
+      SignupPageTransition(
+        page: FourthStepSignup(
+            weightKg: Provider.of<SignupFlowProvider>(context, listen: false)
+                    .weightKg ??
+                70.0),
+      ),
+    );
+  }
+
+  // Navegación a la siguiente pantalla
+  void _goToNextStep() {
+    Navigator.pushReplacement(
+      context,
+      SignupPageTransition(page: const SixthStepSignup()),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    dynamic size, heights, width;
-    size = MediaQuery.of(context).size;
-    heights = size.height;
-    width = size.width;
+    // Acceder al provider para detectar cambios
+    final signupFlowProvider = Provider.of<SignupFlowProvider>(context);
+    final String? selectedActivity = signupFlowProvider.fitnessLevel;
 
-    return SafeArea(
-      child: Scaffold(
-        body: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Color.fromARGB(255, 0, 93, 200),
-                Color.fromARGB(255, 1, 69, 148),
-                Color.fromARGB(255, 1, 51, 109),
-                Color.fromARGB(255, 2, 45, 96),
+    return Scaffold(
+      body: GradientBackground(
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const SizedBox(height: 40),
+
+                // Barra de progreso reutilizable
+                const SignupProgressBar(currentStep: 5, totalSteps: 6),
+
+                const SizedBox(height: 30),
+
+                // Encabezado reutilizable
+                const SignupHeader(
+                  title: "What's your activity level?",
+                  subtitle: "This helps us determine your daily calorie needs",
+                ),
+
+                const SizedBox(height: 20),
+
+                // Lista de opciones de actividad
+                Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    itemCount: _activityOptions.length,
+                    itemBuilder: (context, index) {
+                      final option = _activityOptions[index];
+                      return ActivityOptionButton(
+                        label: option.label,
+                        icon: option.icon,
+                        description: option.description,
+                        isSelected: selectedActivity == option.label,
+                        onPressed: () {
+                          if (mounted) {
+                            signupFlowProvider.setFitnessLevel(option.label);
+                          }
+                        },
+                      );
+                    },
+                  ),
+                ),
+
+                // Botones de navegación reutilizables
+                SignupNavigationButtons(
+                  onPrevious: _goToPreviousStep,
+                  onNext: _goToNextStep,
+                  disableNextButton: selectedActivity == null,
+                ),
+
+                const SizedBox(height: 20),
               ],
             ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              SizedBox(height: heights / 30),
-              // Progress Bar
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(6, (index) {
-                    return Container(
-                      margin: EdgeInsets.symmetric(horizontal: 2.0),
-                      width: width / 8,
-                      height: 5,
-                      decoration: BoxDecoration(
-                        color: index == 4
-                            ? const Color.fromARGB(255, 10, 187, 37)
-                            : const Color.fromARGB(178, 163, 172, 164),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    );
-                  }),
-                ),
-              ),
-              SizedBox(height: heights / 20),
-              // Title and Subtitle
-              Text(
-                "What’s your activity level?",
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: heights / 40),
-              Text(
-                "Lorem ipsum dolor sit amet, consectetur\nadipiscing elit. Morbi",
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.white70,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: heights / 20),
-              // Selector de Actividad
-              Expanded(
-                child: ListView(
-                  padding: EdgeInsets.symmetric(horizontal: 10),
-                  children: [
-                    ActivityOptionButton(
-                      label: "Sedentary",
-                      icon: Icons.male,
-                      isSelected: selectedActivityLevel == "Sedentary",
-                      onPressed: () {
-                        setState(() {
-                          selectedActivityLevel = "Sedentary";
-                        });
-                      },
-                    ),
-                    ActivityOptionButton(
-                      label: "Lightly Active",
-                      icon: Icons.female,
-                      isSelected: selectedActivityLevel == "Lightly Active",
-                      onPressed: () {
-                        setState(() {
-                          selectedActivityLevel = "Lightly Active";
-                        });
-                      },
-                    ),
-                    ActivityOptionButton(
-                      label: "Moderately Active",
-                      icon: Icons.transgender,
-                      isSelected: selectedActivityLevel == "Moderately Active",
-                      onPressed: () {
-                        setState(() {
-                          selectedActivityLevel = "Moderately Active";
-                        });
-                      },
-                    ),
-                    ActivityOptionButton(
-                      label: "Very Active",
-                      icon: Icons.close,
-                      isSelected: selectedActivityLevel == "Very Active",
-                      onPressed: () {
-                        setState(() {
-                          selectedActivityLevel = "Very Active";
-                        });
-                      },
-                    ),
-                    ActivityOptionButton(
-                      label: "Professional Athlete",
-                      icon: Icons.close,
-                      isSelected:
-                          selectedActivityLevel == "Professional Athlete",
-                      onPressed: () {
-                        setState(() {
-                          selectedActivityLevel = "Professional Athlete";
-                        });
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              // Buttons
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 50),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pushReplacement(
-                          context,
-                          PageRouteBuilder(
-                            transitionDuration: Duration(milliseconds: 600),
-                            pageBuilder:
-                                (context, animation, secondaryAnimation) =>
-                                    FourthStepSignup(),
-                            transitionsBuilder: (context, animation,
-                                secondaryAnimation, child) {
-                              return FadeTransition(
-                                opacity: animation,
-                                child: BackdropFilter(
-                                  filter: ImageFilter.blur(
-                                      sigmaX: animation.value * 5,
-                                      sigmaY: animation.value * 5),
-                                  child: child,
-                                ),
-                              );
-                            },
-                          ),
-                        );
-                      },
-                      style: TextButton.styleFrom(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Transform.rotate(
-                            angle: 3.1416,
-                            child: Icon(
-                              Icons.play_arrow_rounded,
-                              color: Colors.white,
-                            ),
-                          ),
-                          SizedBox(width: 5),
-                          Text(
-                            "Previous",
-                            style: TextStyle(
-                                color:
-                                    const Color.fromARGB(255, 255, 255, 255)),
-                          ),
-                        ],
-                      ),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.pushReplacement(
-                          context,
-                          PageRouteBuilder(
-                            transitionDuration: Duration(milliseconds: 600),
-                            pageBuilder:
-                                (context, animation, secondaryAnimation) =>
-                                    SixthStepSignup(),
-                            transitionsBuilder: (context, animation,
-                                secondaryAnimation, child) {
-                              return FadeTransition(
-                                opacity: animation,
-                                child: BackdropFilter(
-                                  filter: ImageFilter.blur(
-                                      sigmaX: animation.value * 5,
-                                      sigmaY: animation.value * 5),
-                                  child: child,
-                                ),
-                              );
-                            },
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromRGBO(45, 124, 181, 1),
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 15, vertical: 15),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(9),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Text(
-                            "Continue",
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          SizedBox(width: 5),
-                          Icon(Icons.fast_forward_rounded, color: Colors.white),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
           ),
         ),
       ),
@@ -251,9 +135,24 @@ class _FifthStepSignupState extends State<FifthStepSignup> {
   }
 }
 
+// Clase para almacenar las opciones de actividad
+class ActivityOption {
+  final String label;
+  final IconData icon;
+  final String description;
+
+  ActivityOption({
+    required this.label,
+    required this.icon,
+    required this.description,
+  });
+}
+
+// Widget para mostrar un botón de opción de actividad
 class ActivityOptionButton extends StatelessWidget {
   final String label;
   final IconData icon;
+  final String? description;
   final bool isSelected;
   final VoidCallback onPressed;
 
@@ -261,6 +160,7 @@ class ActivityOptionButton extends StatelessWidget {
     super.key,
     required this.label,
     required this.icon,
+    this.description,
     required this.isSelected,
     required this.onPressed,
   });
@@ -268,38 +168,87 @@ class ActivityOptionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(10),
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: isSelected
-              ? const Color.fromARGB(255, 45, 83, 181)
-              : const Color.fromARGB(201, 255, 255, 255),
-          padding: EdgeInsets.all(25),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          elevation: isSelected ? 10 : 5,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            Icon(icon,
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Material(
+        elevation: isSelected ? 8 : 2,
+        borderRadius: BorderRadius.circular(16),
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? const Color(0xFF2D57B5)
+                  : Colors.white.withOpacity(0.9),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
                 color: isSelected
-                    ? Colors.white
-                    : const Color.fromARGB(255, 126, 126, 126),
-                size: 30),
-            SizedBox(width: 10),
-            Text(
-              label,
-              style: TextStyle(
-                color: isSelected
-                    ? Colors.white
-                    : const Color.fromARGB(255, 126, 126, 126),
-                fontSize: 17,
+                    ? const Color(0xFF2D57B5).withOpacity(0.5)
+                    : Colors.white.withOpacity(0.2),
+                width: 1,
               ),
             ),
-          ],
+            child: Row(
+              children: [
+                // Icono con círculo de fondo
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isSelected
+                        ? Colors.white.withOpacity(0.3)
+                        : const Color(0xFFEEF2F5),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: isSelected ? Colors.white : const Color(0xFF2D57B5),
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                // Textos descriptivos
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        label,
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: isSelected
+                              ? Colors.white
+                              : const Color(0xFF2D3748),
+                        ),
+                      ),
+                      if (description != null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          description!,
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            color: isSelected
+                                ? Colors.white.withOpacity(0.8)
+                                : const Color(0xFF718096),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                // Indicador de selección
+                if (isSelected)
+                  const Icon(
+                    Icons.check_circle,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+              ],
+            ),
+          ),
         ),
       ),
     );

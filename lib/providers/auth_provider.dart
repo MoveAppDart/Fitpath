@@ -35,35 +35,39 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      // First, attempt to login
+      // Intenta hacer login
       final response = await _authService.login(email, password);
 
       if (response['success'] == true) {
-        // If login is successful, try to fetch user profile
-        try {
-          await _updateUserData();
-          return true;
-        } catch (profileError) {
-          debugPrint('Error updating user data: $profileError');
-          // Even if profile fetch fails, we can still consider login successful
-          // as long as we have a valid token
-          final token = await _authService.getToken();
-          if (token != null) {
-            _error = 'Logged in, but could not load profile. ${profileError.toString()}';
-            return true;
+        // Si el login fue exitoso, verificamos el estado de autenticación
+        // para asegurarnos de que el UserProvider fue actualizado correctamente
+        debugPrint('Login exitoso, usuario autenticado');
+        debugPrint('Estado de _userProvider.user después del login: ${_userProvider.user}');
+        debugPrint('Estado de isLoggedIn después del login: $isLoggedIn');
+        
+        // Si por alguna razón el usuario no está en el provider después del login exitoso,
+        // intentamos actualizarlo forzadamente
+        if (_userProvider.user == null && response['data'] != null) {
+          final data = response['data'] as Map<String, dynamic>;
+          if (data['user'] != null && data['user'] is Map<String, dynamic>) {
+            debugPrint('Actualizando UserProvider manualmente desde AuthProvider');
+            _userProvider.setUserFromMap(data['user'] as Map<String, dynamic>);
+            debugPrint('Estado de _userProvider.user después de actualización manual: ${_userProvider.user}');
           }
-          _error = 'Login successful but no authentication token was received';
-          return false;
         }
+        
+        return true;
       } else {
-        _error = response['message'] ?? 'Authentication failed';
+        // Si hay un mensaje de error, lo mostramos
+        _error = response['message'] ?? 'Error de autenticación';
         if (response['error'] != null) {
-          _error = '${_error}\n${response['error']}';
+          _error = '$_error\n${response['error']}';
         }
         return false;
       }
     } catch (e) {
-      _error = e.toString();
+      _error = 'Error durante el inicio de sesión: $e';
+      debugPrint('Error en AuthProvider.login: $e');
       return false;
     } finally {
       _isLoading = false;
@@ -72,7 +76,7 @@ class AuthProvider with ChangeNotifier {
   }
 
   /// Registers a new user with the given email, password, and name
-  Future<bool> register(String email, String password, String name) async {
+  Future<Map<String, dynamic>> register(String email, String password, String name) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -81,16 +85,69 @@ class AuthProvider with ChangeNotifier {
       final response = await _authService.register(email, password, name);
 
       if (response['success'] == true) {
-        // Update user data from the response
-        await _updateUserData();
-        return true;
+        // Verificar que los datos del usuario se hayan actualizado correctamente
+        final data = response['data'] as Map<String, dynamic>?;
+        if (data != null) {
+          final userData = data['user'] as Map<String, dynamic>?;
+          if (userData != null) {
+            // Asegurarnos de que el UserProvider tenga los datos del usuario
+            // y marcarlo como recién registrado
+            _userProvider.setUserFromMap({
+              'id': userData['id']?.toString() ?? '',
+              'email': userData['email'] ?? '',
+              'name': userData['name'] ?? '',
+              'lastName': userData['lastName'] ?? '',
+            }, isNewRegistration: true);
+          }
+        }
+        
+        debugPrint('Registro exitoso, usuario autenticado');
+        return {'success': true};
       } else {
-        _error = response['message'] ?? 'Registration failed';
-        return false;
+        // Extraer el código de error y el mensaje si están disponibles
+        final errorCode = response['statusCode'];
+        final errorType = response['error'];
+        final errorMessage = response['message'] ?? 'Error en el registro';
+        
+        // Formatear el mensaje de error
+        _error = errorMessage;
+        
+        // Detectar específicamente el error de correo ya registrado
+        bool isEmailExists = false;
+        if (errorCode == 409 || (errorType is String && errorType == 'user_exists')) {
+          isEmailExists = true;
+          _error = 'El correo electrónico ya está registrado. Por favor utiliza otro correo o inicia sesión.';
+        }
+        
+        debugPrint('Error en registro: $_error (Código: $errorCode, Tipo: $errorType)');
+        return {
+          'success': false, 
+          'errorCode': errorCode, 
+          'errorType': errorType,
+          'message': _error,
+          'isEmailExists': isEmailExists
+        };
       }
     } catch (e) {
-      _error = e.toString();
-      return false;
+      debugPrint('Excepción en AuthProvider.register: $e');
+      
+      // Intentar detectar error 409 en la excepción
+      bool isEmailExists = false;
+      String errorMessage = 'Error durante el registro';
+      
+      if (e.toString().contains('409') || e.toString().contains('user_exists')) {
+        isEmailExists = true;
+        errorMessage = 'El correo electrónico ya está registrado. Por favor utiliza otro correo o inicia sesión.';
+      } else {
+        errorMessage = 'Error durante el registro: $e';
+      }
+      
+      _error = errorMessage;
+      return {
+        'success': false, 
+        'message': _error,
+        'isEmailExists': isEmailExists
+      };
     } finally {
       _isLoading = false;
       notifyListeners();

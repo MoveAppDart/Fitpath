@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
-import 'package:intl/intl.dart';
-import '../services/data_service.dart';
+import 'package:intl/intl.dart'; // Para formateo de fechas
+import 'package:google_fonts/google_fonts.dart'; // Para fuentes
 
-// Función auxiliar para comparar fechas
-bool isSameDay(DateTime? a, DateTime? b) {
-  if (a == null || b == null) return false;
-  return a.year == b.year && a.month == b.month && a.day == b.day;
-}
+// Asumo que DataService y la lógica de getWorkoutHistory se reemplazarán por llamadas a API
+import '../services/data_service.dart'; // Mantendremos esto por ahora para que compile
+
+// La función isSameDay ya está definida en table_calendar, no es necesario redefinirla
+// si usas selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+// pero si la quieres explícita para claridad, está bien.
+// bool isSameDay(DateTime? a, DateTime? b) { ... }
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -19,64 +21,94 @@ class CalendarScreen extends StatefulWidget {
 class _CalendarScreenState extends State<CalendarScreen> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
-  late Map<DateTime, List<String>> _workoutHistory;
-  
+  late Map<DateTime, List<String>>
+      _workoutHistory; // Eventualmente vendrá de un provider/API
+
+  // Colores del tema
+  static const Color primaryBlue = Color(0xFF005DC8);
+  static const Color lightBlue =
+      Color(0xFF0D75F3); // Un azul más claro para acentos
+  static const Color darkBlue = Color(0xFF003366);
+  static const Color accentGreen =
+      Color(0xFF4CAF50); // Verde para marcadores/acciones positivas
+  static const Color textWhite = Colors.white;
+  static const Color textWhite70 = Colors.white70;
+  static const Color textWhite54 = Colors.white54;
+
   @override
   void initState() {
     super.initState();
+    // TODO: Reemplazar con llamada asíncrona a provider/servicio para obtener datos de API
     _workoutHistory = DataService.getWorkoutHistory();
     _selectedDay = _focusedDay;
   }
 
-  List<String>? _getWorkoutsForDay(DateTime day) {
-    return _workoutHistory[DateTime(day.year, day.month, day.day)];
+  List<String> _getEventsForDay(DateTime day) {
+    // Normalizar el día para asegurar que la clave del mapa coincida
+    DateTime normalizedDay = DateTime(day.year, day.month, day.day);
+    return _workoutHistory[normalizedDay] ??
+        []; // Devolver lista vacía si no hay eventos
   }
 
   @override
   Widget build(BuildContext context) {
-    final workoutEvents = _getWorkoutsForDay(_selectedDay ?? _focusedDay);
-    
+    final List<String> selectedDayEvents =
+        _getEventsForDay(_selectedDay ?? _focusedDay);
+
+    // Formateador de fecha para el título de eventos del día
+    // 'en_US' asegura el formato de fecha en inglés independientemente del locale del dispositivo
+    final DateFormat eventHeaderFormat =
+        DateFormat('EEEE, MMMM d, yyyy', 'en_US');
+
     return Scaffold(
-      backgroundColor: const Color(0xFF005DC8),
+      backgroundColor: darkBlue, // Un fondo azul más oscuro y profundo
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.fromLTRB(
+              16.0, 24.0, 16.0, 16.0), // Más padding superior
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header con imagen de perfil y título
+              // Header
               Row(
                 children: [
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundColor: Colors.white24,
+                  // TODO: Reemplazar con la imagen de perfil real del usuario
+                  const CircleAvatar(
+                    radius: 24, // Un poco más grande
+                    backgroundColor: Colors.white12, // Más sutil
                     child: Icon(
-                      Icons.person,
-                      size: 24,
-                      color: Colors.white,
+                      Icons.person_outline, // Icono diferente
+                      size: 28,
+                      color: textWhite70,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  const Text(
-                    'Calendario',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
+                  const SizedBox(width: 16),
+                  Text(
+                    'Workout Calendar', // EN INGLÉS
+                    style: GoogleFonts.poppins(
+                      color: textWhite,
+                      fontSize: 26, // Ligeramente más grande
+                      fontWeight: FontWeight.w600, // Más peso
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
+
               // Calendario
               Card(
-                elevation: 4,
+                elevation: 6, // Más sombra para profundidad
+                color: primaryBlue
+                    .withOpacity(0.85), // Color de fondo de la tarjeta
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius:
+                      BorderRadius.circular(16), // Bordes más redondeados
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.all(12.0), // Padding interno
                   child: TableCalendar(
+                    locale:
+                        'en_US', // Asegurar que los nombres de meses/días estén en inglés
                     firstDay: DateTime.utc(2020, 1, 1),
                     lastDay: DateTime.utc(2030, 12, 31),
                     focusedDay: _focusedDay,
@@ -84,75 +116,150 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     onDaySelected: (selectedDay, focusedDay) {
                       setState(() {
                         _selectedDay = selectedDay;
-                        _focusedDay = focusedDay;
+                        _focusedDay =
+                            focusedDay; // Actualizar focusedDay también es buena práctica
                       });
                     },
                     calendarFormat: CalendarFormat.month,
-                    headerStyle: const HeaderStyle(
+                    startingDayOfWeek:
+                        StartingDayOfWeek.monday, // Común en muchas regiones
+
+                    // Estilo del Header (Mes y flechas)
+                    headerStyle: HeaderStyle(
                       formatButtonVisible: false,
                       titleCentered: true,
+                      titleTextStyle: GoogleFonts.poppins(
+                          color: textWhite,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500),
+                      leftChevronIcon:
+                          const Icon(Icons.chevron_left, color: textWhite70),
+                      rightChevronIcon:
+                          const Icon(Icons.chevron_right, color: textWhite70),
+                      decoration: BoxDecoration(
+                          // Fondo sutil para el header
+                          color: Colors.white.withOpacity(0.1),
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(8),
+                            topRight: Radius.circular(8),
+                          )),
+                      headerPadding: const EdgeInsets.symmetric(vertical: 8),
                     ),
-                    daysOfWeekStyle: const DaysOfWeekStyle(
-                      weekdayStyle: TextStyle(fontWeight: FontWeight.bold),
-                      weekendStyle: TextStyle(fontWeight: FontWeight.bold),
+
+                    // Estilo de los nombres de los días de la semana (Mon, Tue...)
+                    daysOfWeekStyle: DaysOfWeekStyle(
+                      weekdayStyle: GoogleFonts.poppins(
+                          color: textWhite70,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 12),
+                      weekendStyle: GoogleFonts.poppins(
+                          color: textWhite54,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 12), // Fines de semana un poco más tenues
                     ),
+
+                    // Estilo de los días del calendario
                     calendarStyle: CalendarStyle(
+                      defaultTextStyle: GoogleFonts.poppins(color: textWhite),
+                      weekendTextStyle: GoogleFonts.poppins(color: textWhite70),
+                      outsideTextStyle: GoogleFonts.poppins(
+                          color: textWhite
+                              .withOpacity(0.4)), // Días fuera del mes actual
+
                       todayDecoration: BoxDecoration(
-                        color: const Color(0xFF005DC8).withOpacity(0.5),
+                        color: lightBlue
+                            .withOpacity(0.6), // Un azul más claro para "hoy"
                         shape: BoxShape.circle,
                       ),
                       selectedDecoration: const BoxDecoration(
-                        color: Color(0xFF005DC8),
+                        color: lightBlue, // Color de selección más brillante
                         shape: BoxShape.circle,
                       ),
-                      todayTextStyle: const TextStyle(
-                        color: Colors.white,
+                      todayTextStyle: GoogleFonts.poppins(
+                        color: textWhite,
                         fontWeight: FontWeight.bold,
                       ),
-                      selectedTextStyle: const TextStyle(
-                        color: Colors.white,
+                      selectedTextStyle: GoogleFonts.poppins(
+                        color: textWhite,
                         fontWeight: FontWeight.bold,
                       ),
+                      // Estilo para los marcadores de eventos
                       markerDecoration: const BoxDecoration(
-                        color: Colors.green,
+                        color: accentGreen, // Verde para indicar evento
                         shape: BoxShape.circle,
                       ),
-                      markersMaxCount: 3,
+                      markersMaxCount:
+                          1, // Mostrar un solo marcador por simplicidad
+                      markerSize: 5.0,
+                      markerMargin: const EdgeInsets.symmetric(horizontal: 0.5)
+                          .copyWith(top: 6.0),
                     ),
+                    // Función para cargar eventos (marcadores)
+                    eventLoader: (day) {
+                      return _getEventsForDay(day);
+                    },
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
-              // Eventos del día seleccionado
+              const SizedBox(height: 24),
+
+              // Título de Eventos del día seleccionado
               Text(
-                'Entrenamientos para ${DateFormat('EEEE, d MMMM y', 'es_ES').format(_selectedDay ?? _focusedDay)}',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+                'Workouts for ${eventHeaderFormat.format(_selectedDay ?? _focusedDay)}', // EN INGLÉS y formato
+                style: GoogleFonts.poppins(
+                  color: textWhite,
+                  fontSize: 18, // Tamaño consistente
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
+
               // Lista de eventos
               Expanded(
-                child: workoutEvents == null || workoutEvents.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'No hay entrenamientos programados',
-                          style: TextStyle(color: Colors.white70),
+                child: selectedDayEvents.isEmpty
+                    ? Center(
+                        child: Column(
+                          // Para centrar icono y texto
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.event_busy_outlined,
+                                color: textWhite54, size: 48),
+                            const SizedBox(height: 12),
+                            Text(
+                              'No workouts scheduled for this day.', // EN INGLÉS
+                              style: GoogleFonts.poppins(
+                                  color: textWhite70, fontSize: 15),
+                            ),
+                          ],
                         ),
                       )
                     : ListView.builder(
-                        itemCount: workoutEvents.length,
+                        itemCount: selectedDayEvents.length,
                         itemBuilder: (context, index) {
                           return Card(
-                            margin: const EdgeInsets.symmetric(vertical: 4),
+                            elevation: 2,
+                            margin: const EdgeInsets.symmetric(
+                                vertical: 6.0, horizontal: 2.0),
+                            color: Colors.white
+                                .withOpacity(0.1), // Color de tarjeta sutil
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
                             child: ListTile(
-                              leading: const Icon(Icons.fitness_center),
-                              title: Text(workoutEvents[index]),
-                              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                              leading: const Icon(Icons.fitness_center,
+                                  color: accentGreen,
+                                  size: 28), // Icono más grande y con color
+                              title: Text(
+                                selectedDayEvents[index],
+                                style: GoogleFonts.poppins(
+                                    color: textWhite,
+                                    fontWeight: FontWeight.w500),
+                              ),
+                              trailing: const Icon(Icons.arrow_forward_ios,
+                                  color: textWhite54, size: 16),
                               onTap: () {
-                                // Navegar al detalle del entrenamiento
+                                // TODO: Implementar navegación al detalle del entrenamiento
+                                // Necesitarás el ID del workout o más info para esto.
+                                print('Tapped on: ${selectedDayEvents[index]}');
                               },
                             ),
                           );
@@ -165,10 +272,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
       ),
     );
   }
-  
-  // Métodos auxiliares para futuras implementaciones
-  String _getWeekdayName(int weekday) {
-    const weekdays = ['', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
-    return weekdays[weekday];
-  }
+
+  // La función _getWeekdayName no se usa en este código, pero la dejo si la necesitas para otra cosa.
+  // String _getWeekdayName(int weekday) {
+  //   const weekdays = ['', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  //   return weekdays[weekday];
+  // }
 }

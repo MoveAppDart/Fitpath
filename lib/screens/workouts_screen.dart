@@ -4,7 +4,6 @@ import 'workout_detail_screen.dart';
 import 'create_plan_screen.dart';
 import '../providers/workout_provider.dart';
 import '../providers/user_provider.dart';
-import '../models/workout.dart';
 import '../widgets/state_widgets.dart';
 import '../widgets/workout_card.dart';
 
@@ -201,7 +200,7 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
 
                           // Carrusel de programas - Usando datos reales o placeholders
                           workoutProvider.routines.isEmpty
-                              ? EmptyState(
+                              ? const EmptyState(
                                   message: 'No hay programas disponibles todavía',
                                   icon: Icons.calendar_today,
                                 )
@@ -249,12 +248,12 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
               children: [
                 Text(
                   title,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 16,
                   ),
                 ),
-                Icon(
+                const Icon(
                   Icons.arrow_forward_ios,
                   color: Colors.white,
                   size: 16,
@@ -280,7 +279,7 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
         child: InkWell(
           onTap: () {},
           borderRadius: BorderRadius.circular(12),
-          child: Row(
+          child: const Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
@@ -290,7 +289,7 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                   fontSize: 16,
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Icon(
                 Icons.add_circle_outline,
                 color: Colors.white,
@@ -322,7 +321,7 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
           children: [
             Text(
               title,
-              style: TextStyle(
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -331,7 +330,7 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
             const Spacer(),
             Text(
               duration,
-              style: TextStyle(
+              style: const TextStyle(
                 color: Colors.white70,
                 fontSize: 14,
               ),
@@ -339,7 +338,7 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
             const SizedBox(height: 4),
             Text(
               level,
-              style: TextStyle(
+              style: const TextStyle(
                 color: Colors.white70,
                 fontSize: 14,
               ),

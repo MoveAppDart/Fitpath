@@ -1,214 +1,276 @@
 // Importaciones de paquetes de Flutter
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:dio/dio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-// Importaciones de servicios API
-import 'services/api/api_client.dart';
-import 'services/api/auth_service.dart';
+// Importaciones de modelos
+import 'models/exercise.dart';
+
+// Importaciones de servicios
+import 'config/env_config.dart';
 import 'services/api/auth_service_impl.dart';
 import 'services/api/user_service.dart';
-import 'services/api/workout_service.dart';
-import 'services/api/wger_service.dart';
+import 'services/wger_service.dart';
+import 'services/api/api_client.dart';
+import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 
 // Importaciones de providers
 import 'providers/auth_provider.dart';
 import 'providers/user_provider.dart';
-import 'providers/workout_provider.dart';
-import 'providers/wger_exercises_provider.dart';
+import 'providers/signup_flow_provider.dart';
+import 'providers/wger_provider.dart';
 
 // Importaciones de pantallas
-import 'screens/login_screen.dart';
 import 'screens/onboarding_screen.dart';
-import 'screens/bottom_navbar.dart';
+import 'screens/login_screen.dart';
+import 'screens/signup_screen.dart';
+import 'screens/home_screen.dart';
+import 'screens/workouts_screen.dart';
+import 'screens/calendar_screen.dart';
+import 'screens/stats_screen.dart';
+import 'screens/profile_screen.dart';
+import 'screens/wger_search_screen.dart';
+import 'screens/wger_exercise_details_screen.dart';
+import 'screens/exercise_execution_screen.dart';
 
-// Clave global para la navegación
+// Importaciones de pantallas de registro
+import 'screens/register/step1_signup.dart';
+import 'screens/register/step2_signup.dart' as step2;
+import 'screens/register/step3_signup.dart' as step3;
+import 'screens/register/step4_signup.dart' as step4;
+import 'screens/register/step5_signup.dart' as step5;
+import 'screens/register/step6_signup.dart' as step6;
+
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Inicializar servicios
+  const storage = FlutterSecureStorage();
+  
+  // Configurar Dio con la URL base
+  final dio = Dio(BaseOptions(
+    baseUrl: EnvConfig.apiBaseUrl,
+    connectTimeout: const Duration(seconds: 10),
+    receiveTimeout: const Duration(seconds: 10),
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+  ));2
+  
+  final apiClient = ApiClient(dio: dio);
+  final userService = UserService(apiClient);
+  final userProvider = UserProvider(userService);
+  final authService = AuthServiceImpl(
+    dio: dio,
+    storage: storage,
+    userProvider: userProvider,
+  );
+  
+  // Agregar logger para depuración
+  if (kDebugMode) {
+    dio.interceptors.add(PrettyDioLogger(
+      requestHeader: true,
+      requestBody: true,
+      responseBody: true,
+      error: true,
+      compact: false,
+    ));
+  }
+  final wgerService = WgerService(apiClient);
+  final authProvider = AuthProvider(authService, userProvider);
+  final wgerProvider = WgerProvider(wgerService);
+
+  runApp(MyApp(
+    authProvider: authProvider,
+    userProvider: userProvider,
+    wgerProvider: wgerProvider,
+    navigatorKey: navigatorKey,
+  ));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({
+    super.key,
+    required this.authProvider,
+    required this.userProvider,
+    required this.wgerProvider,
+    required this.navigatorKey,
+  });
+
+  final AuthProvider authProvider;
+  final UserProvider userProvider;
+  final WgerProvider wgerProvider;
+  final GlobalKey<NavigatorState> navigatorKey;
 
   @override
   Widget build(BuildContext context) {
-    // Initialize services
-    final dio = Dio(BaseOptions(
-      baseUrl: 'http://localhost:8080', // Replace with your actual API base URL
-      connectTimeout: const Duration(seconds: 10),
-      receiveTimeout: const Duration(seconds: 10),
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-    ));
-    
-    final storage = const FlutterSecureStorage();
-    final apiClient = ApiClient(dio: dio);
-    final userService = UserService(apiClient);
-    final workoutService = WorkoutService(apiClient);
-    final wgerService = WgerService(apiClient);
-    
-    // Initialize providers
-    final userProvider = UserProvider(userService);
-    
-    // Initialize AuthService with all required dependencies
-    final authService = AuthServiceImpl(
-      dio: dio, // Pass the Dio instance directly
-      storage: storage,
-      userProvider: userProvider,
-    );
-    // Estos servicios se utilizarán más adelante cuando se implementen sus respectivas funcionalidades
-    // final statsService = StatsService(apiClient);
-    // final weightLogService = WeightLogService(apiClient);
-
-    // Configurar el gestor de errores global
-    FlutterError.onError = (FlutterErrorDetails details) {
-      FlutterError.presentError(details);
-      // Aquí podrías agregar lógica para reportar errores a un servicio externo
-    };
-
     return MultiProvider(
       providers: [
-        // Proporcionar las instancias de servicios
-        Provider<ApiClient>.value(value: apiClient),
-        Provider<AuthService>.value(value: authService),
-        Provider<UserService>.value(value: userService),
-        Provider<WorkoutService>.value(value: workoutService),
-        Provider<WgerService>.value(value: wgerService),
-        
-        // Inicializar UserProvider primero ya que AuthProvider depende de él
-        ChangeNotifierProvider(
-          create: (context) => UserProvider(userService),
+        // Siguiendo la memoria, primero listamos el UserProvider que es dependencia
+        ChangeNotifierProvider.value(
+          value: userProvider,
         ),
-        
-        // Inicializar AuthProvider que depende de UserProvider
-        ChangeNotifierProxyProvider<UserProvider, AuthProvider>(
-          create: (context) => AuthProvider(
-            authService,
-            Provider.of<UserProvider>(context, listen: false),
-          ),
-          update: (context, userProvider, previous) {
-            return previous ?? AuthProvider(authService, userProvider);
-          },
+        // Luego el AuthProvider que depende de UserProvider
+        ChangeNotifierProvider.value(
+          value: authProvider,
         ),
-        
-        // Otros providers
-        ChangeNotifierProvider(
-          create: (context) => WorkoutProvider(workoutService),
+        ChangeNotifierProvider.value(
+          value: wgerProvider,
         ),
-        
         ChangeNotifierProvider(
-          create: (context) => WgerExercisesProvider(wgerService),
+          create: (_) => SignupFlowProvider(),
         ),
       ],
-      child: MaterialApp(
-        title: 'FitPath',
-        debugShowCheckedModeBanner: false,
-        navigatorKey: navigatorKey, // Clave global para la navegación
-        localizationsDelegates: const [
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: const [
-          Locale('es', ''), // Español
-          Locale('en', ''), // Inglés
-        ],
-        locale: const Locale('es', ''), // Establecer español como idioma por defecto
-        themeMode: ThemeMode.dark,
-        darkTheme: ThemeData(
-          brightness: Brightness.dark,
-          primaryColor: const Color(0xFF00E5FF),
-          colorScheme: const ColorScheme.dark(
-            primary: Color(0xFF00E5FF),
-            secondary: Color(0xFF00B8D4),
-            surface: Color(0xFF1D1E33),
-            background: Color(0xFF0A0E21),
-          ),
-          scaffoldBackgroundColor: const Color(0xFF0A0E21),
-          appBarTheme: const AppBarTheme(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            centerTitle: true,
-          ),
-          textTheme: GoogleFonts.poppinsTextTheme(
-            ThemeData.dark().textTheme,
-          ),
-          elevatedButtonTheme: ElevatedButtonThemeData(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF00E5FF),
-              foregroundColor: Colors.black,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
+      child: Consumer<AuthProvider>(
+        builder: (context, authProvider, _) {
+          return MaterialApp(
+            title: 'FitPath',
+            debugShowCheckedModeBanner: false,
+            localizationsDelegates: const [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: const [
+              Locale('en', 'US'),
+              Locale('es', 'ES'),
+            ],
+            theme: ThemeData(
+              primaryColor: const Color(0xFF005DC8),
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: const Color(0xFF005DC8),
+                primary: const Color(0xFF005DC8),
+                secondary: const Color(0xFF01E0A9),
               ),
-              padding: const EdgeInsets.symmetric(vertical: 16),
+              textTheme: GoogleFonts.poppinsTextTheme(),
+              useMaterial3: true,
             ),
-          ),
-          outlinedButtonTheme: OutlinedButtonThemeData(
-            style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF00E5FF),
-              side: const BorderSide(color: Color(0xFF00E5FF), width: 2),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
-              ),
-              padding: const EdgeInsets.symmetric(vertical: 16),
-            ),
-          ),
-        ),
-        theme: ThemeData(
-          textTheme: GoogleFonts.istokWebTextTheme(),
-          primaryColor: const Color(0xFF005DC8),
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF005DC8),
-            primary: const Color(0xFF005DC8),
-            secondary: const Color(0xFF004AAE),
-          ),
-        ),
-        initialRoute: '/',
-        routes: {
-          '/': (context) => const OnboardingScreen(),
-          '/login': (context) => const LoginScreen(),
-          '/home': (context) => const BottomNavbar(),
-        },
-        onGenerateRoute: (settings) {
-          // Handle deep linking or unknown routes
-          return MaterialPageRoute(
-            builder: (context) => const OnboardingScreen(),
-          );
-        },
-        builder: (context, child) {
-          return Consumer<AuthProvider>(
-            builder: (context, authProvider, _) {
-              if (authProvider.isLoading) {
-                return const Scaffold(
-                  body: Center(
-                    child: CircularProgressIndicator(),
-                  ),
-                );
-              }
-              
-              // This will handle the auth state for all routes
-              if (authProvider.isLoggedIn && ModalRoute.of(context)?.settings.name != '/home') {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  Navigator.pushReplacementNamed(context, '/home');
-                });
-              } else if (!authProvider.isLoggedIn && 
-                        ModalRoute.of(context)?.settings.name != '/' && 
-                        ModalRoute.of(context)?.settings.name != '/login') {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  Navigator.pushReplacementNamed(context, '/login');
-                });
-              }
-              
-              return child!;
+            navigatorKey: navigatorKey,
+            initialRoute: '/',
+            routes: {
+              '/': (context) => const OnboardingScreen(),
+              '/onboarding': (context) => const OnboardingScreen(),
+              '/login': (context) => const LoginScreen(),
+              '/register': (context) => const SignupScreen(),
+              '/signup': (context) => const SignupScreen(),
+              '/home': (context) => const HomeScreen(),
+              '/step1_signup': (context) => const FirstStepSignup(),
+              '/step2_signup': (context) => const step2.SecondStepSignup(),
+              '/step3_signup': (context) => const step3.ThirdStepSignup(),
+              '/step4_signup': (context) =>
+                  const step4.FourthStepSignup(weightKg: 70.0),
+              '/step5_signup': (context) => const step5.FifthStepSignup(),
+              '/step6_signup': (context) => const step6.SixthStepSignup(),
+              '/workouts': (context) => const WorkoutsScreen(),
+              '/calendar': (context) => const CalendarScreen(),
+              '/stats': (context) => const StatsScreen(),
+              '/profile': (context) => const ProfileScreen(),
+              '/wger_search': (context) => const WgerSearchScreen(),
             },
-            child: child,
+            onGenerateRoute: (settings) {
+              switch (settings.name) {
+                case '/wger_exercise_details':
+                  final exercise = settings.arguments as Exercise?;
+                  return MaterialPageRoute(
+                    builder: (context) => WgerExerciseDetailsScreen(
+                      exercise: exercise ??
+                          Exercise(
+                            id: '0',
+                            name: 'Exercise',
+                            type: 'strength',
+                            targetMuscle: 'general',
+                            description: 'No description available',
+                            equipment: [],
+                            isPublic: true,
+                          ),
+                    ),
+                  );
+                case '/exercise_execution':
+                  final args =
+                      settings.arguments as Map<String, dynamic>? ?? {};
+                  return MaterialPageRoute(
+                    builder: (context) => ExerciseExecutionScreen(
+                      exerciseName:
+                          args['exerciseName'] as String? ?? 'Exercise',
+                      imageAsset: args['imageAsset'] as String? ??
+                          'assets/images/exercises/default.png',
+                      instructions: (args['instructions'] as List<dynamic>?)
+                              ?.cast<String>() ??
+                          ['No instructions available'],
+                      reps: args['reps'] as int? ?? 10,
+                      weight: args['weight']?.toString() ?? '0.0',
+                      totalSets: args['totalSets'] as int? ?? 3,
+                    ),
+                  );
+                default:
+                  return MaterialPageRoute(
+                    builder: (context) => const LoginScreen(),
+                  );
+              }
+            },
+            builder: (context, child) {
+              final currentRoute = ModalRoute.of(context)?.settings.name;
+              final isOnAuthenticatedRoute = [
+                '/home',
+                '/workouts',
+                '/calendar',
+                '/stats',
+                '/profile',
+                '/home_screen',
+                '/wger_search',
+                '/exercise_execution',
+                '/wger_exercise_details',
+                '/'
+              ].any((route) =>
+                  currentRoute == route ||
+                  (currentRoute?.startsWith(route) ?? false));
+
+              // Verificar el estado de autenticación
+              if (authProvider.isLoggedIn) {
+                if (!isOnAuthenticatedRoute && currentRoute != null) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    Navigator.of(context)
+                        .pushNamedAndRemoveUntil('/home', (route) => false);
+                  });
+                }
+              } else {
+                final allowedPublicRoutes = [
+                  '/onboarding',
+                  '/login',
+                  '/register'
+                ];
+                final isOnAllowedRoute = allowedPublicRoutes.any((route) =>
+                    currentRoute == route ||
+                    (currentRoute?.startsWith(route) ?? false));
+
+                if (!isOnAllowedRoute &&
+                    !(currentRoute?.startsWith('/step') ?? false)) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) async {
+                    final prefs = await SharedPreferences.getInstance();
+                    final hasSeenOnboarding =
+                        prefs.getBool('hasSeenOnboarding') ?? false;
+                    final targetRoute =
+                        hasSeenOnboarding ? '/login' : '/onboarding';
+
+                    debugPrint('[MainBuilder] Redirigiendo a $targetRoute');
+                    if (navigatorKey.currentContext != null) {
+                      Navigator.of(navigatorKey.currentContext!)
+                          .pushNamedAndRemoveUntil(
+                              targetRoute, (route) => false);
+                    }
+                  });
+                }
+              }
+              return child ?? const SizedBox.shrink();
+            },
           );
         },
       ),

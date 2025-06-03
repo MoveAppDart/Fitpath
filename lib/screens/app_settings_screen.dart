@@ -33,7 +33,7 @@ class AppSettingsScreen extends StatelessWidget {
               children: [
                 Text(
                   LocalizationService.getTranslatedValue(context, 'settings'),
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 24,
                     fontWeight: FontWeight.bold,

@@ -78,9 +78,9 @@ class _WeightSliderState extends State<WeightSlider> {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Color.fromARGB(229, 255, 255, 255), // Fondo blanco translúcido
+        color: const Color.fromARGB(229, 255, 255, 255), // Fondo blanco translúcido
         borderRadius: BorderRadius.circular(30), // Bordes redondeados
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
             color: Colors.black26,
             blurRadius: 10,
@@ -258,7 +258,7 @@ class _Dividers extends StatelessWidget {
                 Transform.translate(
                   offset: Offset(-thickness / 2, 0),
                   child: AnimatedContainer(
-                    duration: Duration(milliseconds: 200),
+                    duration: const Duration(milliseconds: 200),
                     height: lineHeight,
                     child: VerticalDivider(
                       thickness: thickness,

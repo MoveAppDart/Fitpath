@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/auth_provider.dart';
-import 'home_screen.dart';
 import './signup_screen.dart';
 
 // Mueve el enum SocialLogin aquí, a nivel superior (fuera de la clase)
@@ -20,6 +19,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _initialEmailSet = false;
 
   @override
   void dispose() {
@@ -29,47 +29,69 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _tryLogin() async {
+    // Validar el formulario
     if (!_formKey.currentState!.validate()) {
       return;
     }
     
+    // Obtener el proveedor de autenticación
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    
+    // Mostrar indicador de carga
     setState(() {
       _isLoading = true;
     });
     
     try {
+      // Intentar iniciar sesión
       final success = await authProvider.login(
         _emailController.text.trim(),
         _passwordController.text,
       );
       
+      // Verificar si el widget sigue montado
       if (!mounted) return;
 
-      if (success) {
-        if (!mounted) return;
-        // Navigate to home screen and remove all previous routes
-        Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
-          (route) => false, // This removes all previous routes
-        );
-      } else {
+      if (!success) {
+        // Mostrar mensaje de error si el login falla
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(authProvider.errorMessage ?? 'Error signing in. Please try again.'),
+            content: Text(
+              authProvider.errorMessage ?? 'Error al iniciar sesión. Verifica tus credenciales.',
+              style: const TextStyle(color: Colors.white),
+            ),
             backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(10),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
       }
+      // No es necesario manejar la navegación aquí, ya que se maneja en main.dart
     } catch (e) {
+      // Manejar errores inesperados
       if (!mounted) return;
+      
+      debugPrint('Error inesperado en _tryLogin: $e');
+      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('An unexpected error occurred. Please try again.'),
+          content: const Text(
+            'Ocurrió un error inesperado. Por favor, inténtalo de nuevo.',
+            style: TextStyle(color: Colors.white),
+          ),
           backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(10),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
     } finally {
+      // Ocultar indicador de carga
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -80,6 +102,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Verificar si recibimos un correo como argumento (desde la pantalla de registro)
+    if (!_initialEmailSet) {
+      final Object? args = ModalRoute.of(context)?.settings.arguments;
+      if (args != null && args is String && args.isNotEmpty) {
+        _emailController.text = args;
+        _initialEmailSet = true;
+      }
+    }
+    
     final screenSize = MediaQuery.of(context).size;
     final screenWidth = screenSize.width;
     final screenHeight = screenSize.height;

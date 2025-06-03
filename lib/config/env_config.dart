@@ -1,9 +1,11 @@
 class EnvConfig {
-  // URL base de la API
-  static const String apiBaseUrl = String.fromEnvironment(
+  static const String apiBaseUrl = 'http://10.0.2.2:3000';
+}
     'API_BASE_URL',
-    defaultValue: 'http://localhost:8080',
+    // Usar 10.0.2.2 para emulador Android, localhost para iOS o web
+    defaultValue: 'http://10.0.2.2:3000',
   );
+  // Para Flutter web o iOS puedes usar: 'http://localhost:3000'
 
   // Indica si la aplicación está en modo producción
   static const bool isProduction = bool.fromEnvironment(
@@ -23,41 +25,36 @@ class EnvConfig {
     defaultValue: true,
   );
 
-  // Versión de la API
-  static const String apiVersion = String.fromEnvironment(
-    'API_VERSION',
-    defaultValue: 'v1',
-  );
-
-  // Base path para todos los endpoints
-  static String get basePath => '/api/$apiVersion';
+  // Ya no usamos versionado ni prefijo /api/
+  static String get basePath => '';
 
   // Endpoints de Autenticación
   static String get loginEndpoint => '/login';
   static String get registerEndpoint => '/register';
   static String get logoutEndpoint => '/logout';
-  static String get refreshTokenEndpoint => '/auth/refresh';  // Mantenemos auth/ para el refresh si es necesario
+  static String get refreshTokenEndpoint =>
+      '/auth/refresh'; // Mantenemos auth/ para el refresh si es necesario
 
   // Endpoints de Perfil
   static String get profileEndpoint => '/profile';
   static String get userStatsEndpoint => '/profile/stats';
   static String get userPreferencesEndpoint => '/profile/preferences';
-  
+
   // Alias para compatibilidad con código existente
   static String get profileStatsEndpoint => userStatsEndpoint;
   static String get profilePreferencesEndpoint => userPreferencesEndpoint;
 
-  // Endpoints de Entrenamientos
-  static String get workoutsEndpoint => '$basePath/workouts';
-  static String get routinesEndpoint => '$basePath/routines';
-  static String get exercisesEndpoint => '$basePath/exercises';
-  static String get calendarEndpoint => '$basePath/calendar';
+  // Endpoints de Entrenamientos (sin versionado)
+  static String get workoutsEndpoint => '/workouts';
+  static String get routinesEndpoint => '/routines';
+  static String get exercisesEndpoint => '/exercises';
+  static String get calendarEndpoint => '/calendar';
 
-  // Endpoints de Seguimiento
-  static String get weightLogsEndpoint => '$basePath/weight-logs';
+  // Endpoints de Seguimiento (sin versionado)
+  static String get weightLogsEndpoint => '/weight-logs';
 
-  // Endpoints de Estadísticas
-  static String get statsEndpoint => '$basePath/stats';
+  // Endpoints de Estadísticas (sin versionado)
+  static String get statsEndpoint => '/stats';
   static String get weightEvolutionEndpoint =>
       '$statsEndpoint/weight-evolution';
   static String personalBestEndpoint(String exerciseId) =>
