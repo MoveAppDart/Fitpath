@@ -63,8 +63,8 @@ class EnvConfig {
       '$statsEndpoint/workout-frequency';
 
   // Endpoints de WGER
-  static String get wgerSearchEndpoint => '$exercisesEndpoint/wger/search';
-  static String wgerExerciseEndpoint(int id) => '$exercisesEndpoint/wger/$id';
+  static String getwgerSearchEndpoint => '$exercisesEndpoint/search';
+  static String wgerExerciseEndpoint(int id) => '$exercisesEndpoint/$id';
   static String exerciseByIdEndpoint(String id) => '$exercisesEndpoint/$id';
 
   // Configuración de caché
