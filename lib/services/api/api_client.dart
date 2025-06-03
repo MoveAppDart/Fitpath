@@ -24,17 +24,20 @@ class ApiClient {
     _setupInterceptors();
   }
 
+  Dio get dio => _dio;
+
   void _setupInterceptors() {
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
         // Asegurarse de que la URL base se maneje correctamente
         if (!options.path.startsWith('http')) {
           // Asegurarse de que no haya doble barra al unir baseUrl y path
-          final baseUrl = _dio.options.baseUrl.endsWith('/') 
-              ? _dio.options.baseUrl.substring(0, _dio.options.baseUrl.length - 1)
+          final baseUrl = _dio.options.baseUrl.endsWith('/')
+              ? _dio.options.baseUrl
+                  .substring(0, _dio.options.baseUrl.length - 1)
               : _dio.options.baseUrl;
-          final path = options.path.startsWith('/') 
-              ? options.path.substring(1) 
+          final path = options.path.startsWith('/')
+              ? options.path.substring(1)
               : options.path;
           options.path = '$baseUrl/$path';
         }
@@ -43,11 +46,13 @@ class ApiClient {
         return handler.next(options);
       },
       onResponse: (response, handler) {
-        debugPrint('API Response: ${response.statusCode} ${response.requestOptions.path}');
+        debugPrint(
+            'API Response: ${response.statusCode} ${response.requestOptions.path}');
         return handler.next(response);
       },
       onError: (DioException error, handler) async {
-        debugPrint('API Error: ${error.response?.statusCode} ${error.requestOptions.path}');
+        debugPrint(
+            'API Error: ${error.response?.statusCode} ${error.requestOptions.path}');
         return handler.next(error);
       },
     ));

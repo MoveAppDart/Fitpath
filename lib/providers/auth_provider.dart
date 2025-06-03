@@ -1,3 +1,6 @@
+import 'package:dio/src/dio.dart';
+import 'package:fitpath/services/api/api_client.dart';
+import 'package:fitpath/services/api/auth_service_impl.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -47,12 +50,12 @@ class AuthProvider with ChangeNotifier {
             'age': userProfile['age'],
             'gender': userProfile['gender'],
           };
-          
+
           // Update user provider if available
           if (_userProvider != null) {
             _userProvider!.setUserFromMap(userData);
           }
-          
+
           return true;
         } else {
           _error = 'No se pudo cargar el perfil del usuario';
@@ -107,7 +110,7 @@ class AuthProvider with ChangeNotifier {
           'gender': gender,
         });
       }
-      
+
       debugPrint('Registro exitoso: $email');
       return true;
     } on AuthErrorResponse catch (e) {
@@ -217,6 +220,8 @@ class AuthProvider with ChangeNotifier {
 // === PROVIDER GLOBAL DE RIVERPOD ===
 final authProvider = ChangeNotifierProvider<AuthProvider>((ref) {
   final userProv = ref.watch(userProvider);
-  final authService = AuthService();
+  final apiClient = ApiClient();
+  final authService = AuthServiceImpl(apiClient.dio); // ✅ Correcto
+
   return AuthProvider(authService, userProv);
 });

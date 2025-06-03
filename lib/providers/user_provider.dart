@@ -1,3 +1,4 @@
+import 'package:fitpath/services/api/api_client.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/user.dart';
@@ -241,6 +242,7 @@ class UserProvider with ChangeNotifier {
 
 // === PROVIDER GLOBAL DE RIVERPOD ===
 final userProvider = ChangeNotifierProvider<UserProvider>((ref) {
-  final userService = UserService(); // Ajusta aquí si requiere argumentos
-  return UserProvider(userService);
+  final apiClient = ApiClient(); // ✅ Crea instancia de ApiClient
+  final userService = UserService(apiClient); // ✅ Pasa ApiClient como argumento
+  return UserProvider(userService); // ✅ Todo correcto
 });

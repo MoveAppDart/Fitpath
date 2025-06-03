@@ -1,3 +1,4 @@
+import 'package:dio/src/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
@@ -22,7 +23,7 @@ final apiClientProvider = Provider<ApiClient>((ref) {
 // Services
 final authServiceProvider = Provider<AuthServiceImpl>((ref) {
   final apiClient = ref.watch(apiClientProvider);
-  return AuthServiceImpl(apiClient);
+  return AuthServiceImpl(apiClient.dio); // ✅ Accede al Dio interno
 });
 
 final userServiceProvider = Provider<UserService>((ref) {
@@ -60,7 +61,7 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 void main() async {
   // Inicializar bindings de Flutter
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Configuración de la UI del sistema
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
@@ -80,7 +81,7 @@ void main() async {
 
 class MyApp extends ConsumerWidget {
   const MyApp({super.key});
-  
+
   // Configuración de la UI del sistema
   static void configureSystemUI() {
     SystemChrome.setSystemUIOverlayStyle(
@@ -97,34 +98,39 @@ class MyApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Configurar la UI del sistema
     configureSystemUI();
-    
+
     final router = GoRouter(
       initialLocation: '/login',
       redirect: (BuildContext context, GoRouterState state) {
         final isLoggedIn = ref.read(authProvider).isLoggedIn;
-        final isLoggingIn = state.uri.path == '/login' || state.uri.path == '/signup';
-        
+        final isLoggingIn =
+            state.uri.path == '/login' || state.uri.path == '/signup';
+
         if (!isLoggedIn && !isLoggingIn) return '/login';
         if (isLoggedIn && isLoggingIn) return '/home';
-        
+
         return null;
       },
       routes: <RouteBase>[
         GoRoute(
           path: '/login',
-          builder: (BuildContext context, GoRouterState state) => const LoginScreen(),
+          builder: (BuildContext context, GoRouterState state) =>
+              const LoginScreen(),
         ),
         GoRoute(
           path: '/signup',
-          builder: (BuildContext context, GoRouterState state) => const SignupScreen(),
+          builder: (BuildContext context, GoRouterState state) =>
+              const SignupScreen(),
         ),
         GoRoute(
           path: '/home',
-          builder: (BuildContext context, GoRouterState state) => const HomeScreen(),
+          builder: (BuildContext context, GoRouterState state) =>
+              const HomeScreen(),
         ),
         GoRoute(
           path: '/language',
-          builder: (BuildContext context, GoRouterState state) => const LanguageScreen(),
+          builder: (BuildContext context, GoRouterState state) =>
+              const LanguageScreen(),
         ),
         GoRoute(
           path: '/exercise/:id',
@@ -140,7 +146,7 @@ class MyApp extends ConsumerWidget {
         ),
       ),
     );
-    
+
     return MaterialApp.router(
       routerConfig: router,
       title: 'FitPath',
@@ -154,7 +160,7 @@ class MyApp extends ConsumerWidget {
       },
     );
   }
-  
+
   ThemeData _buildTheme() {
     final baseTheme = ThemeData(
       useMaterial3: true,
@@ -180,12 +186,12 @@ class MyApp extends ConsumerWidget {
         bodyMedium: GoogleFonts.poppins(color: AppColors.textWhite70),
       ),
       cardTheme: ThemeData.dark().cardTheme.copyWith(
-        color: AppColors.card,
-        elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-      ),
+            color: AppColors.card,
+            elevation: 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.card.withOpacity(0.5),
@@ -201,7 +207,8 @@ class MyApp extends ConsumerWidget {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: AppColors.accent, width: 2),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         hintStyle: const TextStyle(color: AppColors.textWhite54),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -221,12 +228,11 @@ class MyApp extends ConsumerWidget {
         ),
       ),
     );
-    
+
     return baseTheme.copyWith(
       textTheme: GoogleFonts.poppinsTextTheme(baseTheme.textTheme),
     );
   }
-  
 }
 
 // Clase de ayuda para la navegación
@@ -234,15 +240,15 @@ extension NavigationHelper on BuildContext {
   void pushNamed(String routeName, {Object? arguments}) {
     GoRouter.of(this).push(routeName, extra: arguments);
   }
-  
+
   void pushReplacementNamed(String routeName, {Object? arguments}) {
     GoRouter.of(this).pushReplacement(routeName, extra: arguments);
   }
-  
+
   void pop() {
     GoRouter.of(this).pop();
   }
-  
+
   void popUntilFirst() {
     while (GoRouter.of(this).canPop()) {
       GoRouter.of(this).pop();
@@ -308,11 +314,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               // Show loading indicator
               final scaffoldMessenger = ScaffoldMessenger.of(context);
               final navigator = Navigator.of(context);
-              
+
               try {
                 // Call logout
                 await ref.read(authProvider.notifier).logout();
-                
+
                 // Navigate to login screen
                 if (_isMounted) {
                   navigator.pushNamedAndRemoveUntil('/login', (route) => false);
@@ -335,7 +341,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            if (user.user?.name != null) 
+            if (user.user?.name != null)
               Text(
                 'Welcome back, ${user.user!.name}!',
                 style: Theme.of(context).textTheme.headlineSmall,

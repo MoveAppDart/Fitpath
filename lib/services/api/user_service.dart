@@ -52,7 +52,8 @@ class UserService {
 
   /// Actualiza las preferencias del usuario
   /// Retorna un mapa con el resultado de la operación
-  Future<Map<String, dynamic>> updatePreferences(Map<String, dynamic> preferences) async {
+  Future<Map<String, dynamic>> updatePreferences(
+      Map<String, dynamic> preferences) async {
     try {
       final response = await _apiClient.put(
         EnvConfig.userPreferencesEndpoint,
