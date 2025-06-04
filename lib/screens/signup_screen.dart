@@ -1,24 +1,24 @@
 import 'dart:ui';
 import 'package:fitpath/screens/register/step1_signup.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // Providers
 import '../providers/auth_provider.dart';
-import '../main.dart' show navigatorKey;
 import '../screens/login_screen.dart';
 
-class SignupScreen extends StatefulWidget {
+class SignupScreen extends ConsumerStatefulWidget {
   const SignupScreen({super.key});
 
   @override
-  State<SignupScreen> createState() => _SignupScreenState();
+  ConsumerState<SignupScreen> createState() => _SignupScreenState();
 }
 
 enum Gender { male, female, other }
 
-class _SignupScreenState extends State<SignupScreen> {
+class _SignupScreenState extends ConsumerState<SignupScreen> {
   // Form controllers
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
@@ -385,8 +385,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
   // Sign Up button
   Widget _buildSignUpButton(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-
+    final auth = ref.read(authProvider.notifier);
     return Center(
       child: ElevatedButton(
         onPressed: _isLoading
@@ -402,7 +401,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
                 try {
                   // Attempt to register the user with all required fields
-                  final success = await authProvider.register(
+                  final success = await auth.register(
                     email: _emailController.text.trim(),
                     password: _passwordController.text,
                     name: _nameController.text.trim(),
@@ -423,13 +422,10 @@ class _SignupScreenState extends State<SignupScreen> {
                       setState(() => _selectedGender = null);
 
                       // Navigate to the next step in the registration flow
-                      navigatorKey.currentState?.pushNamedAndRemoveUntil(
-                        '/step1_signup',
-                        (route) => false,
-                      );
+                      GoRouter.of(context).go('/home');
                     } else {
                       // Check for email already exists error
-                      if (authProvider.error?.toLowerCase().contains('email') ??
+                      if (auth.error?.toLowerCase().contains('email') ??
                           false) {
                         // Show email already registered dialog
                         showDialog(
@@ -466,7 +462,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         // Show other errors
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text(authProvider.error ??
+                            content: Text(auth.error ??
                                 'Registration failed. Please try again.'),
                             backgroundColor: Colors.red,
                           ),

@@ -39,7 +39,7 @@ class EnvConfig {
   static String get resetPasswordEndpoint => '/reset-password';
 
   // ========== User & Profile Endpoints ==========
-  static String get profileEndpoint => '/users/me';
+  static String get profileEndpoint => '/profile';
   static String get userStatsEndpoint => '/users/me/stats';
   static String get userPreferencesEndpoint => '/users/me/preferences';
 

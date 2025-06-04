@@ -1,6 +1,6 @@
 import 'package:fitpath/providers/auth_provider.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart' hide Provider;
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'home_screen.dart';
@@ -30,53 +30,55 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _tryLogin() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
+    if (!_formKey.currentState!.validate()) return;
 
-    final auth = ref.read(authProvider as ProviderListenable);
-    setState(() {
-      _isLoading = true;
-    });
+    final auth = ref.read(authProvider.notifier);
+
+    // Marcar “loading” de inmediato
+    setState(() => _isLoading = true);
 
     try {
+      // 1) Aquí inicia la llamada al login (setea _isLoading=true y notifica)
       final success = await auth.login(
         _emailController.text.trim(),
         _passwordController.text,
       );
 
+      // 2) Justo después de await, ya se ejecutó el `finally` con su notifyListeners()
+      //    Ahora authProvider ha cambiado estado por última vez (_isLoading=false).
       if (!mounted) return;
 
       if (success) {
-        if (!mounted) return;
-        // Navigate to home screen and remove all previous routes
-        Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
-          (route) => false, // This removes all previous routes
-        );
-      } else {
+        // Fuerza la redirección a /home:
+        GoRouter.of(context).go('/home');
+      }
+      if (!success) {
+        // Login fallido: mostramos el mensaje de error
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-                auth.errorMessage ?? 'Error signing in. Please try again.'),
+            content: Text(auth.errorMessage ?? 'Credenciales inválidas'),
             backgroundColor: Colors.redAccent,
           ),
         );
+        return;
       }
-    } catch (e) {
+
+      // 3) Si llegamos aquí, la llamada al login fue exitosa y ya se completó
+      //    notifyListeners() dentro de AuthProvider. Ahora GoRouter al reconstruirse
+      //    verá que isLoggedIn==true y redirigirá a /home.
+      //    NO hacemos Navigator.push manual; dejamos que GoRouter se encargue.
+    } catch (e, stack) {
       if (!mounted) return;
+      debugPrint('Login error inesperado: $e\n$stack');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('An unexpected error occurred. Please try again.'),
+          content: Text('Error inesperado: ${e.toString()}'),
           backgroundColor: Colors.redAccent,
         ),
       );
     } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      // 4) Ya pasados los notifyListeners() internos, detenemos el spinner local:
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 

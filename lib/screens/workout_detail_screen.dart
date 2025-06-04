@@ -40,14 +40,16 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
     });
 
     try {
-      final workoutProvider = Provider.of<WorkoutProvider>(context, listen: false);
+      final workoutProvider =
+          Provider.of<WorkoutProvider>(context, listen: false);
       final success = await workoutProvider.getWorkoutDetails(widget.workoutId);
-      
+
       if (!success) {
         setState(() {
           _isLoading = false;
           _hasError = true;
-          _errorMessage = workoutProvider.error ?? 'No se encontró el entrenamiento';
+          _errorMessage =
+              workoutProvider.error ?? 'No se encontró el entrenamiento';
         });
         return;
       }
@@ -107,26 +109,27 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
                   color: Theme.of(context).primaryColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: exercise.imageUrl != null && exercise.imageUrl!.isNotEmpty
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
-                          exercise.imageUrl!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Icon(
-                              Icons.fitness_center,
-                              size: 30,
-                              color: Theme.of(context).primaryColor,
-                            );
-                          },
-                        ),
-                      )
-                    : Icon(
-                        Icons.fitness_center,
-                        size: 30,
-                        color: Theme.of(context).primaryColor,
-                      ),
+                child:
+                    exercise.imageUrl != null && exercise.imageUrl!.isNotEmpty
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(
+                              exercise.imageUrl!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Icon(
+                                  Icons.fitness_center,
+                                  size: 30,
+                                  color: Theme.of(context).primaryColor,
+                                );
+                              },
+                            ),
+                          )
+                        : Icon(
+                            Icons.fitness_center,
+                            size: 30,
+                            color: Theme.of(context).primaryColor,
+                          ),
               ),
               const SizedBox(width: 16),
               // Información del ejercicio
@@ -149,7 +152,9 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
                       style: TextStyle(
                         color: Colors.grey[600],
                         fontSize: 14,
-                        fontStyle: exercise.description == null ? FontStyle.italic : null,
+                        fontStyle: exercise.description == null
+                            ? FontStyle.italic
+                            : null,
                       ),
                     ),
                   ],
@@ -309,7 +314,8 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const LoadingState(message: 'Cargando detalles del entrenamiento...');
+      return const LoadingState(
+          message: 'Cargando detalles del entrenamiento...');
     }
 
     if (_hasError) {
@@ -352,12 +358,13 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
       MaterialPageRoute(
         builder: (context) => ExerciseDetailScreen(
           exerciseId: exercise.id ?? '0',
-          exercise: exercise, // Pasamos el ejercicio directamente para evitar otra llamada a la API
+          exercise:
+              exercise, // Pasamos el ejercicio directamente para evitar otra llamada a la API
         ),
       ),
     );
-    
-    // Si prefieres navegar directamente a la pantalla de ejecución del ejercicio, 
+
+    // Si prefieres navegar directamente a la pantalla de ejecución del ejercicio,
     // descomenta el siguiente código y comenta o elimina el Navigator.push anterior
     /*
     final instructionsList = exercise.instructions ?? ['No hay instrucciones disponibles'];
@@ -398,9 +405,9 @@ class _WorkoutDetailScreenState extends State<WorkoutDetailScreen> {
               // TODO: Implementar funcionalidad para guardar favoritos
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(_isFavorite 
-                    ? 'Añadido a favoritos' 
-                    : 'Eliminado de favoritos'),
+                  content: Text(_isFavorite
+                      ? 'Añadido a favoritos'
+                      : 'Eliminado de favoritos'),
                   duration: const Duration(seconds: 2),
                 ),
               );

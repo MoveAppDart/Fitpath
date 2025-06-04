@@ -17,28 +17,30 @@ class WorkoutsScreen extends StatefulWidget {
 class _WorkoutsScreenState extends State<WorkoutsScreen> {
   bool _isLoading = false;
   String? _error;
-  
+
   @override
   void initState() {
     super.initState();
     _loadWorkouts();
   }
-  
+
   Future<void> _loadWorkouts() async {
     if (!mounted) return;
-    
+
     setState(() {
       _isLoading = true;
       _error = null;
     });
-    
+
     try {
-      final workoutProvider = Provider.of<WorkoutProvider>(context, listen: false);
+      final workoutProvider =
+          Provider.of<WorkoutProvider>(context, listen: false);
       final success = await workoutProvider.loadWorkouts();
-      
+
       if (!success && mounted) {
         setState(() {
-          _error = workoutProvider.error ?? 'No se pudieron cargar los entrenamientos';
+          _error = workoutProvider.error ??
+              'No se pudieron cargar los entrenamientos';
         });
       }
     } catch (e) {
@@ -61,7 +63,7 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
     // Obtenemos el provider de entrenamientos para acceder a los datos
     final workoutProvider = Provider.of<WorkoutProvider>(context);
     final userProvider = Provider.of<UserProvider>(context);
-    
+
     // Colores predefinidos para las tarjetas de entrenamiento
     final List<Color> workoutColors = [
       const Color(0xFF4A90E2),
@@ -71,7 +73,7 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
       const Color(0xFF9E4AE2),
       const Color(0xFF4AE2C5),
     ];
-    
+
     return Scaffold(
       backgroundColor: const Color(0xFF005DC8),
       body: SafeArea(
@@ -92,8 +94,9 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                           // Header con foto de perfil
                           Row(
                             children: [
-                              userProvider.user?.profilePicture != null && 
-                              userProvider.user!.profilePicture!.isNotEmpty
+                              userProvider.user?.profilePicture != null &&
+                                      userProvider
+                                          .user!.profilePicture!.isNotEmpty
                                   ? CircleAvatar(
                                       radius: 20,
                                       backgroundImage: NetworkImage(
@@ -134,13 +137,15 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                           // Sección de rutinas - Usando datos reales del provider
                           workoutProvider.workouts.isEmpty
                               ? EmptyState(
-                                  message: 'No tienes entrenamientos todavía. ¡Crea tu primer entrenamiento!',
+                                  message:
+                                      'No tienes entrenamientos todavía. ¡Crea tu primer entrenamiento!',
                                   icon: Icons.fitness_center,
                                   onAction: () {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => const CreatePlanScreen(),
+                                        builder: (context) =>
+                                            const CreatePlanScreen(),
                                       ),
                                     );
                                   },
@@ -151,13 +156,15 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                                     ...workoutProvider.workouts.map(
                                       (workout) => WorkoutListItem(
                                         title: workout.name,
-                                        subtitle: '${workout.duration} min · ${workout.type}',
+                                        subtitle:
+                                            '${workout.duration} min · ${workout.type}',
                                         isCompleted: workout.completed,
                                         onTap: () {
                                           Navigator.push(
                                             context,
                                             MaterialPageRoute(
-                                              builder: (context) => WorkoutDetailScreen(
+                                              builder: (context) =>
+                                                  WorkoutDetailScreen(
                                                 workoutId: workout.id,
                                               ),
                                             ),
@@ -189,7 +196,8 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => const CreatePlanScreen(),
+                                      builder: (context) =>
+                                          const CreatePlanScreen(),
                                     ),
                                   );
                                 },
@@ -201,7 +209,8 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                           // Carrusel de programas - Usando datos reales o placeholders
                           workoutProvider.routines.isEmpty
                               ? const EmptyState(
-                                  message: 'No hay programas disponibles todavía',
+                                  message:
+                                      'No hay programas disponibles todavía',
                                   icon: Icons.calendar_today,
                                 )
                               : SizedBox(
@@ -210,12 +219,19 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                                     scrollDirection: Axis.horizontal,
                                     itemCount: workoutProvider.routines.length,
                                     itemBuilder: (context, index) {
-                                      final routine = workoutProvider.routines[index];
+                                      final routine =
+                                          workoutProvider.routines[index];
                                       return _buildProgramCard(
-                                        title: routine['name'] ?? 'Programa ${index + 1}',
-                                        duration: routine['duration'] ?? '${index + 4} semanas',
-                                        level: routine['level'] ?? (index % 2 == 0 ? 'Intermedio' : 'Avanzado'),
-                                        color: workoutColors[index % workoutColors.length],
+                                        title: routine['name'] ??
+                                            'Programa ${index + 1}',
+                                        duration: routine['duration'] ??
+                                            '${index + 4} semanas',
+                                        level: routine['level'] ??
+                                            (index % 2 == 0
+                                                ? 'Intermedio'
+                                                : 'Avanzado'),
+                                        color: workoutColors[
+                                            index % workoutColors.length],
                                       );
                                     },
                                   ),

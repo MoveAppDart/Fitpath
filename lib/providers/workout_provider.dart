@@ -1,4 +1,7 @@
+import 'package:fitpath/services/api/api_client.dart';
+import 'package:fitpath/services/api/auth_service_impl.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/workout.dart';
 import '../models/exercise.dart';
 import '../services/api/workout_service.dart';
@@ -12,9 +15,9 @@ class WorkoutProvider with ChangeNotifier {
   List<dynamic> _routines = [];
   bool _isLoading = false;
   String? _error;
-  
+
   WorkoutProvider(this._workoutService);
-  
+
   List<Workout> get workouts => _workouts;
   Workout? get selectedWorkout => _selectedWorkout;
   List<Exercise> get workoutExercises => _workoutExercises;
@@ -22,19 +25,21 @@ class WorkoutProvider with ChangeNotifier {
   List<dynamic> get routines => _routines;
   bool get isLoading => _isLoading;
   String? get error => _error;
-  
+
   /// Carga la lista de entrenamientos del usuario
   Future<bool> loadWorkouts() async {
     _isLoading = true;
     _error = null;
     notifyListeners();
-    
+
     try {
       final response = await _workoutService.getWorkouts();
-      
+
       if (response['success'] == true) {
         final workoutsData = response['data'] as List<dynamic>;
-        _workouts = workoutsData.map((workoutJson) => Workout.fromJson(workoutJson)).toList();
+        _workouts = workoutsData
+            .map((workoutJson) => Workout.fromJson(workoutJson))
+            .toList();
         _error = null;
         notifyListeners();
         return true;
@@ -52,31 +57,35 @@ class WorkoutProvider with ChangeNotifier {
       notifyListeners();
     }
   }
-  
+
   /// Obtiene los detalles de un entrenamiento específico
   Future<bool> getWorkoutDetails(String workoutId) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
-    
+
     try {
       // Obtener detalles del entrenamiento
       final workoutResponse = await _workoutService.getWorkout(workoutId);
-      
+
       if (workoutResponse['success'] != true) {
-        _error = workoutResponse['message'] ?? 'Error al obtener el entrenamiento';
+        _error =
+            workoutResponse['message'] ?? 'Error al obtener el entrenamiento';
         notifyListeners();
         return false;
       }
-      
+
       _selectedWorkout = Workout.fromJson(workoutResponse['data']);
-      
+
       // Obtener ejercicios del entrenamiento
-      final exercisesResponse = await _workoutService.getExercisesForWorkout(workoutId);
-      
+      final exercisesResponse =
+          await _workoutService.getExercisesForWorkout(workoutId);
+
       if (exercisesResponse['success'] == true) {
         final exercisesData = exercisesResponse['data'] as List<dynamic>;
-        _workoutExercises = exercisesData.map((exerciseJson) => Exercise.fromJson(exerciseJson)).toList();
+        _workoutExercises = exercisesData
+            .map((exerciseJson) => Exercise.fromJson(exerciseJson))
+            .toList();
         _error = null;
         notifyListeners();
         return true;
@@ -94,16 +103,16 @@ class WorkoutProvider with ChangeNotifier {
       notifyListeners();
     }
   }
-  
+
   /// Crea un nuevo entrenamiento
   Future<bool> createWorkout(Map<String, dynamic> workoutData) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
-    
+
     try {
       final response = await _workoutService.createWorkout(workoutData);
-      
+
       if (response['success'] == true) {
         // Recargar la lista de entrenamientos si la creación fue exitosa
         await loadWorkouts();
@@ -124,24 +133,23 @@ class WorkoutProvider with ChangeNotifier {
       notifyListeners();
     }
   }
-  
+
   /// Actualiza un entrenamiento existente
-  Future<bool> updateWorkout(String id, Map<String, dynamic> workoutData) async {
+  Future<bool> updateWorkout(
+      String id, Map<String, dynamic> workoutData) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
-    
+
     try {
       final response = await _workoutService.updateWorkout(id, workoutData);
-      
+
       if (response['success'] == true) {
         // Actualizar el entrenamiento seleccionado si es el mismo que se está editando
         if (_selectedWorkout != null && _selectedWorkout!.id == id) {
           // Crear un nuevo objeto Workout con los datos actualizados
-          _selectedWorkout = Workout.fromJson({
-            ...response['data'],
-            ...workoutData
-          });
+          _selectedWorkout =
+              Workout.fromJson({...response['data'], ...workoutData});
         }
         // Recargar la lista de entrenamientos
         await loadWorkouts();
@@ -162,16 +170,16 @@ class WorkoutProvider with ChangeNotifier {
       notifyListeners();
     }
   }
-  
+
   /// Elimina un entrenamiento
   Future<bool> deleteWorkout(String id) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
-    
+
     try {
       final response = await _workoutService.deleteWorkout(id);
-      
+
       if (response['success'] == true) {
         // Limpiar el entrenamiento seleccionado si es el mismo que se está eliminando
         if (_selectedWorkout != null && _selectedWorkout!.id == id) {
@@ -197,22 +205,25 @@ class WorkoutProvider with ChangeNotifier {
       notifyListeners();
     }
   }
-  
+
   /// Registra un entrenamiento como completado
-  Future<bool> logCompletedWorkout(String workoutId, Map<String, dynamic> completionData) async {
+  Future<bool> logCompletedWorkout(
+      String workoutId, Map<String, dynamic> completionData) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
-    
+
     try {
-      final response = await _workoutService.logCompletedWorkout(workoutId, completionData);
-      
+      final response =
+          await _workoutService.logCompletedWorkout(workoutId, completionData);
+
       if (response['success'] == true) {
         _error = null;
         notifyListeners();
         return true;
       } else {
-        _error = response['message'] ?? 'Error al registrar entrenamiento completado';
+        _error = response['message'] ??
+            'Error al registrar entrenamiento completado';
         notifyListeners();
         return false;
       }
@@ -225,16 +236,17 @@ class WorkoutProvider with ChangeNotifier {
       notifyListeners();
     }
   }
-  
+
   /// Obtiene el calendario de entrenamientos
   Future<bool> getWorkoutCalendar(String startDate, String endDate) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
-    
+
     try {
-      final response = await _workoutService.getWorkoutCalendar(startDate, endDate);
-      
+      final response =
+          await _workoutService.getWorkoutCalendar(startDate, endDate);
+
       if (response['success'] == true) {
         _workoutCalendar = response['data'];
         _error = null;
@@ -254,16 +266,16 @@ class WorkoutProvider with ChangeNotifier {
       notifyListeners();
     }
   }
-  
+
   /// Obtiene las rutinas de entrenamiento
   Future<bool> getRoutines() async {
     _isLoading = true;
     _error = null;
     notifyListeners();
-    
+
     try {
       final response = await _workoutService.getRoutines();
-      
+
       if (response['success'] == true) {
         _routines = response['data'] as List<dynamic>;
         _error = null;
@@ -284,3 +296,11 @@ class WorkoutProvider with ChangeNotifier {
     }
   }
 }
+
+final workoutProvider = ChangeNotifierProvider<WorkoutProvider>((ref) {
+  final apiClient = ApiClient();
+  final authService = AuthServiceImpl(apiClient.dio);
+  final workoutService = WorkoutService(apiClient, authService);
+
+  return WorkoutProvider(workoutService);
+});

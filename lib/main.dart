@@ -1,29 +1,28 @@
-import 'package:dio/src/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'screens/login_screen.dart';
 import 'screens/signup_screen.dart';
+import 'screens/home_screen.dart';
 import 'screens/language_screen.dart';
 import 'screens/exercise_detail_screen.dart';
-import 'providers/auth_provider.dart';
-import 'providers/user_provider.dart';
+
+import 'services/api/api_client.dart';
 import 'services/api/auth_service_impl.dart';
 import 'services/api/user_service.dart';
-import 'services/api/api_client.dart';
 
-// API Client
-final apiClientProvider = Provider<ApiClient>((ref) {
-  return ApiClient();
-});
+import 'providers/auth_provider.dart';
+import 'providers/user_provider.dart';
 
-// Services
+// === Providers ===
+final apiClientProvider = Provider<ApiClient>((ref) => ApiClient());
+
 final authServiceProvider = Provider<AuthServiceImpl>((ref) {
   final apiClient = ref.watch(apiClientProvider);
-  return AuthServiceImpl(apiClient.dio); // ✅ Accede al Dio interno
+  return AuthServiceImpl(apiClient.dio);
 });
 
 final userServiceProvider = Provider<UserService>((ref) {
@@ -31,7 +30,6 @@ final userServiceProvider = Provider<UserService>((ref) {
   return UserService(apiClient);
 });
 
-// Providers
 final userProvider = ChangeNotifierProvider<UserProvider>((ref) {
   final userService = ref.watch(userServiceProvider);
   return UserProvider(userService);
@@ -43,7 +41,43 @@ final authProvider = ChangeNotifierProvider<AuthProvider>((ref) {
   return AuthProvider(authService, userProv);
 });
 
-// Colores de la aplicación
+// === Router Provider ===
+final routerProvider = Provider<GoRouter>((ref) {
+  final auth = ref.watch(authProvider);
+
+  return GoRouter(
+    initialLocation: '/login',
+    refreshListenable: auth,
+    redirect: (context, state) {
+      final isLoggedIn = auth.isLoggedIn;
+      final isAuthPage =
+          state.uri.path == '/login' || state.uri.path == '/signup';
+
+      debugPrint('[REDIRECT] isLoggedIn=$isLoggedIn | path=${state.uri.path}');
+
+      if (isLoggedIn && isAuthPage) return '/home';
+      return null;
+    },
+    routes: [
+      GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
+      GoRoute(path: '/signup', builder: (_, __) => const SignupScreen()),
+      GoRoute(path: '/home', builder: (_, __) => const HomeScreen()),
+      GoRoute(path: '/language', builder: (_, __) => const LanguageScreen()),
+      GoRoute(
+        path: '/exercise/:id',
+        builder: (_, state) =>
+            ExerciseDetailScreen(exerciseId: state.pathParameters['id']!),
+      ),
+    ],
+    errorBuilder: (_, state) => Scaffold(
+      body: Center(
+        child: Text('Error: ${state.error?.toString() ?? 'Unknown error'}'),
+      ),
+    ),
+  );
+});
+
+// === App Theme ===
 class AppColors {
   static const Color primary = Color(0xFF0A7AFF);
   static const Color accent = Color(0xFF00E676);
@@ -55,14 +89,10 @@ class AppColors {
   static const Color textWhite54 = Colors.white54;
 }
 
-// Clave global para navegación
-final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
-
+// === Main ===
 void main() async {
-  // Inicializar bindings de Flutter
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Configuración de la UI del sistema
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -72,92 +102,26 @@ void main() async {
     ),
   );
 
-  runApp(
-    const ProviderScope(
-      child: MyApp(),
-    ),
-  );
+  runApp(const ProviderScope(child: MyApp()));
 }
 
+// === MyApp ===
 class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
-  // Configuración de la UI del sistema
-  static void configureSystemUI() {
-    SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-        systemNavigationBarColor: Colors.white,
-        systemNavigationBarIconBrightness: Brightness.dark,
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Configurar la UI del sistema
-    configureSystemUI();
-
-    final router = GoRouter(
-      initialLocation: '/login',
-      redirect: (BuildContext context, GoRouterState state) {
-        final isLoggedIn = ref.read(authProvider).isLoggedIn;
-        final isLoggingIn =
-            state.uri.path == '/login' || state.uri.path == '/signup';
-
-        if (!isLoggedIn && !isLoggingIn) return '/login';
-        if (isLoggedIn && isLoggingIn) return '/home';
-
-        return null;
-      },
-      routes: <RouteBase>[
-        GoRoute(
-          path: '/login',
-          builder: (BuildContext context, GoRouterState state) =>
-              const LoginScreen(),
-        ),
-        GoRoute(
-          path: '/signup',
-          builder: (BuildContext context, GoRouterState state) =>
-              const SignupScreen(),
-        ),
-        GoRoute(
-          path: '/home',
-          builder: (BuildContext context, GoRouterState state) =>
-              const HomeScreen(),
-        ),
-        GoRoute(
-          path: '/language',
-          builder: (BuildContext context, GoRouterState state) =>
-              const LanguageScreen(),
-        ),
-        GoRoute(
-          path: '/exercise/:id',
-          builder: (BuildContext context, GoRouterState state) {
-            final id = state.pathParameters['id']!;
-            return ExerciseDetailScreen(exerciseId: id);
-          },
-        ),
-      ],
-      errorBuilder: (BuildContext context, GoRouterState state) => Scaffold(
-        body: Center(
-          child: Text('Error: ${state.error}'),
-        ),
-      ),
-    );
+    final router = ref.watch(routerProvider);
 
     return MaterialApp.router(
       routerConfig: router,
       title: 'FitPath',
       debugShowCheckedModeBanner: false,
       theme: _buildTheme(),
-      builder: (BuildContext context, Widget? child) {
-        return GestureDetector(
-          onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-          child: child!,
-        );
-      },
+      builder: (context, child) => GestureDetector(
+        onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+        child: child!,
+      ),
     );
   }
 
@@ -199,10 +163,6 @@ class MyApp extends ConsumerWidget {
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: AppColors.accent, width: 2),
@@ -223,134 +183,12 @@ class MyApp extends ConsumerWidget {
         ),
       ),
       textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          foregroundColor: AppColors.accent,
-        ),
+        style: TextButton.styleFrom(foregroundColor: AppColors.accent),
       ),
     );
 
     return baseTheme.copyWith(
       textTheme: GoogleFonts.poppinsTextTheme(baseTheme.textTheme),
-    );
-  }
-}
-
-// Clase de ayuda para la navegación
-extension NavigationHelper on BuildContext {
-  void pushNamed(String routeName, {Object? arguments}) {
-    GoRouter.of(this).push(routeName, extra: arguments);
-  }
-
-  void pushReplacementNamed(String routeName, {Object? arguments}) {
-    GoRouter.of(this).pushReplacement(routeName, extra: arguments);
-  }
-
-  void pop() {
-    GoRouter.of(this).pop();
-  }
-
-  void popUntilFirst() {
-    while (GoRouter.of(this).canPop()) {
-      GoRouter.of(this).pop();
-    }
-  }
-}
-
-class HomeScreen extends ConsumerStatefulWidget {
-  const HomeScreen({super.key});
-
-  @override
-  ConsumerState<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends ConsumerState<HomeScreen> {
-  bool _isMounted = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _isMounted = true;
-  }
-
-  @override
-  void dispose() {
-    _isMounted = false;
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // Listen to auth state changes
-    final authState = ref.watch(authProvider);
-    final user = ref.watch(userProvider);
-
-    // Show loading indicator while checking auth state
-    if (authState.isLoading) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
-
-    // Redirect to login if not authenticated
-    if (!authState.isLoggedIn) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_isMounted) {
-          GoRouter.of(context).go('/login');
-        }
-      });
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Welcome to FitPath'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Logout',
-            onPressed: () async {
-              // Show loading indicator
-              final scaffoldMessenger = ScaffoldMessenger.of(context);
-              final navigator = Navigator.of(context);
-
-              try {
-                // Call logout
-                await ref.read(authProvider.notifier).logout();
-
-                // Navigate to login screen
-                if (_isMounted) {
-                  navigator.pushNamedAndRemoveUntil('/login', (route) => false);
-                }
-              } catch (e) {
-                if (_isMounted) {
-                  scaffoldMessenger.showSnackBar(
-                    SnackBar(
-                      content: Text('Failed to logout: $e'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              }
-            },
-          ),
-        ],
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (user.user?.name != null)
-              Text(
-                'Welcome back, ${user.user!.name}!',
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-            const SizedBox(height: 16),
-            const Text('You are now logged in to FitPath!'),
-          ],
-        ),
-      ),
     );
   }
 }

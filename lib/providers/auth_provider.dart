@@ -36,44 +36,35 @@ class AuthProvider with ChangeNotifier {
     _error = null;
     notifyListeners();
 
+    bool result = false;
+
     try {
       final response = await _authService.login(email, password);
       if (response != null) {
-        // Get user profile after successful login
-        final userProfile = await _authService.getUserProfile();
-        if (userProfile != null) {
-          final userData = {
-            'id': response.user.id,
-            'email': response.user.email,
-            'name': response.user.name,
-            'lastName': userProfile['lastName'] ?? '',
-            'age': userProfile['age'],
-            'gender': userProfile['gender'],
-          };
-
-          // Update user provider if available
-          if (_userProvider != null) {
-            _userProvider!.setUserFromMap(userData);
-          }
-
-          return true;
-        } else {
-          _error = 'No se pudo cargar el perfil del usuario';
-          return false;
-        }
+        // … actualizas userProvider…
+        result = true;
+      } else {
+        _error = 'Error desconocido al iniciar sesión';
+        result = false;
       }
-      _error = 'Error desconocido al iniciar sesión';
-      return false;
     } on AuthErrorResponse catch (e) {
       _error = e.message;
-      return false;
+      result = false;
     } catch (e) {
       _error = 'Error inesperado: $e';
-      return false;
+      result = false;
     } finally {
       _isLoading = false;
-      notifyListeners();
+      // Antes de notificar, verificamos que no haya sido disposed:
+      if (!hasListeners) {
+        // “hasListeners” es una propiedad de ChangeNotifier que indica
+        // si aún hay algún widget escuchando. Si nadie escucha, ya no notificamos.
+      } else {
+        notifyListeners();
+      }
     }
+
+    return result;
   }
 
   /// Registers a new user with the provided information
@@ -88,6 +79,8 @@ class AuthProvider with ChangeNotifier {
     _isLoading = true;
     _error = null;
     notifyListeners();
+
+    bool result = false;
 
     try {
       final response = await _authService.register(
@@ -112,19 +105,23 @@ class AuthProvider with ChangeNotifier {
       }
 
       debugPrint('Registro exitoso: $email');
-      return true;
+      result = true;
     } on AuthErrorResponse catch (e) {
       _error = e.message;
       debugPrint('Error de registro: ${e.message}');
-      return false;
+      result = false;
     } catch (e) {
       _error = 'Error inesperado durante el registro: $e';
       debugPrint('Error en AuthProvider.register: $e');
-      return false;
+      result = false;
     } finally {
       _isLoading = false;
-      notifyListeners();
+      if (hasListeners) {
+        notifyListeners();
+      }
     }
+
+    return result;
   }
 
   /// Updates the user's profile information

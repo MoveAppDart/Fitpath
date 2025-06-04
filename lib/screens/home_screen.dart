@@ -1,46 +1,42 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-// Providers
+import '../models/workout.dart';
 import '../providers/user_provider.dart';
 import '../providers/workout_provider.dart';
-// Models
-import '../models/workout.dart';
-// Screens
-// import './workout_detail_screen.dart'; // Ensure this screen exists and takes workoutId (Currently unused)
+import '../providers/auth_provider.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
   HomeScreenState createState() => HomeScreenState();
 }
 
-class HomeScreenState extends State<HomeScreen> {
+class HomeScreenState extends ConsumerState<HomeScreen> {
   final DateTime _now = DateTime.now();
   late DateTime _weekStart;
-  late DateTime _weekEnd; // Now used for weekRangeText
+  late DateTime _weekEnd;
   late List<DateTime> _weekDays;
 
+  // Estado local para mostrar nombre/fallback antes de cargar
   Map<String, dynamic> _userData = {'name': 'Loading...'};
-  List<Workout> _upcomingWorkouts = [];
-  List<Workout> _recentWorkouts = [];
-  Map<DateTime, List<Workout>> _workoutCalendarEvents =
-      {}; // Store full Workout objects for calendar events
 
   bool _isLoadingUserData = true;
   bool _isLoadingWorkouts = true;
 
-  // Theme Colors (consider moving to a central theme file)
-  static const Color primaryBlue =
-      Color(0xFF0A7AFF); // A slightly brighter, modern blue
+  // Lista local para mostrar los workouts ya procesados
+  List<Workout> _upcomingWorkouts = [];
+  List<Workout> _recentWorkouts = [];
+  Map<DateTime, List<Workout>> _workoutCalendarEvents = {};
+
+  // Colores (puedes sacarlos a un archivo central si prefieres)
+  static const Color primaryBlue = Color(0xFF0A7AFF);
   static const Color darkBackgroundBlue = Color(0xFF001E3C);
-  static const Color cardBlue = Color(0xFF003D7A); // For cards
-  static const Color accentColor =
-      Color(0xFF00E676); // A vibrant green/teal for accents
+  static const Color cardBlue = Color(0xFF003D7A);
+  static const Color accentColor = Color(0xFF00E676);
   static const Color textWhite = Colors.white;
   static const Color textWhite70 = Colors.white70;
   static const Color textWhite54 = Colors.white54;
@@ -49,7 +45,8 @@ class HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _calculateWeekRange();
-    // Load data after the first frame to allow context to be available
+
+    // Cargar datos una vez que la UI esté lista
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadInitialData();
     });
@@ -64,8 +61,7 @@ class HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadInitialData() async {
     if (!mounted) return;
-    // Load user data first, then workouts as they might depend on user context
-    // (though current implementation doesn't show direct dependency for workout loading)
+
     await _loadUserData();
     await _loadWorkoutData();
   }
@@ -74,21 +70,22 @@ class HomeScreenState extends State<HomeScreen> {
     if (!mounted) return;
     setState(() => _isLoadingUserData = true);
 
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
     try {
-      bool profileLoaded = await userProvider.loadUserProfile();
-      if (profileLoaded && userProvider.user != null && mounted) {
-        setState(() => _userData = userProvider.user!.toJson());
-        print('HomeScreen: User profile loaded: ${_userData['name']}');
+      // En lugar de Provider.of, usamos ref.read/ref.watch
+      final userProv = ref.read(userProvider.notifier);
+      final loaded = await userProv.loadUserProfile();
+
+      if (loaded && ref.read(userProvider).user != null && mounted) {
+        setState(() => _userData = ref.read(userProvider).user!.toJson());
+        debugPrint('HomeScreen: User profile loaded: ${_userData['name']}');
       } else {
-        final prefs = await SharedPreferences.getInstance();
-        final savedName = prefs.getString('user_name');
-        if (mounted) setState(() => _userData['name'] = savedName ?? 'User');
-        print('HomeScreen: Used fallback name: ${_userData['name']}');
+        // Puedes leer de SharedPreferences aquí si quieres fallback
+        setState(() => _userData['name'] = 'User');
+        debugPrint('HomeScreen: Fallback name used');
       }
     } catch (e) {
       if (mounted) setState(() => _userData['name'] = 'User');
-      print('HomeScreen: Error loading user data: $e');
+      debugPrint('HomeScreen: Error loading user data: $e');
     } finally {
       if (mounted) setState(() => _isLoadingUserData = false);
     }
@@ -98,18 +95,14 @@ class HomeScreenState extends State<HomeScreen> {
     if (!mounted) return;
     setState(() => _isLoadingWorkouts = true);
 
-    final workoutProvider =
-        Provider.of<WorkoutProvider>(context, listen: false);
     try {
-      await workoutProvider
-          .loadWorkouts(); // Assumes this fetches all user's workouts
-      if (mounted) {
-        _processAndSetWorkoutData(workoutProvider.workouts);
-      }
-      // Load calendar-specific view if your API supports it, or process all workouts
-      // For now, _processAndSetWorkoutData also populates _workoutCalendarEvents
+      final workoutProv = ref.read(workoutProvider.notifier);
+      await workoutProv.loadWorkouts();
+
+      final allWorkouts = ref.read(workoutProvider).workouts;
+      _processAndSetWorkoutData(allWorkouts);
     } catch (e) {
-      print('HomeScreen: Error loading workout data: $e');
+      debugPrint('HomeScreen: Error loading workout data: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading workouts: ${e.toString()}')),
@@ -121,26 +114,20 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   void _processAndSetWorkoutData(List<Workout> allWorkouts) {
-    final now = DateTime.now();
-    final todayDateOnly = DateTime(now.year, now.month, now.day);
+    final todayDateOnly = DateTime(_now.year, _now.month, _now.day);
 
     List<Workout> upcoming = [];
     List<Workout> recent = [];
     Map<DateTime, List<Workout>> calendarEvents = {};
 
     for (var workout in allWorkouts) {
-      final workoutDate = workout.scheduledDate;
-      final workoutDateOnly =
-          DateTime(workoutDate.year, workoutDate.month, workoutDate.day);
+      final wd = workout.scheduledDate;
+      final workoutDateOnly = DateTime(wd.year, wd.month, wd.day);
 
-      // Populate calendar events
-      if (calendarEvents.containsKey(workoutDateOnly)) {
-        calendarEvents[workoutDateOnly]!.add(workout);
-      } else {
-        calendarEvents[workoutDateOnly] = [workout];
-      }
+      // Construir calendario
+      calendarEvents.putIfAbsent(workoutDateOnly, () => []).add(workout);
 
-      // Populate upcoming and recent lists
+      // Próximos
       if (workoutDateOnly.isAfter(todayDateOnly) ||
           workoutDateOnly.isAtSameMomentAs(todayDateOnly)) {
         upcoming.add(workout);
@@ -162,7 +149,6 @@ class HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // Helper to get events for TableCalendar
   List<Workout> _getEventsForCalendarDay(DateTime day) {
     return _workoutCalendarEvents[DateTime(day.year, day.month, day.day)] ?? [];
   }
@@ -171,8 +157,7 @@ class HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
     final bool isTablet = screenSize.width >= 600;
-    final bool isDesktop = screenSize.width >=
-        960; // Adjusted for better desktop layout consideration
+    final bool isDesktop = screenSize.width >= 960;
 
     final double horizontalPadding = isDesktop ? 32 : (isTablet ? 24 : 16);
     final double verticalCardSpacing = isDesktop ? 24 : (isTablet ? 20 : 16);
@@ -182,7 +167,7 @@ class HomeScreenState extends State<HomeScreen> {
     final double cardTitleFontSize =
         (screenSize.width * 0.045).clamp(18.0, 22.0);
 
-    String greetingName =
+    final String greetingName =
         _isLoadingUserData ? "Loading..." : (_userData['name'] ?? 'User');
 
     Workout? todaysWorkout;
@@ -193,25 +178,24 @@ class HomeScreenState extends State<HomeScreen> {
             w.scheduledDate.year == today.year &&
             w.scheduledDate.month == today.month &&
             w.scheduledDate.day == today.day,
-        orElse: () => _upcomingWorkouts
-            .first, // Fallback to next upcoming if none for today
+        orElse: () => _upcomingWorkouts.first,
       );
     }
 
     int completedThisWeek = 0;
     for (var day in _weekDays) {
-      if (_workoutCalendarEvents[DateTime(day.year, day.month, day.day)]
+      if ((_workoutCalendarEvents[DateTime(day.year, day.month, day.day)]
               ?.any((w) => w.completed) ??
-          false) {
+          false)) {
         completedThisWeek++;
       }
     }
-    // Define weekRangeText here
+
     final String weekRangeText =
         "${DateFormat.MMMd().format(_weekStart)} - ${DateFormat.MMMd().format(_weekEnd)}";
 
-    // TODO: Get totalPlannedWorkouts dynamically or from user settings
-    int totalPlannedWorkouts = 5; // Example
+    // Por ahora lo dejamos fijo, pero podrías obtenerlo de un provider de settings
+    int totalPlannedWorkouts = 5;
     double weeklyProgress = totalPlannedWorkouts > 0
         ? (completedThisWeek / totalPlannedWorkouts).clamp(0.0, 1.0)
         : 0.0;
@@ -224,97 +208,110 @@ class HomeScreenState extends State<HomeScreen> {
           color: textWhite,
           backgroundColor: primaryBlue,
           child: CustomScrollView(
-            // Use CustomScrollView for more complex scrollable layouts
             slivers: [
               SliverPadding(
                 padding: EdgeInsets.symmetric(
-                    horizontal: horizontalPadding,
-                    vertical: verticalCardSpacing * 0.8),
+                  horizontal: horizontalPadding,
+                  vertical: verticalCardSpacing * 0.8,
+                ),
                 sliver: SliverToBoxAdapter(
                   child: _buildUserHeader(
-                      greetingName,
-                      _userData['profileImage'],
-                      headerFontSize,
-                      subHeaderFontSize,
-                      isDesktop,
-                      isTablet),
+                    greetingName,
+                    _userData['profileImage'],
+                    headerFontSize,
+                    subHeaderFontSize,
+                    isDesktop,
+                    isTablet,
+                  ),
                 ),
               ),
 
               if (_isLoadingWorkouts && _upcomingWorkouts.isEmpty)
                 const SliverFillRemaining(
-                    child: Center(
-                        child: CircularProgressIndicator(color: textWhite))),
+                  child: Center(
+                      child: CircularProgressIndicator(color: textWhite)),
+                ),
 
               if (!_isLoadingWorkouts && todaysWorkout != null)
                 SliverPadding(
                   padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
                   sliver: SliverToBoxAdapter(
-                      child: _buildTodaysRoutineCard(
-                          todaysWorkout,
-                          cardTitleFontSize,
-                          subHeaderFontSize,
-                          verticalCardSpacing)),
+                    child: _buildTodaysRoutineCard(
+                      todaysWorkout,
+                      cardTitleFontSize,
+                      subHeaderFontSize,
+                      verticalCardSpacing,
+                    ),
+                  ),
                 ),
 
               if (!_isLoadingWorkouts)
                 SliverPadding(
                   padding: EdgeInsets.fromLTRB(
-                      horizontalPadding,
-                      verticalCardSpacing,
-                      horizontalPadding,
-                      verticalCardSpacing),
+                    horizontalPadding,
+                    verticalCardSpacing,
+                    horizontalPadding,
+                    verticalCardSpacing,
+                  ),
                   sliver: SliverToBoxAdapter(
-                      child: _buildWeeklyProgressSection(
-                          weekRangeText, // Now defined
-                          completedThisWeek,
-                          totalPlannedWorkouts,
-                          weeklyProgress,
-                          headerFontSize,
-                          subHeaderFontSize,
-                          isDesktop,
-                          isTablet)),
+                    child: _buildWeeklyProgressSection(
+                      weekRangeText,
+                      completedThisWeek,
+                      totalPlannedWorkouts,
+                      weeklyProgress,
+                      headerFontSize,
+                      subHeaderFontSize,
+                      isDesktop,
+                      isTablet,
+                    ),
+                  ),
                 ),
 
               if (!_isLoadingWorkouts && _recentWorkouts.isNotEmpty)
                 SliverPadding(
                   padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
                   sliver: _buildRecentActivitySection(
-                      _recentWorkouts,
-                      cardTitleFontSize,
-                      subHeaderFontSize,
-                      verticalCardSpacing),
+                    _recentWorkouts,
+                    cardTitleFontSize,
+                    subHeaderFontSize,
+                    verticalCardSpacing,
+                  ),
                 ),
 
               if (!_isLoadingWorkouts &&
                   _upcomingWorkouts.isEmpty &&
                   _recentWorkouts.isEmpty)
                 SliverFillRemaining(
-                  // Use SliverFillRemaining to center content if list is empty
                   child: Center(
                     child: Padding(
                       padding: const EdgeInsets.all(24.0),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.fitness_center_outlined,
-                              size: 60, color: textWhite54),
+                          const Icon(
+                            Icons.fitness_center_outlined,
+                            size: 60,
+                            color: textWhite54,
+                          ),
                           const SizedBox(height: 16),
                           Text(
                             "No workouts scheduled or completed recently.\nPlan your next session!",
                             textAlign: TextAlign.center,
                             style: GoogleFonts.poppins(
-                                color: textWhite70,
-                                fontSize: subHeaderFontSize),
+                              color: textWhite70,
+                              fontSize: subHeaderFontSize,
+                            ),
                           ),
                         ],
                       ),
                     ),
                   ),
                 ),
+
+              // Espacio en blanco al final
               SliverToBoxAdapter(
-                  child:
-                      SizedBox(height: verticalCardSpacing)), // Bottom padding
+                child: SizedBox(height: verticalCardSpacing),
+              ),
             ],
           ),
         ),
@@ -333,10 +330,6 @@ class HomeScreenState extends State<HomeScreen> {
               (profileImageUrl != null && profileImageUrl.isNotEmpty)
                   ? NetworkImage(profileImageUrl)
                   : null,
-          onBackgroundImageError:
-              profileImageUrl != null && profileImageUrl.isNotEmpty
-                  ? (_, __) {}
-                  : null, // Basic error handling
           child: (profileImageUrl == null || profileImageUrl.isEmpty)
               ? Icon(Icons.person,
                   size: isDesktop ? 36 : (isTablet ? 32 : 28),
@@ -351,15 +344,18 @@ class HomeScreenState extends State<HomeScreen> {
               Text(
                 'Welcome,',
                 style: GoogleFonts.poppins(
-                    color: textWhite70, fontSize: subHeaderFs * 0.9),
+                  color: textWhite70,
+                  fontSize: subHeaderFs * 0.9,
+                ),
               ),
               const SizedBox(height: 2),
               Text(
                 name,
                 style: GoogleFonts.poppins(
-                    color: textWhite,
-                    fontSize: headerFs,
-                    fontWeight: FontWeight.w600),
+                  color: textWhite,
+                  fontSize: headerFs,
+                  fontWeight: FontWeight.w600,
+                ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -367,9 +363,21 @@ class HomeScreenState extends State<HomeScreen> {
           ),
         ),
         IconButton(
-          icon: Icon(Icons.notifications_none_outlined,
-              color: textWhite70, size: isDesktop ? 28 : 24),
-          onPressed: () {/* TODO: Navigate to notifications */},
+          icon: Icon(
+            Icons.notifications_none_outlined,
+            color: textWhite70,
+            size: isDesktop ? 28 : 24,
+          ),
+          onPressed: () {
+            // Navegar a notificaciones si lo implementas
+          },
+        ),
+        IconButton(
+          icon: const Icon(Icons.logout, color: textWhite70),
+          onPressed: () async {
+            // Llamar a logout para que GoRouter redirija a /login automáticamente
+            await ref.read(authProvider.notifier).logout();
+          },
         ),
       ],
     );
@@ -389,17 +397,19 @@ class HomeScreenState extends State<HomeScreen> {
             Text(
               "Today's Focus",
               style: GoogleFonts.poppins(
-                  color: textWhite,
-                  fontSize: titleFs,
-                  fontWeight: FontWeight.bold),
+                color: textWhite,
+                fontSize: titleFs,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             SizedBox(height: vSpacing * 0.5),
             Text(
               workout.name,
               style: GoogleFonts.poppins(
-                  color: accentColor,
-                  fontSize: titleFs * 0.9,
-                  fontWeight: FontWeight.w600),
+                color: accentColor,
+                fontSize: titleFs * 0.9,
+                fontWeight: FontWeight.w600,
+              ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
@@ -409,7 +419,7 @@ class HomeScreenState extends State<HomeScreen> {
                 Icon(Icons.timer_outlined, color: textWhite70, size: subFs),
                 const SizedBox(width: 8),
                 Text(
-                  "${workout.duration} min", // Assuming duration is in minutes
+                  "${workout.duration} min",
                   style:
                       GoogleFonts.poppins(color: textWhite70, fontSize: subFs),
                 ),
@@ -435,8 +445,9 @@ class HomeScreenState extends State<HomeScreen> {
                       fontWeight: FontWeight.bold, color: darkBackgroundBlue),
                 ),
                 onPressed: () {
-                  // Navigator.push(context, MaterialPageRoute(builder: (context) => WorkoutDetailScreen(workoutId: workout.id)));
-                  print("Start workout: ${workout.id}");
+                  // Navegar a detalle, p. ej.:
+                  // GoRouter.of(context).push('/exercise/${workout.id}');
+                  debugPrint("Start workout: ${workout.id}");
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: accentColor,
@@ -445,7 +456,7 @@ class HomeScreenState extends State<HomeScreen> {
                       borderRadius: BorderRadius.circular(12)),
                 ),
               ),
-            )
+            ),
           ],
         ),
       ),
@@ -453,14 +464,15 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildWeeklyProgressSection(
-      String weekRange,
-      int completed,
-      int total,
-      double progress,
-      double headerFs,
-      double subFs,
-      bool isDesktop,
-      bool isTablet) {
+    String weekRange,
+    int completed,
+    int total,
+    double progress,
+    double headerFs,
+    double subFs,
+    bool isDesktop,
+    bool isTablet,
+  ) {
     return Card(
       elevation: 4,
       color: cardBlue,
@@ -476,28 +488,38 @@ class HomeScreenState extends State<HomeScreen> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Weekly Progress',
-                        style: GoogleFonts.poppins(
-                            color: textWhite,
-                            fontSize: headerFs * 0.9,
-                            fontWeight: FontWeight.w600)),
+                    Text(
+                      'Weekly Progress',
+                      style: GoogleFonts.poppins(
+                        color: textWhite,
+                        fontSize: headerFs * 0.9,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     const SizedBox(height: 4),
-                    Text(weekRange,
-                        style: GoogleFonts.poppins(
-                            color: textWhite70, fontSize: subFs * 0.9)),
+                    Text(
+                      weekRange,
+                      style: GoogleFonts.poppins(
+                        color: textWhite70,
+                        fontSize: subFs * 0.9,
+                      ),
+                    ),
                   ],
                 ),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text('$completed/$total Done',
-                        style: GoogleFonts.poppins(
-                            color: accentColor,
-                            fontSize: subFs,
-                            fontWeight: FontWeight.bold)),
+                    Text(
+                      '$completed/$total Done',
+                      style: GoogleFonts.poppins(
+                        color: accentColor,
+                        fontSize: subFs,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(height: 4),
                     SizedBox(
-                      width: isTablet ? 100 : 80, // Bar width
+                      width: isTablet ? 100 : 80,
                       child: LinearProgressIndicator(
                         value: progress,
                         backgroundColor:
@@ -514,7 +536,6 @@ class HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 20),
             SingleChildScrollView(
-              // Allow horizontal scroll for day cards
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: List.generate(7, (index) {
@@ -541,10 +562,11 @@ class HomeScreenState extends State<HomeScreen> {
                       boxShadow: isToday
                           ? [
                               BoxShadow(
-                                  color: accentColor
-                                      .withAlpha((255 * 0.3).round()),
-                                  blurRadius: 8,
-                                  spreadRadius: 1)
+                                color:
+                                    accentColor.withAlpha((255 * 0.3).round()),
+                                blurRadius: 8,
+                                spreadRadius: 1,
+                              )
                             ]
                           : [],
                     ),
@@ -552,9 +574,7 @@ class HomeScreenState extends State<HomeScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          DateFormat('E', 'en_US')
-                              .format(day)
-                              .substring(0, 1), // Just "M", "T", "W"
+                          DateFormat('E', 'en_US').format(day).substring(0, 1),
                           style: GoogleFonts.poppins(
                             color: isToday ? darkBackgroundBlue : textWhite,
                             fontWeight: FontWeight.bold,
@@ -579,14 +599,12 @@ class HomeScreenState extends State<HomeScreen> {
                             decoration: BoxDecoration(
                               color: hasCompletedWorkout
                                   ? Colors.white
-                                  : Colors
-                                      .amberAccent, // Different color if completed
+                                  : Colors.amberAccent,
                               shape: BoxShape.circle,
                             ),
                           )
                         else
-                          const SizedBox(
-                              height: 8), // Placeholder for alignment
+                          const SizedBox(height: 8),
                       ],
                     ),
                   );
@@ -599,31 +617,36 @@ class HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildRecentActivitySection(List<Workout> recentWorkouts,
-      double titleFs, double subFs, double verticalCardSpacing) {
+  Widget _buildRecentActivitySection(
+    List<Workout> recentWorkouts,
+    double titleFs,
+    double subFs,
+    double verticalCardSpacing,
+  ) {
     return SliverList(
       delegate: SliverChildListDelegate([
         Padding(
           padding: EdgeInsets.only(
-              top: verticalCardSpacing *
-                  0.5), // Now verticalCardSpacing is in scope
+            top: verticalCardSpacing * 0.5,
+          ),
           child: Text(
             'Recent Activities',
             style: GoogleFonts.poppins(
-                color: textWhite,
-                fontSize: titleFs,
-                fontWeight: FontWeight.w600),
+              color: textWhite,
+              fontSize: titleFs,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
         const SizedBox(height: 12),
         ...recentWorkouts.take(3).map((workout) {
-          // Show max 3 recent
           return Card(
             elevation: 3,
             margin: const EdgeInsets.symmetric(vertical: 6),
             color: cardBlue.withAlpha((255 * 0.9).round()),
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: ListTile(
               contentPadding:
                   const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
@@ -633,29 +656,33 @@ class HomeScreenState extends State<HomeScreen> {
                   color: primaryBlue.withAlpha((255 * 0.7).round()),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: _getWorkoutTypeIcon(workout.type), // Helper for icon
+                child: _getWorkoutTypeIcon(workout.type),
               ),
               title: Text(
                 workout.name,
                 style: GoogleFonts.poppins(
-                    color: textWhite,
-                    fontWeight: FontWeight.w500,
-                    fontSize: subFs * 1.1),
+                  color: textWhite,
+                  fontWeight: FontWeight.w500,
+                  fontSize: subFs * 1.1,
+                ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
               subtitle: Text(
                 "${DateFormat('MMM d, yyyy').format(workout.scheduledDate)} • ${workout.duration} min",
                 style: GoogleFonts.poppins(
-                    color: textWhite70, fontSize: subFs * 0.9),
+                  color: textWhite70,
+                  fontSize: subFs * 0.9,
+                ),
               ),
               trailing: workout.completed
                   ? const Icon(Icons.check_circle, color: accentColor, size: 22)
                   : const Icon(Icons.pending_outlined,
                       color: textWhite54, size: 22),
               onTap: () {
-                // Navigator.push(context, MaterialPageRoute(builder: (context) => WorkoutDetailScreen(workoutId: workout.id)));
-                print("Navigate to recent workout: ${workout.id}");
+                // Por ejemplo:
+                // GoRouter.of(context).push('/exercise/${workout.id}');
+                debugPrint("Navigate to recent workout: ${workout.id}");
               },
             ),
           );
@@ -665,7 +692,6 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   Icon _getWorkoutTypeIcon(String type) {
-    // Example: map workout type to an icon
     switch (type.toLowerCase()) {
       case 'strength':
         return const Icon(Icons.fitness_center, color: textWhite, size: 24);
@@ -679,11 +705,8 @@ class HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // Helper method to check if two DateTime objects represent the same day.
   bool isSameDay(DateTime? a, DateTime? b) {
-    if (a == null || b == null) {
-      return false;
-    }
+    if (a == null || b == null) return false;
     return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 }
