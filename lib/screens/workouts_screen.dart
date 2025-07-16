@@ -13,7 +13,7 @@ class WorkoutsScreen extends StatefulWidget {
 
 class _WorkoutsScreenState extends State<WorkoutsScreen> {
   late List<Map<String, dynamic>> _workoutCollections;
-  
+
   @override
   void initState() {
     super.initState();
@@ -22,145 +22,166 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final Size screenSize = MediaQuery.of(context).size;
+    final bool isTablet = screenSize.width > 600;
+    final bool isDesktop = screenSize.width > 1200;
     return Scaffold(
-      backgroundColor: const Color(0xFF005DC8),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(32.0),
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(), // Ensure scrolling is always enabled
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header with profile picture
-                Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 20,
-                      backgroundColor: Colors.white24,
-                      child: Icon(
-                        Icons.person,
-                        size: 24,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
+        backgroundColor: const Color(0xFF005DC8),
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(32.0),
+            child: SingleChildScrollView(
+              physics:
+                  const AlwaysScrollableScrollPhysics(), // Ensure scrolling is always enabled
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: isDesktop ? 800 : double.infinity,
+                  minHeight: screenSize.height +
+                      100, // Ensure enough height for content
                 ),
-                const SizedBox(height: 30), // Increased spacing
-                
-                // Your Collections Title
-                Text(
-                  "Your's Collections",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 30), // Increased spacing
-                
-                // Routines Section - Using data from DataService
-                Column(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    ..._workoutCollections.map((workout) => 
-                      Column(
-                        children: [
-                          _buildRoutineButton(
-                            workout['name'],
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => WorkoutDetailScreen(
-                                    workoutName: workout['name'],
-                                  ),
-                                ),
-                              );
-                            },
+                    // Header with profile picture
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 20,
+                          backgroundColor: Colors.white24,
+                          child: Icon(
+                            Icons.person,
+                            size: 24,
+                            color: Colors.white,
                           ),
-                          const SizedBox(height: 12),
-                        ],
-                      ),
-                    ).toList(),
-                    _buildNewRoutineButton(),
-                  ],
-                ),
-                const SizedBox(height: 40),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 30), // Increased spacing
 
-                // Programs Section
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Programms',
+                    // Your Collections Title
+                    Text(
+                      "Your's Collections",
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.add_circle_outline, color: Colors.white),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const CreatePlanScreen(),
+                    const SizedBox(height: 30), // Increased spacing
+
+                    // Routines Section - Using data from DataService
+                    Column(
+                      children: [
+                        ..._workoutCollections
+                            .map(
+                              (workout) => Column(
+                                children: [
+                                  _buildRoutineButton(
+                                    workout['name'],
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              WorkoutDetailScreen(
+                                            workoutName: workout['name'],
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  const SizedBox(height: 12),
+                                ],
+                              ),
+                            )
+                            .toList(),
+                        _buildNewRoutineButton(),
+                      ],
+                    ),
+                    const SizedBox(height: 40),
+
+                    // Programs Section
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Programms',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
                           ),
-                        );
-                      },
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.add_circle_outline,
+                              color: Colors.white),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const CreatePlanScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Programs Carousel - Using workout collections for variety
+                    SizedBox(
+                      // Removed Expanded and replaced with SizedBox
+                      height: 380, // Fixed height for both carousels
+                      child: Column(
+                        children: [
+                          SizedBox(
+                            height: 180,
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: _workoutCollections.length,
+                              itemBuilder: (context, index) {
+                                return _buildProgramCard(
+                                  title: _workoutCollections[index]['name'],
+                                  duration: '${index + 4} weeks',
+                                  level: index % 2 == 0
+                                      ? 'Intermediate'
+                                      : 'Advanced',
+                                  color: _workoutCollections[index]['color'],
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          SizedBox(
+                            height: 180,
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: _workoutCollections.length,
+                              itemBuilder: (context, index) {
+                                final reversedIndex =
+                                    _workoutCollections.length - 1 - index;
+                                return _buildProgramCard(
+                                  title:
+                                      '${_workoutCollections[reversedIndex]['name']} Pro',
+                                  duration: '${reversedIndex + 6} weeks',
+                                  level: reversedIndex % 2 == 0
+                                      ? 'Beginner'
+                                      : 'Expert',
+                                  color: _workoutCollections[reversedIndex]
+                                      ['color'],
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
-                
-                // Programs Carousel - Using workout collections for variety
-                SizedBox(  // Removed Expanded and replaced with SizedBox
-                  height: 380,  // Fixed height for both carousels
-                  child: Column(
-                    children: [
-                      SizedBox(
-                        height: 180,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: _workoutCollections.length,
-                          itemBuilder: (context, index) {
-                            return _buildProgramCard(
-                              title: _workoutCollections[index]['name'],
-                              duration: '${index + 4} weeks',
-                              level: index % 2 == 0 ? 'Intermediate' : 'Advanced',
-                              color: _workoutCollections[index]['color'],
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      SizedBox(
-                        height: 180,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: _workoutCollections.length,
-                          itemBuilder: (context, index) {
-                            final reversedIndex = _workoutCollections.length - 1 - index;
-                            return _buildProgramCard(
-                              title: '${_workoutCollections[reversedIndex]['name']} Pro',
-                              duration: '${reversedIndex + 6} weeks',
-                              level: reversedIndex % 2 == 0 ? 'Beginner' : 'Expert',
-                              color: _workoutCollections[reversedIndex]['color'],
-                            );
-                          },
-                        ),
-                      ),
-                      
-                    ],
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
-    );
+        ));
   }
 
   Widget _buildRoutineButton(String title, {required VoidCallback onTap}) {
