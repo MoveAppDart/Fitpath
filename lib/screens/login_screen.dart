@@ -23,16 +23,17 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {    
+  Widget build(BuildContext context) {
     final Size screenSize = MediaQuery.of(context).size;
     final bool isTablet = screenSize.width > 600;
     final bool isDesktop = screenSize.width > 1200;
-    
+
     // Calcul dels valors responsive
-    final double titleFontSize = isDesktop ? 90 : (isTablet ? 72 : 60); // Larger base values
+    final double titleFontSize =
+        isDesktop ? 90 : (isTablet ? 72 : 60); // Larger base values
     final double horizontalPadding = isDesktop ? 80 : (isTablet ? 40 : 16);
     final double verticalSpacing = isDesktop ? 50 : (isTablet ? 40 : 30);
-    
+
     return Scaffold(
       body: LayoutBuilder(
         builder: (context, constraints) {
@@ -65,7 +66,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           SizedBox(height: 40),
-                          
+
                           // Title
                           Center(
                             child: Text(
@@ -78,7 +79,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                           SizedBox(height: 60),
-                          
+
                           // Login Text
                           Row(
                             children: [
@@ -86,7 +87,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                 'Login',
                                 style: TextStyle(
                                   color: Colors.white,
-                                  fontSize: isDesktop ? 42 : (isTablet ? 38 : 34),
+                                  fontSize:
+                                      isDesktop ? 42 : (isTablet ? 38 : 34),
                                   letterSpacing: 1,
                                 ),
                               ),
@@ -123,7 +125,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                           // Sign up link
                           _buildSignUpLink(context),
-                          SizedBox(height: 20),  // Add spacing at the bottom
+                          SizedBox(height: 20), // Add spacing at the bottom
                         ],
                       ),
                     ),
@@ -150,12 +152,19 @@ class _LoginScreenState extends State<LoginScreen> {
       decoration: InputDecoration(
         contentPadding: const EdgeInsets.all(12.5),
         hintText: hintText,
-        hintStyle: const TextStyle(color: Color.fromARGB(170, 255, 253, 253)),
+        hintStyle: const TextStyle(color: Color.fromARGB(255, 150, 150, 150)),
         filled: true,
-        fillColor: const Color.fromARGB(135, 255, 255, 255),
+        fillColor: const Color.fromARGB(255, 243, 243, 243),
         enabledBorder: OutlineInputBorder(
           borderSide: const BorderSide(
-            color: Color.fromARGB(170, 255, 255, 255),
+            color: Color.fromARGB(255, 0, 85, 77),
+          ),
+          borderRadius: BorderRadius.circular(15),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderSide: const BorderSide(
+            color: Color.fromARGB(255, 0, 85, 77),
+            width: 2.0, // optional: make it stand out when focused
           ),
           borderRadius: BorderRadius.circular(15),
         ),
@@ -168,7 +177,8 @@ class _LoginScreenState extends State<LoginScreen> {
     return Center(
       child: ElevatedButton(
         onPressed: () {
-          if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+          if (_emailController.text.isEmpty ||
+              _passwordController.text.isEmpty) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Please enter both email and password'),
@@ -184,8 +194,8 @@ class _LoginScreenState extends State<LoginScreen> {
         },
         style: ElevatedButton.styleFrom(
           foregroundColor: Colors.white,
-          backgroundColor: const Color.fromARGB(148, 0, 0, 0),
-          minimumSize: const Size(260, 50),
+          backgroundColor: const Color.fromARGB(220, 16, 34, 135),
+          minimumSize: const Size(200, 60),
         ),
         child: const Text(
           'Login',
@@ -237,7 +247,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ],
       );
     }
-    
+
     // For mobile, stack buttons vertically
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -264,14 +274,13 @@ class _LoginScreenState extends State<LoginScreen> {
         label: const Text(
           'Continue with Google',
           style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-          
         ),
         style: OutlinedButton.styleFrom(
           padding: const EdgeInsets.all(18),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
-          side: const BorderSide(color: Colors.black12), 
+          side: const BorderSide(color: Colors.black12),
           backgroundColor: Colors.white,
           foregroundColor: Colors.black,
         ),
