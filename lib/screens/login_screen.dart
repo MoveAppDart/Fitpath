@@ -30,7 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     // Calcul dels valors responsive
     final double titleFontSize =
-        isDesktop ? 90 : (isTablet ? 72 : 60); // Larger base values
+        isDesktop ? 110 : (isTablet ? 82 : 70); // Larger base values
     final double horizontalPadding = isDesktop ? 80 : (isTablet ? 40 : 16);
     final double verticalSpacing = isDesktop ? 50 : (isTablet ? 40 : 30);
 
@@ -56,7 +56,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Padding(
                     padding: EdgeInsets.symmetric(
                       horizontal: horizontalPadding,
-                      vertical: 16.0,
+                      vertical: 10.0,
                     ),
                     child: ConstrainedBox(
                       constraints: BoxConstraints(
@@ -65,7 +65,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          SizedBox(height: 40),
+                          SizedBox(height: 10),
 
                           // Title
                           Center(
@@ -74,32 +74,39 @@ class _LoginScreenState extends State<LoginScreen> {
                               style: GoogleFonts.genos(
                                 fontSize: titleFontSize,
                                 color: Colors.white,
-                                fontWeight: FontWeight.w600,
+                                fontWeight: FontWeight.w400,
                               ),
                             ),
                           ),
                           SizedBox(height: 60),
 
                           // Login Text
-                          Row(
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 'Login',
-                                style: TextStyle(
+                                style: GoogleFonts.istokWeb(
                                   color: Colors.white,
-                                  fontSize:
-                                      isDesktop ? 42 : (isTablet ? 38 : 34),
-                                  letterSpacing: 1,
+                                  fontSize: isDesktop ? 42 : (isTablet ? 38 : 34),
+                                  letterSpacing: 0.2,
                                 ),
+                              ),
+                              const SizedBox(height: 4),
+                              Container(
+                                height: 1,
+                                width: 90,
+                                color: Colors.white,
                               ),
                             ],
                           ),
+
                           SizedBox(height: 30),
 
                           // Email field
                           _buildTextField(
                             controller: _emailController,
-                            hintText: 'example@example.com',
+                            hintText: 'Email',
                           ),
                           const SizedBox(height: 30),
 
@@ -150,9 +157,9 @@ class _LoginScreenState extends State<LoginScreen> {
       obscureText: isPassword,
       style: const TextStyle(color: Colors.black),
       decoration: InputDecoration(
-        contentPadding: const EdgeInsets.all(12.5),
+        contentPadding: const EdgeInsets.all(20),
         hintText: hintText,
-        hintStyle: const TextStyle(color: Color.fromARGB(255, 150, 150, 150)),
+        hintStyle: GoogleFonts.istokWeb(color: const Color.fromARGB(255, 150, 150, 150)),
         filled: true,
         fillColor: const Color.fromARGB(255, 243, 243, 243),
         enabledBorder: OutlineInputBorder(
@@ -175,7 +182,10 @@ class _LoginScreenState extends State<LoginScreen> {
   // Login button widget
   Widget _buildLoginButton(BuildContext context) {
     return Center(
-      child: ElevatedButton(
+      child: Material(
+        elevation: 12,
+        borderRadius: BorderRadius.circular(30),
+        child: ElevatedButton(
         onPressed: () {
           if (_emailController.text.isEmpty ||
               _passwordController.text.isEmpty) {
@@ -194,14 +204,15 @@ class _LoginScreenState extends State<LoginScreen> {
         },
         style: ElevatedButton.styleFrom(
           foregroundColor: Colors.white,
-          backgroundColor: const Color.fromARGB(220, 16, 34, 135),
-          minimumSize: const Size(200, 60),
+          backgroundColor: const Color.fromARGB(250, 4, 21, 115),
+          minimumSize: const Size(150, 60),
         ),
-        child: const Text(
+        child: Text(
           'Login',
-          style: TextStyle(fontSize: 16),
+          style: GoogleFonts.istokWeb(fontSize: 18, fontWeight: FontWeight.w800),
         ),
       ),
+      )
     );
   }
 
@@ -242,7 +253,7 @@ class _LoginScreenState extends State<LoginScreen> {
       return Row(
         children: [
           Expanded(child: _buildGoogleButton()),
-          const SizedBox(width: 70),
+          const SizedBox(width: 50),
           Expanded(child: _buildAppleButton()),
         ],
       );
@@ -253,7 +264,7 @@ class _LoginScreenState extends State<LoginScreen> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         _buildGoogleButton(),
-        const SizedBox(height: 40),
+        const SizedBox(height: 20),
         _buildAppleButton(),
       ],
     );
@@ -276,7 +287,7 @@ class _LoginScreenState extends State<LoginScreen> {
           style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
         ),
         style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.only(left: 18, right: 18, top: 22, bottom: 22),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
@@ -305,7 +316,7 @@ class _LoginScreenState extends State<LoginScreen> {
           style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
         ),
         style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.only(left: 18, right: 18, top: 22, bottom: 22),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
@@ -345,15 +356,16 @@ class _LoginScreenState extends State<LoginScreen> {
           );
         },
         child: Column(
-          children: const [
+          children: [
             Text(
               'Don\'t Have An Account?',
-              style: TextStyle(color: Colors.white),
+              style: GoogleFonts.itim(color: const Color.fromARGB(255, 156, 156, 156)),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
-              'Sign Up Here!',
-              style: TextStyle(
+              'Create One',
+              style: GoogleFonts.itim(
+                fontSize: 16,
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
               ),

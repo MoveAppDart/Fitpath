@@ -466,50 +466,15 @@ class _HomeScreenState extends State<HomeScreen> {
                             children: [
                               // Day Activity Container
                               Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: horizontalPadding * 0.2,
-                                  vertical: verticalSpacing * 0.4,
+                                child: SizedBox(
+                                  width: isDesktop ? 95 : (isTablet ? 75 : 55),
+                                  height: isDesktop ? 170 : (isTablet ? 150 : 130),
+                                  child: _DayActivityCard(
+                                    title: '',
+                                    value: _nutritionData['calories']['burned'].toString(),
+                                  ),
                                 ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF003366),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Column(
-                                  children: [
-                                    Text(
-                                      'Day Activity',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: subHeaderFontSize,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    SizedBox(height: verticalSpacing * 0.2),
-                                    Icon(
-                                      Icons.fitness_center,
-                                      color: Colors.white,
-                                      size:
-                                          isDesktop ? 35 : (isTablet ? 30 : 25),
-                                    ),
-                                    SizedBox(height: verticalSpacing * 0.2),
-                                    Text(
-                                      _nutritionData['calories']['burned']
-                                          .toString(),
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: headerFontSize,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    Text(
-                                      'kcal',
-                                      style: TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: subHeaderFontSize,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+
                               ),
                               SizedBox(width: horizontalPadding * 0.3),
                               // Sleep Time Section
@@ -607,4 +572,125 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     ));
   }
+}
+
+
+class _DayActivityCard extends StatelessWidget {
+  final String title;
+  final String value;
+
+  const _DayActivityCard({
+    required this.title,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF0E3F5B),
+            Color(0xFF0B2B46),
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.35),
+            blurRadius: 24,
+            offset: const Offset(0, 7),
+          ),
+        ],
+      ),
+child: ClipRRect(
+  borderRadius: BorderRadius.circular(14),
+  child: Stack(
+    children: [
+      Align(
+        alignment: Alignment.bottomCenter,
+        child: ClipPath(
+          clipper: _WaveClipper(),
+          child: Container(
+            height: 70,
+            color: const Color(0xFF7C8D99).withOpacity(0.85),
+          ),
+        ),
+      ),
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Container(
+              width: 37,
+              height: 37,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(9),
+              ),
+              child: const Icon(Icons.fitness_center, color: Colors.white, size: 17),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+                height: 1.0,
+              ),
+            ),
+            const SizedBox(height: 2),
+            const Text('kcal', style: TextStyle(color: Colors.white70, fontSize: 9)),
+            const SizedBox(height: 6),
+            Text(
+              title,
+              style: const TextStyle(color: Colors.white70, fontSize: 8, fontWeight: FontWeight.w600),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    ],
+  ),
+),
+ );
+  }
+}
+
+class _WaveClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final p = Path();
+    p.lineTo(0, size.height * 0.55);
+
+    // primera curva (sube)
+    p.quadraticBezierTo(
+      size.width * 0.25,
+      size.height * 0.35,
+      size.width * 0.5,
+      size.height * 0.55,
+    );
+
+    // segunda curva (baja)
+    p.quadraticBezierTo(
+      size.width * 0.75,
+      size.height * 0.75,
+      size.width,
+      size.height * 0.55,
+    );
+
+    p.lineTo(size.width, size.height);
+    p.lineTo(0, size.height);
+    p.close();
+    return p;
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }
