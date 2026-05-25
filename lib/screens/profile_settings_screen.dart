@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../services/data_service.dart';
 
 class ProfileSettingsScreen extends StatelessWidget {
   const ProfileSettingsScreen({super.key});

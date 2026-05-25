@@ -94,7 +94,7 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                                 ],
                               ),
                             )
-                            .toList(),
+                            ,
                         _buildNewRoutineButton(),
                       ],
                     ),
@@ -189,7 +189,7 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
       width: double.infinity,
       height: 60,
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.white.withOpacity(0.3)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Material(

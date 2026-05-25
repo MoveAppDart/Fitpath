@@ -100,7 +100,7 @@ class _WeightSliderState extends State<WeightSlider> {
             children: [
               const SizedBox(height: 10),
               Text(
-                '${value.toStringAsFixed(1)}',
+                value.toStringAsFixed(1),
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -282,8 +282,8 @@ class _CustomPageScrollPhysics extends ScrollPhysics {
   const _CustomPageScrollPhysics({
     required this.start,
     required this.end,
-    ScrollPhysics? parent,
-  }) : super(parent: parent);
+    super.parent,
+  });
 
   @override
   _CustomPageScrollPhysics applyTo(ScrollPhysics? ancestor) {

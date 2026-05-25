@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:FitPath/screens/register/step2_signup.dart';
 
 class FirstStepSignup extends StatefulWidget {
+  const FirstStepSignup({super.key});
+
   @override
   _FirstStepSignupState createState() => _FirstStepSignupState();
 }
@@ -220,7 +222,7 @@ class GenderOptionButton extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onPressed;
 
-  const GenderOptionButton({
+  const GenderOptionButton({super.key, 
     required this.label,
     required this.icon,
     required this.isSelected,

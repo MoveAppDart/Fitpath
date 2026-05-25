@@ -5,7 +5,7 @@ import 'package:FitPath/screens/register/step5_signup.dart';
 
 class RoundedBox extends StatelessWidget {
   final double size;
-  RoundedBox({required this.size});
+  const RoundedBox({super.key, required this.size});
   
   @override
   Widget build(BuildContext context) {
@@ -21,6 +21,8 @@ class RoundedBox extends StatelessWidget {
 }
 
 class SixthStepSignup extends StatefulWidget {
+  const SixthStepSignup({super.key});
+
   @override
   _SixthStepSignupState createState() => _SixthStepSignupState();
 }

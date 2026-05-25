@@ -4,6 +4,8 @@ import 'package:FitPath/screens/register/step4_signup.dart';
 import 'package:FitPath/screens/register/step6_signup.dart';
 
 class FifthStepSignup extends StatefulWidget {
+  const FifthStepSignup({super.key});
+
   @override
   _FifthStepSignupState createState() => _FifthStepSignupState();
 }
@@ -249,7 +251,7 @@ class ActivityOptionButton extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onPressed;
 
-  const ActivityOptionButton({
+  const ActivityOptionButton({super.key, 
     required this.label,
     required this.icon,
     required this.isSelected,

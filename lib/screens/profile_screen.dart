@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
 import 'login_screen.dart';
 import 'profile_settings_screen.dart';
 import 'app_settings_screen.dart';
-import '../services/localization_service.dart';
 import '../services/data_service.dart';  // Add this import
 
 class ProfileScreen extends StatefulWidget {

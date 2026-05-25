@@ -5,6 +5,8 @@ import 'package:FitPath/screens/register/step1_signup.dart';
 import 'package:FitPath/screens/register/step3_signup.dart';
 
 class SecondStepSignup extends StatefulWidget {
+  const SecondStepSignup({super.key});
+
   @override
   _SecondStepSignupState createState() => _SecondStepSignupState();
 }

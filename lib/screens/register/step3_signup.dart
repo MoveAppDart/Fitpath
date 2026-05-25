@@ -8,6 +8,8 @@ import 'package:FitPath/screens/utils/weightSlider.dart';
 const greenColor = Color(0xff90D855);
 
 class ThirdStepSignup extends StatefulWidget {
+  const ThirdStepSignup({super.key});
+
   @override
   _ThirdStepSignupState createState() => _ThirdStepSignupState();
 }

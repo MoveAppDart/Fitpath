@@ -221,7 +221,7 @@ class _StatsScreenState extends State<StatsScreen> {
                       ),
                       Expanded(
                         flex: 2,
-                        child: Container(
+                        child: SizedBox(
                           width: 100,
                           height: 100,
                           child: CustomPaint(
@@ -237,7 +237,7 @@ class _StatsScreenState extends State<StatsScreen> {
                 Spacer(),
 
                 // Bottom navigation
-                Container(
+                SizedBox(
                   height: 60,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -328,7 +328,7 @@ class _StatsScreenState extends State<StatsScreen> {
       width: double.infinity,
       height: height,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.70),
+        color: Colors.white.withValues(alpha: 0.70),
         borderRadius: BorderRadius.circular(15),
       ),
       child: child,
@@ -430,7 +430,7 @@ class PieChartPainter extends CustomPainter {
         2 * math.pi * legsPercentage, true, paint);
 
     // Draw white circle in center for donut effect
-    paint.color = Colors.white.withOpacity(0.2);
+    paint.color = Colors.white.withValues(alpha: 0.2);
     canvas.drawCircle(center, radius * 0.5, paint);
   }
 

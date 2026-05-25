@@ -299,7 +299,7 @@ class _SignupScreenState extends State<SignupScreen> {
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.3),
+              color: Colors.black.withValues(alpha: 0.3),
               spreadRadius: 1,
               blurRadius: 5,
               offset: Offset(0, 3),

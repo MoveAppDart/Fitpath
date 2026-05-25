@@ -158,10 +158,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     Container(
                       width: double.infinity,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
+                        color: Colors.white.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withValues(alpha: 0.2),
                         ),
                       ),
                       padding: EdgeInsets.all(horizontalPadding * 0.5),
@@ -180,7 +180,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             width: double.infinity,
                             height: screenSize.height * 0.15,
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.78),
+                              color: Colors.white.withValues(alpha: 0.78),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             padding: EdgeInsets.all(horizontalPadding * 0.3),
@@ -219,7 +219,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               );
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white.withOpacity(0.2),
+                              backgroundColor: Colors.white.withValues(alpha: 0.2),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
@@ -269,10 +269,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     Container(
                       width: double.infinity,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
+                        color: Colors.white.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withValues(alpha: 0.2),
                         ),
                       ),
                       padding: EdgeInsets.all(horizontalPadding * 0.5),
@@ -315,7 +315,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     ),
                                   ),
                                   SizedBox(width: horizontalPadding * 0.2),
-                                  Container(
+                                  SizedBox(
                                     width:
                                         isDesktop ? 50 : (isTablet ? 45 : 40),
                                     height:
@@ -392,7 +392,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   color: isToday
                                       ? const Color.fromARGB(117, 1, 52, 47)
                                       : const Color.fromARGB(255, 194, 194, 194)
-                                          .withOpacity(0.79),
+                                          .withValues(alpha: 0.79),
                                   borderRadius: borderRadius,
                                 ),
                                 child: Column(
@@ -443,10 +443,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     Container(
                       width: double.infinity,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
+                        color: Colors.white.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withValues(alpha: 0.2),
                         ),
                       ),
                       padding: EdgeInsets.all(horizontalPadding * 0.5),
@@ -486,10 +486,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                     vertical: verticalSpacing * 0.4,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.1),
+                                    color: Colors.white.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
-                                      color: Colors.white.withOpacity(0.2),
+                                      color: Colors.white.withValues(alpha: 0.2),
                                     ),
                                   ),
                                   child: Column(
@@ -516,7 +516,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                             ),
                                             decoration: BoxDecoration(
                                               color: const Color(0xFF7BA69A)
-                                                  .withOpacity(0.2),
+                                                  .withValues(alpha: 0.2),
                                               borderRadius:
                                                   BorderRadius.circular(12),
                                             ),
@@ -599,7 +599,7 @@ class _DayActivityCard extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.35),
+            color: Colors.black.withValues(alpha: 0.35),
             blurRadius: 24,
             offset: const Offset(0, 7),
           ),
@@ -615,7 +615,7 @@ child: ClipRRect(
           clipper: _WaveClipper(),
           child: Container(
             height: 70,
-            color: const Color(0xFF7C8D99).withOpacity(0.85),
+            color: const Color(0xFF7C8D99).withValues(alpha: 0.85),
           ),
         ),
       ),
@@ -628,7 +628,7 @@ child: ClipRRect(
               width: 37,
               height: 37,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.08),
+                color: Colors.white.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(9),
               ),
               child: const Icon(Icons.fitness_center, color: Colors.white, size: 17),

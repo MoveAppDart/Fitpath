@@ -222,7 +222,7 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
           shape: BoxShape.circle,
           color: isSelected ? const Color(0xFF4CAF50) : Colors.transparent, // Green when selected
           border: Border.all(
-            color: isSelected ? const Color(0xFF4CAF50) : Colors.grey.withOpacity(0.5),
+            color: isSelected ? const Color(0xFF4CAF50) : Colors.grey.withValues(alpha: 0.5),
             width: 2,
           ),
         ),
@@ -251,10 +251,10 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
         decoration: BoxDecoration(
           color: isSelected 
                 ? const Color(0xFF1A4B94) // Darker blue when selected
-                : Colors.white.withOpacity(0.1),
+                : Colors.white.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
           border: isSelected
-                ? Border.all(color: Colors.white.withOpacity(0.3), width: 2)
+                ? Border.all(color: Colors.white.withValues(alpha: 0.3), width: 2)
                 : null,
         ),
         child: Column(
@@ -272,7 +272,7 @@ class _CreatePlanScreenState extends State<CreatePlanScreen> {
             Text(
               description,
               style: TextStyle(
-                color: Colors.white.withOpacity(0.7),
+                color: Colors.white.withValues(alpha: 0.7),
                 fontSize: 14,
               ),
             ),

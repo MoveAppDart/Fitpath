@@ -69,7 +69,7 @@ class _BottomNavbarState extends State<BottomNavbar> {
                 borderRadius: BorderRadius.circular(50),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
+                    color: Colors.black.withValues(alpha: 0.2),
                     spreadRadius: 1,
                     blurRadius: 10,
                     offset: Offset(0, 5),
@@ -108,7 +108,7 @@ class _BottomNavbarState extends State<BottomNavbar> {
                                 : BorderRadius.circular(100),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.2),
+                                color: Colors.black.withValues(alpha: 0.2),
                                 spreadRadius: 1,
                                 blurRadius: 10,
                                 offset: Offset(0, 5),
